@@ -168,7 +168,7 @@ uint16_t UHS_NI MAX3421E_HOST::reset(void) {
         }
         now = (int32_t)(micros() - expires);
         if(now < 0L) {
-                i -= now; // This actually adds, since now is a negative number :-)
+                i = 65535 + now; // Note this subtracts, as now is negative
         }
         return (i);
 }
