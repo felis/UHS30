@@ -3,10 +3,10 @@ Pre-release of USB Host Library version 3.0. No technical support offered at thi
 
 <H2>This set of libraries is EXTERMELY ALPHA!<H2>
 <H1>Arduino version 1.6.1 OR BETTER ONLY!</H1>
-* This library set does all USB host operations in an interrupt. This means that calling the Task() method no longer does anything, unless you disable the interrupt mode in your sketch.
-* This library set provides interrupt safe heap for AVR and ARM based boards.
-* Circuitsathome USB Host Shield support (of course!)
-* Freescale(tm) Kinetis(tm) native full-speed host support!
+* This library set does all USB host operations in an interrupt. This means that calling the Task() method no longer does anything, unless you disable the interrupt mode in your sketch.<BR>
+* This library set provides interrupt safe heap for AVR and ARM based boards.<BR>
+* Circuitsathome USB Host Shield support (of course!)<BR>
+* Freescale(tm) Kinetis(tm) native full-speed host support!<BR>
 
 <HR><H2>AVR Arduino(tm) hardware instructions</H2>
 On AVR based Arduino(tm) boards and clones, you must do one of the following:<BR>
