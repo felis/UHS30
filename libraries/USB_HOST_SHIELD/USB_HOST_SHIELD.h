@@ -319,7 +319,7 @@ public:
 
 };
 #if !defined(USB_HOST_SHIELD_LOADED)
-#include <USB_HOST_SHIELD_INLINE.h>
+#include "USB_HOST_SHIELD_INLINE.h"
 #endif
 #else
 #error "define LOAD_USB_HOST_SHIELD in your sketch, never include USB_HOST_SHIELD.h in a driver."
