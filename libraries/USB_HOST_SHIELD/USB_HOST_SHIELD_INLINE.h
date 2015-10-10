@@ -456,12 +456,9 @@ uint8_t UHS_NI MAX3421E_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, ui
                 }
                 pktsize = regRd(rRCVBC); //number of received bytes
                 MAX_HOST_DEBUG("Got %i bytes \r\n", pktsize);
-                // This would be OK, but...
-                //assert(pktsize <= nbytes);
-                if(pktsize > nbytes) {
-                        // This can happen. Use of assert on Arduino locks up the Arduino.
-                        // So I will trim the value, and hope for the best.
-                        //MAX_HOST_DEBUG(">>>>>>>> Problem! Wanted %i bytes but got %i.\r\n", nbytes, pktsize);
+                 
+                if(pktsize > nbytes) {  //certain devices send more than asked
+                        //MAX_HOST_DEBUG(">>>>>>>> Warning: wanted %i bytes but got %i.\r\n", nbytes, pktsize);
                         pktsize = nbytes;
                 }
 
