@@ -282,11 +282,11 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         pinMode(ss, OUTPUT);
         UHS_PIN_WRITE(ss, HIGH);
 
-#ifdef USB_HSOT_SHIELD_TIMING_PIN
-        pinMode(USB_HSOT_SHIELD_TIMING_PIN, OUTPUT);
+#ifdef USB_HOST_SHIELD_TIMING_PIN
+        pinMode(USB_HOST_SHIELD_TIMING_PIN, OUTPUT);
         // My counter/timer can't work on an inverted gate signal
         // so we gate using a high pulse -- AJK
-        UHS_PIN_WRITE(USB_HSOT_SHIELD_TIMING_PIN, LOW);
+        UHS_PIN_WRITE(USB_HOST_SHIELD_TIMING_PIN, LOW);
 #endif
         interrupts();
 
@@ -811,10 +811,10 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
                 interrupts();
         }
 #endif
-#ifdef USB_HSOT_SHIELD_TIMING_PIN
+#ifdef USB_HOST_SHIELD_TIMING_PIN
         // My counter/timer can't work on an inverted gate signal
         // so we gate using a high pulse -- AJK
-        UHS_PIN_WRITE(USB_HSOT_SHIELD_TIMING_PIN, LOW);
+        UHS_PIN_WRITE(USB_HOST_SHIELD_TIMING_PIN, LOW);
 #endif
         usb_task_polling_disabled--;
 }
@@ -878,10 +878,10 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
 
                 if(!sof_countdown && !counted && !usb_task_polling_disabled) {
                         usb_task_polling_disabled++;
-#ifdef USB_HSOT_SHIELD_TIMING_PIN
+#ifdef USB_HOST_SHIELD_TIMING_PIN
         // My counter/timer can't work on an inverted gate signal
         // so we gate using a high pulse -- AJK
-        UHS_PIN_WRITE(USB_HSOT_SHIELD_TIMING_PIN, HIGH);
+        UHS_PIN_WRITE(USB_HOST_SHIELD_TIMING_PIN, HIGH);
 #endif
 
 #if defined(SWI_IRQ_NUM)
