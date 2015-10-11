@@ -113,7 +113,7 @@ e-mail   :  support@circuitsathome.com
 #elif defined(BOARD_MEGA_ADK)
 #error "HELP! Please send us an email, I don't know the values for Int0 and Int1 on the MEGA ADK board!"
 #elif defined(ARDUINO_AVR_BALANDUINO)
-#error "HELP! Please send us an email, I don't know the values for Int0 and Int1 on the AVR BALANDUINO board!"
+#error "ISR mode is currently not supported on the Balanduino. Please set USB_HOST_SHIELD_USE_ISR to 0."
 #else
 #define UHS_MAX3421E_SS 10
 #ifdef __AVR__
@@ -319,7 +319,7 @@ public:
 
 };
 #if !defined(USB_HOST_SHIELD_LOADED)
-#include <USB_HOST_SHIELD_INLINE.h>
+#include "USB_HOST_SHIELD_INLINE.h"
 #endif
 #else
 #error "define LOAD_USB_HOST_SHIELD in your sketch, never include USB_HOST_SHIELD.h in a driver."

@@ -109,6 +109,7 @@ void test_bulk(uint8_t lun) {
 void setup() {
         //while(!Serial1);
         Serial1.begin(115200);
+        Serial1.println("Waiting...");
         delay(10000);
         Serial1.println("Start.");
         Init_dyn_SWI();

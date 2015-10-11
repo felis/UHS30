@@ -161,7 +161,7 @@ void setup() {
                         case( 0x01):  //rev.01
                         case( 0x12):  //rev.02
                         case( 0x13):  //rev.03
-                                printf_P("%2.2x", tmpbyte & 3);
+                                printf_P(PSTR("%2.2x"), tmpbyte & 3);
                                 break;
                         default:
                                 printf_P(PSTR("invalid. Value returned: %2.2x"), tmpbyte);
@@ -225,7 +225,7 @@ void setup() {
                         press_any_key();
                 }  
                 /* Restart oscillator */
-                printf_P(PSTR("\r\nReset oscillator test."),0x80);
+                printf_P(PSTR("\r\nReset oscillator test."));
                 fflush(stdout);
                 for( uint16_t i = 0; i < 100; i++ ) {
                         printf_P(PSTR("\r\nReset number %i\t"), i+1);
@@ -241,7 +241,7 @@ void setup() {
                                 printf_P(PSTR("PLL failed to stabilize"));
                                 press_any_key();
                         } else {
-                                printf_P(PSTR("Time to stabilize, about %i microseconds"), j);
+                                printf_P(PSTR("Time to stabilize, about %u microseconds"), j);
                                 fflush(stdout);
                         }
                 }
