@@ -215,8 +215,8 @@ struct INTERFACE_INFO {
 } __attribute__((packed));
 
 struct ENUMERATION_INFO {
-        uint8_t vid;
-        uint8_t pid;
+        uint16_t vid;
+        uint16_t pid;
         uint8_t klass;
         uint8_t subklass;
         uint8_t protocol;
