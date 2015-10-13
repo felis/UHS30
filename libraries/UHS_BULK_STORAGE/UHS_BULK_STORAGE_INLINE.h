@@ -504,18 +504,20 @@ Fail:
         return rcode;
 }
 
+// Base class definition of Release () used. See UHS_USBInterface class definition for details
+
 /**
  * For driver use only.
  *
  * @return
  */
-void UHS_NI UHS_Bulk_Storage::Release(void) {
+//void UHS_NI UHS_Bulk_Storage::Release(void) {
         // pUsb->DisablePoll();
-        OnRelease();
-        DriverDefaults();
+//        OnRelease();
+//        DriverDefaults();
         // pUsb->EnablePoll();
-        return;
-}
+//        return;
+//}
 
 /**
  * For driver use only.
