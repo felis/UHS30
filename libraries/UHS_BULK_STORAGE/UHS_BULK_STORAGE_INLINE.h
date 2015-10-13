@@ -504,7 +504,7 @@ Fail:
         return rcode;
 }
 
-// Base class definition of Release () used. See UHS_USBInterface class definition for details
+// Base class definition of Release() used. See UHS_USBInterface class definition for details
 
 /**
  * For driver use only.
