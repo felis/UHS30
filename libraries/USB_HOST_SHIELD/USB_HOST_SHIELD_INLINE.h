@@ -282,11 +282,11 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         pinMode(ss, OUTPUT);
         UHS_PIN_WRITE(ss, HIGH);
 
-#ifdef USB_HSOT_SHIELD_TIMING_PIN
-        pinMode(USB_HSOT_SHIELD_TIMING_PIN, OUTPUT);
+#ifdef USB_HOST_SHIELD_TIMING_PIN
+        pinMode(USB_HOST_SHIELD_TIMING_PIN, OUTPUT);
         // My counter/timer can't work on an inverted gate signal
         // so we gate using a high pulse -- AJK
-        UHS_PIN_WRITE(USB_HSOT_SHIELD_TIMING_PIN, LOW);
+        UHS_PIN_WRITE(USB_HOST_SHIELD_TIMING_PIN, LOW);
 #endif
         interrupts();
 
@@ -456,12 +456,9 @@ uint8_t UHS_NI MAX3421E_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, ui
                 }
                 pktsize = regRd(rRCVBC); //number of received bytes
                 MAX_HOST_DEBUG("Got %i bytes \r\n", pktsize);
-                // This would be OK, but...
-                //assert(pktsize <= nbytes);
-                if(pktsize > nbytes) {
-                        // This can happen. Use of assert on Arduino locks up the Arduino.
-                        // So I will trim the value, and hope for the best.
-                        //MAX_HOST_DEBUG(">>>>>>>> Problem! Wanted %i bytes but got %i.\r\n", nbytes, pktsize);
+                 
+                if(pktsize > nbytes) {  //certain devices send more than asked
+                        //MAX_HOST_DEBUG(">>>>>>>> Warning: wanted %i bytes but got %i.\r\n", nbytes, pktsize);
                         pktsize = nbytes;
                 }
 
@@ -814,10 +811,10 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
                 interrupts();
         }
 #endif
-#ifdef USB_HSOT_SHIELD_TIMING_PIN
+#ifdef USB_HOST_SHIELD_TIMING_PIN
         // My counter/timer can't work on an inverted gate signal
         // so we gate using a high pulse -- AJK
-        UHS_PIN_WRITE(USB_HSOT_SHIELD_TIMING_PIN, LOW);
+        UHS_PIN_WRITE(USB_HOST_SHIELD_TIMING_PIN, LOW);
 #endif
         usb_task_polling_disabled--;
 }
@@ -881,10 +878,10 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
 
                 if(!sof_countdown && !counted && !usb_task_polling_disabled) {
                         usb_task_polling_disabled++;
-#ifdef USB_HSOT_SHIELD_TIMING_PIN
+#ifdef USB_HOST_SHIELD_TIMING_PIN
         // My counter/timer can't work on an inverted gate signal
         // so we gate using a high pulse -- AJK
-        UHS_PIN_WRITE(USB_HSOT_SHIELD_TIMING_PIN, HIGH);
+        UHS_PIN_WRITE(USB_HOST_SHIELD_TIMING_PIN, HIGH);
 #endif
 
 #if defined(SWI_IRQ_NUM)
