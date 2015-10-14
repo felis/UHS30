@@ -405,11 +405,11 @@ again:
                                                         HOST_DUBUG("Configuring error: %2.2x Can't close USB_INTERFACE_DESCRIPTOR stream.\r\n", rcode);
                                                         continue;
                                                 }
-                                                if(enumerateInterface(&ei) < UHS_HOST_MAX_INTERFACE_DRIVERS) {
-                                                        HOST_DUBUG("Interface Configured\r\n");
-                                                        //p->epcount += ei.interface.numep;
-                                                } else {
+
+                                                if(enumerateInterface(&ei) == UHS_HOST_MAX_INTERFACE_DRIVERS) {
                                                         HOST_DUBUG("No interface driver for this interface.");
+                                                } else {
+                                                        HOST_DUBUG("Interface Configured\r\n");
                                                 }
                                         }
                                 }
@@ -450,7 +450,11 @@ again:
                                         HOST_DUBUG("Skipped\r\n");
                                 }
                         }
-                }
+#if defined(UHS_HID_LOADED)
+                        // Now do HID
+
+#endif
+                        }
         } else {
                 addrPool.FreeAddress(ei.address);
         }
@@ -465,6 +469,10 @@ again:
  */
 void UHS_USB_HOST_BASE::ReleaseDevice(uint8_t addr) {
         if(addr) {
+#if defined(UHS_HID_LOADED)
+                // Release any HID children
+                UHS_HID_Release(this, addr);
+#endif
                 for(uint8_t i = 0; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
                         if(!devConfig[i]) continue;
                         if(devConfig[i]->bAddress == addr) {
@@ -898,27 +906,27 @@ uint8_t UHS_USB_HOST_BASE::enumerateInterface(ENUMERATION_INFO *ei) {
 
 #if defined(UHS_HID_LOADED)
         // Check HID here, if it is, then lie
-        if(ei->klass == UHS_USB_CLASS_HID) {
-                UHS_HUB_SetInterface(this, ENUMERATION_INFO *ei);
+        if(ei->klass == UHS_USB_CLASS_HID || ei->interface.klass == UHS_USB_CLASS_HID) {
+                UHS_HID_SetUSBInterface(this, ENUMERATION_INFO * ei);
                 devConfigIndex = UHS_HID_INDEX;
         } else
 #endif
-        for(devConfigIndex = 0; devConfigIndex < UHS_HOST_MAX_INTERFACE_DRIVERS; devConfigIndex++) {
-                if(!devConfig[devConfigIndex]) {
-                        HOST_DUBUG("No driver at index %i\r\n", devConfigIndex);
-                        continue; // no driver
-                }
-                if(devConfig[devConfigIndex]->bAddress) {
-                        HOST_DUBUG("Driver %i is already consumed @ %2.2x\r\n", devConfigIndex, devConfig[devConfigIndex]->bAddress);
-                        continue; // consumed
-                }
+                for(devConfigIndex = 0; devConfigIndex < UHS_HOST_MAX_INTERFACE_DRIVERS; devConfigIndex++) {
+                        if(!devConfig[devConfigIndex]) {
+                                HOST_DUBUG("No driver at index %i\r\n", devConfigIndex);
+                                continue; // no driver
+                        }
+                        if(devConfig[devConfigIndex]->bAddress) {
+                                HOST_DUBUG("Driver %i is already consumed @ %2.2x\r\n", devConfigIndex, devConfig[devConfigIndex]->bAddress);
+                                continue; // consumed
+                        }
 
-                if(devConfig[devConfigIndex]->OKtoEnumerate(ei)) {
-                        HOST_DUBUG("Driver %i supports this interface\r\n", devConfigIndex);
-                        if(!devConfig[devConfigIndex]->SetInterface(ei)) break;
-                        else devConfigIndex = UHS_HOST_MAX_INTERFACE_DRIVERS;
+                        if(devConfig[devConfigIndex]->OKtoEnumerate(ei)) {
+                                HOST_DUBUG("Driver %i supports this interface\r\n", devConfigIndex);
+                                if(!devConfig[devConfigIndex]->SetInterface(ei)) break;
+                                else devConfigIndex = UHS_HOST_MAX_INTERFACE_DRIVERS;
+                        }
                 }
-        }
         return devConfigIndex;
 };
 

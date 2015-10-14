@@ -213,6 +213,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
                         break;
                 case UHS_USB_HOST_STATE_RUNNING:
                         //printf("ISRbottom, UHS_USB_HOST_STATE_RUNNING\r\n");
+                        Poll_Others();
                         for(x = 0; (usb_task_state == UHS_USB_HOST_STATE_RUNNING) && (x < UHS_HOST_MAX_INTERFACE_DRIVERS); x++) {
                                 if(devConfig[x]) {
                                         if(devConfig[x]->bPollEnable) devConfig[x]->Poll();

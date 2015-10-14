@@ -175,6 +175,15 @@ public:
         //
         /////////////////////////////////////////////
 
+        inline void Poll_Others(void) {
+#if defined(UHS_LOAD_BT)
+                UHS_BT_Poll();
+#endif
+#if defined(UHS_LOAD_HID)
+                UHS_HID_Poll();
+#endif
+        }
+
         inline void DisablePoll(void) {
                 noInterrupts();
                 usb_task_polling_disabled++;
