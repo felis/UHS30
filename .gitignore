@@ -6,3 +6,4 @@ DEADJOE
 *.orig
 *.rej
 nbproject/private
+build
