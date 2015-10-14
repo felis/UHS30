@@ -876,7 +876,16 @@ uint8_t UHS_USB_HOST_BASE::TestInterface(ENUMERATION_INFO *ei) {
                         break;
                 }
         }
-        if(devConfigIndex == UHS_HOST_MAX_INTERFACE_DRIVERS) rcode = UHS_HOST_ERROR_DEVICE_NOT_SUPPORTED;
+        if(devConfigIndex == UHS_HOST_MAX_INTERFACE_DRIVERS) {
+                rcode = UHS_HOST_ERROR_DEVICE_NOT_SUPPORTED;
+#if defined(UHS_HID_LOADED)
+                // Check HID here, if it is, then lie
+                if(ei->klass == UHS_USB_CLASS_HID) {
+                        devConfigIndex = UHS_HID_INDEX; // for debugging, otherwise this has no use.
+                        rcode = 0;
+                }
+#endif
+        }
         if(!rcode) HOST_DUBUG("Driver %i can be used for this interface\r\n", devConfigIndex);
         else HOST_DUBUG("No driver for this interface.\r\n");
         return rcode;
@@ -887,6 +896,13 @@ uint8_t UHS_USB_HOST_BASE::enumerateInterface(ENUMERATION_INFO *ei) {
 
         HOST_DUBUG("AttemptConfig: parent = %i, port = %i\r\n", ei->parent, ei->port);
 
+#if defined(UHS_HID_LOADED)
+        // Check HID here, if it is, then lie
+        if(ei->klass == UHS_USB_CLASS_HID) {
+                UHS_HUB_SetInterface(this, ENUMERATION_INFO *ei);
+                devConfigIndex = UHS_HID_INDEX;
+        } else
+#endif
         for(devConfigIndex = 0; devConfigIndex < UHS_HOST_MAX_INTERFACE_DRIVERS; devConfigIndex++) {
                 if(!devConfig[devConfigIndex]) {
                         HOST_DUBUG("No driver at index %i\r\n", devConfigIndex);

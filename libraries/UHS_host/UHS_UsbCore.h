@@ -24,6 +24,11 @@ e-mail   :  support@circuitsathome.com
 #define                  UHS_HOST_MAX_INTERFACE_DRIVERS 16      // Maximum number of USB interface drivers
 #endif
 
+
+// As we make extensions to a target interface add to UHS_HOST_MAX_INTERFACE_DRIVERS
+// This offset gets calculated for supporting wide subclasses, such as HID, BT, etc.
+#define UHS_HID_INDEX (UHS_HOST_MAX_INTERFACE_DRIVERS + 1)
+
 /* Common setup data constant combinations  */
 //get descriptor request type
 #define UHS_bmREQ_GET_DESCR \

@@ -115,6 +115,28 @@ uint8_t retries;
 UHS_Device *p;
 uint8_t dtp;
 
+/* constantly transmits 0x55 via SPI to aid probing */
+void halt55() {
+        printf_P(PSTR("\r\nUnrecoverable error - test halted!!"));
+        printf_P(PSTR("\r\n0x55 pattern is transmitted via SPI"));
+        printf_P(PSTR("\r\nPress RESET to restart test"));
+        fflush(stdout);
+
+        while( 1 ) {
+                UHS_Usb.regWr( 0x55, 0x55 );
+        }
+}
+
+/* prints "Press any key" and returns when key is pressed */
+void press_any_key() {
+        printf_P(PSTR("\r\nPress any key to continue..."));
+        fflush(stdout);
+        while(USB_HOST_SERIAL.available()) USB_HOST_SERIAL.read(); //empty input buffer
+        while( !USB_HOST_SERIAL.available() ); //wait for input
+        while(USB_HOST_SERIAL.available()) USB_HOST_SERIAL.read(); //empty input buffer
+        return;
+}
+
 void setup() {
         laststate = 0;
         Serial.begin( 115200 );
@@ -150,7 +172,7 @@ void setup() {
         UHS_PIN_WRITE(UHS_Usb.ss, HIGH);
 
         printf_P(PSTR("\r\nCircuits At Home 2011"));
-        printf_P(PSTR("\r\nUSB Host Shield Quality Control Routine"));  
+        printf_P(PSTR("\r\nUSB Host Shield Quality Control Routine"));
         /* SPI quick test - check revision register */
         printf_P(PSTR("\r\nReading REVISION register... Die revision "));
         fflush(stdout);
@@ -191,7 +213,7 @@ void setup() {
                         fflush(stdout);
                 }//for( uint8_t i...
                 UHS_Usb.regWr( rGPINPOL, gpinpol_copy );
-                printf_P(PSTR("\r\nSPI long test passed"));    
+                printf_P(PSTR("\r\nSPI long test passed"));
         }//SPI long test
 
         /* GPIO test */
@@ -212,25 +234,25 @@ void setup() {
                                 break;
                         }//if( sample_gpio != tmpbyte...
                 }//for( uint8_t sample_gpio...
-                        printf_P(PSTR("\r\nGPIO test passed."));            
+                        printf_P(PSTR("\r\nGPIO test passed."));
         }//GPIO test
 
         /* PLL test. Stops/starts MAX3421E oscillator several times */
         {
                 printf_P(PSTR("\r\nPLL test. 100 chip resets will be performed"));
                 fflush(stdout);
-                /* check current state of the oscillator */  
+                /* check current state of the oscillator */
                 if(!( UHS_Usb.regRd( rUSBIRQ ) & bmOSCOKIRQ )) {  //wrong state - should be on
-                        printf_P(PSTR("\r\nCurrent oscillator state unexpected."));  
+                        printf_P(PSTR("\r\nCurrent oscillator state unexpected."));
                         press_any_key();
-                }  
+                }
                 /* Restart oscillator */
                 printf_P(PSTR("\r\nReset oscillator test."));
                 fflush(stdout);
                 for( uint16_t i = 0; i < 100; i++ ) {
                         printf_P(PSTR("\r\nReset number %i\t"), i+1);
                         fflush(stdout);
-                        UHS_Usb.regWr( rUSBCTL, bmCHIPRES );  //reset    
+                        UHS_Usb.regWr( rUSBCTL, bmCHIPRES );  //reset
                         if( UHS_Usb.regRd( rUSBIRQ ) & bmOSCOKIRQ ) { //wrong state - should be off
                                 printf_P(PSTR("\r\nCurrent oscillator state unexpected."));
                                 halt55();
@@ -263,11 +285,11 @@ void loop() {
         if(usbstate != laststate) {
                 p = NULL;
                 laststate=usbstate;
-                /**/  
+                /**/
                 switch( usbstate ) {
                         case( UHS_USB_HOST_STATE_IDLE ):
                                 printf_P(PSTR("\r\nWaiting for device..."));
-                                break;  
+                                break;
                         case( UHS_USB_HOST_STATE_RESET_DEVICE ):
                                 printf_P(PSTR("\r\nDevice connected. Resetting..."));
                                 break;
@@ -278,7 +300,7 @@ void loop() {
                                 printf_P(PSTR("\r\nUSB state machine reached error state"));
                                 UHS_Usb.doSoftReset(0, 0, 0);
                                 p = UHS_Usb.addrPool.GetUsbDevicePtr(0);
-                                if(p) { 
+                                if(p) {
                                         printf_P(PSTR("\r\nGot device pointer at 0"));
                                         dtp = 0;
                                 }
@@ -294,12 +316,12 @@ void loop() {
                                                 dtp = 1;
                                         }
                                 }
-                                
+
                                 retries = 0;
                                 again:
                                 printf_P(PSTR("\r\nGetting device descriptor"));
                                 rcode = UHS_Usb.getDevDescr( dtp, sizeof(USB_DEVICE_DESCRIPTOR), (uint8_t*)&buf );
-                                      
+
                                 if( rcode ) {
                                         printf_P(PSTR("\r\nError reading device descriptor. Error code 0x%2.2x\r\n"),rcode);
                                         if(rcode == UHS_HOST_ERROR_JERR && retries < 3) {
@@ -312,7 +334,7 @@ void loop() {
                                         printf_P(PSTR("\r\nDescriptor Length:\t0x%2.2x"),buf.bLength);
                                         printf_P(PSTR("\r\nDescriptor type:\t0x%2.2x"),buf.bDescriptorType);
                                         printf_P(PSTR("\r\nUSB version:\t\t0x%4.4x"),buf.bcdUSB);
-                                        printf_P(PSTR("\r\nDevice class:\t\t0x%2.2x"),buf.bDeviceClass); 
+                                        printf_P(PSTR("\r\nDevice class:\t\t0x%2.2x"),buf.bDeviceClass);
                                         printf_P(PSTR("\r\nDevice Subclass:\t0x%2.2x"),buf.bDeviceSubClass);
                                         printf_P(PSTR("\r\nDevice Protocol:\t0x%2.2x"),buf.bDeviceProtocol);
                                         printf_P(PSTR("\r\nMax.packet size:\t0x%2.2x"),buf.bMaxPacketSize0);
@@ -327,33 +349,11 @@ void loop() {
                                         printf_P(PSTR("\r\n\nAll tests passed. Press RESET to restart test"));
                                 }
                                 break;
-                              
+
                         default:
                                 break;
                 }//switch( usbstate...
                 fflush(stdout);
         }
 }//loop()...
-
-/* constantly transmits 0x55 via SPI to aid probing */
-void halt55() {
-        printf_P(PSTR("\r\nUnrecoverable error - test halted!!"));
-        printf_P(PSTR("\r\n0x55 pattern is transmitted via SPI"));
-        printf_P(PSTR("\r\nPress RESET to restart test"));
-        fflush(stdout);
-            
-        while( 1 ) {
-                UHS_Usb.regWr( 0x55, 0x55 );
-        }
-}
-
-/* prints "Press any key" and returns when key is pressed */
-void press_any_key() {
-        printf_P(PSTR("\r\nPress any key to continue..."));
-        fflush(stdout);
-        while(USB_HOST_SERIAL.available()) USB_HOST_SERIAL.read(); //empty input buffer
-        while( !USB_HOST_SERIAL.available() ); //wait for input
-        while(USB_HOST_SERIAL.available()) USB_HOST_SERIAL.read(); //empty input buffer
-        return;
-}
 

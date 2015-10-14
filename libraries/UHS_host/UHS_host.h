@@ -38,6 +38,9 @@ e-mail   :  support@circuitsathome.com
 #if defined(LOAD_USB_HOST_SYSTEM) && !defined(USB_HOST_SYSTEM_LOADED)
 #include "UHS_util_INLINE.h"
 #include "UHS_host_INLINE.h"
-#endif
+#if defined(LOAD_UHS_HID) && !defined(USB_HID_LOADED)
+#include "../UHS_HID/UHS_HID.h"
+#endif // Add HID
+#endif // Load code
 
-#endif //_usb_h_
+#endif // _UHS_host_h_
