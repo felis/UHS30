@@ -15,6 +15,8 @@ Web      :  www.circuitsathome.com
 e-mail   :  support@circuitsathome.com
  */
 
+//PIC32MX-specific
+
 #if defined(UHS_PIC32_H) && !defined(UHS_PIC32_LOADED)
 #define UHS_PIC32_LOADED
 
@@ -296,43 +298,43 @@ void UHS_NI UHS_PIC32::ISRTask(void) {
                 isrError = hrSTALL;
                 HW_CLEAR |= _U1IR_STALLIF_MASK;
         } else {
-                if((status & USB_ISTAT_ERROR)) { // error
-                        uint8_t err = USB0_ERRSTAT;
-                        USB0_ERRSTAT = err; // clear error
+                if((status & _U1IR_UERRIF_MASK)) { // error
+                        uint8_t err = U1EIR; //error status register
+                        U1EIR = err; // clear error
                         //USBTRACE2X("ISR: error: ", err); USBTRACE("\r\n");
                         //printf("\aISR: error: %2.2x \r\n", err);
                         isrError = 0;
-                        if(err & USB_ERRSTAT_PIDERR) {
+                        if(err & _U1EIR_PIDEF_MASK) {
                                 isrError = hrWRONGPID; // Received wrong Packet ID
-                        } else if(err & USB_ERRSTAT_CRC16) {
+                        } else if(err & _U1EIR_CRC16EF_MASK) {
                                 isrError = hrCRCERR; // USB CRC was incorrect
-                        } else if(err & (USB_ERRSTAT_DFN8 | USB_ERRSTAT_BTSERR)) {
+                        } else if(err & (_U1EIR_DFN8EF_MASK | _U1EIR_BTSEF_MASK)) {
                                 isrError = hrBABBLE; // Line noise/unexpected data
-                        } else if(err & USB_ERRSTAT_DMAERR) {
+                        } else if(err & _U1EIR_DMAEF_MASK) {
                                 isrError = hrDMA; // Data was truncated. Device sent too much.
-                        } else if(err & USB_ERRSTAT_BTOERR) {
+                        } else if(err & _U1EIR_BTOEF_MASK) {
                                 // Device didn't respond in time. It is most likely unplugged.
                                 USBTRACE("\r\n\r\n*** ISR sees error 0x10, Device unplugged? ***\r\n\r\n");
                                 isrError = UHS_HOST_ERROR_UNPLUGGED; //hrNAK;
 #if 0
                                 // Ignore these, for now.
-                        } else if(err & USB_ERRSTAT_CRC5EOF) {
+                        } else if(err & _U1EIR_CRC5EF_MASK) {
                                 isrError =
 #endif
                         }
 
                         // update to signal non-isr code what happened
                         if(isrError) newError = true;
-                        HW_CLEAR |= USB_ISTAT_ERROR;
+                        HW_CLEAR |= _U1IR_UERRIF_MASK;
                 }
         }
 
-        if((status & USB_ISTAT_TOKDNE)) { // Token done
+        if((status & _U1IR_TRNIF_MASK)) { // Token done
                 stat = USB0_STAT;
-                bdt_t *p_newToken = UHS_KINETIS_stat2bufferdescriptor(stat);
+                bdt_t *p_newToken = UHS_PIC32_stat2bufferdescriptor(stat);
                 b_newToken.desc = p_newToken->desc;
                 b_newToken.addr = p_newToken->addr;
-                uint32_t pid = UHS_KINETIS_BDT_PID(b_newToken.desc);
+                uint32_t pid = UHS_PIC32_BDT_PID(b_newToken.desc);
                 isrPid = pid;
                 // update to signal non-isr code what happened
                 switch(pid & 0x0f) {
@@ -366,7 +368,7 @@ void UHS_NI UHS_PIC32::ISRTask(void) {
 #if DEBUG_PRINTF_EXTRA_HUGE
                 uint8_t count = b_newToken.desc >> 16;
                 uint8_t *buf = (uint8_t *)b_newToken.addr;
-                HOST_DUBUG("ISR: TOKDNE. Pid: %lx", pid);
+                HOST_DUBUG("ISR: Token Done. Pid: %lx", pid);
                 HOST_DUBUG(", count: %x", count);
                 if(count) {
                         HOST_DUBUG(". Data: %lx", *(uint32_t *)(buf));
@@ -374,25 +376,25 @@ void UHS_NI UHS_PIC32::ISRTask(void) {
                 HOST_DUBUG("\r\n");
 
 #endif
-                HW_CLEAR |= USB_ISTAT_TOKDNE;
+                HW_CLEAR |= _U1IR_TRNIF_MASK;
                 // return;
         }
 
-        if(status & USB_ISTAT_USBRST) { // bus reset
-                HOST_DUBUG("ISR: reset\r\n");
-                condet = true; // ALWAYS
+        if(status & _U1IR_DETACHIF_MASK) { // device detach
+                HOST_DUBUG("ISR: detach\r\n");
+                condet = true; // ALWAYS. todo: verify, for detach it should rather be always false
                 busprobe();
-                HW_CLEAR |= USB_ISTAT_USBRST;
+                HW_CLEAR |= _U1IR_DETACHIF_MASK;
         }
 
-        if((status & USB_ISTAT_ATTACH)) { // device attached to the usb
+        if((status & _U1IR_ATTACHIF_MASK)) { // device attached to the bus
                 HOST_DUBUG("ISR: Attach\r\n");
                 condet = true;
                 busprobe();
-                HW_CLEAR |= USB_ISTAT_ATTACH;
+                HW_CLEAR |= _U1IR_ATTACHIF_MASK;
         }
 
-        if((status & USB_ISTAT_SOFTOK)) {
+        if((status & _U1IR_SOFIF_MASK)) {
                 // mark the time in microseconds + 1 millisecond.
                 // this is used to know how soon the _next_ SOF will be.
                 sof_mark = (long)(micros() + 1000);
@@ -401,31 +403,31 @@ void UHS_NI UHS_PIC32::ISRTask(void) {
                         counted = true;
                 }
                 sofevent = false;
-                HW_CLEAR |= USB_ISTAT_SOFTOK;
+                HW_CLEAR |= _U1IR_SOFIF_MASK;
         }
 
 #if 0
-        if((status & USB_ISTAT_SLEEP)) { // sleep
-                HOST_DUBUG("ISR: sleep\r\n");
+        if((status & _U1IR_IDLEIF_MASK)) { // idle condition detected
+                HOST_DUBUG("ISR: idle\r\n");
                 // serial_print("sleep\n");
-                HW_CLEAR |= USB_ISTAT_SLEEP;
+                HW_CLEAR |= _U1IR_IDLEIF_MASK;
         }
 
-        if((status & USB_ISTAT_RESUME)) { // resume
+        if((status & _U1IR_RESUMEIF_MASK)) { // resume
                 HOST_DUBUG("ISR: resume\r\n");
                 // serial_print("resume\n");
-                HW_CLEAR |= USB_ISTAT_RESUME;
+                HW_CLEAR |= _U1IR_RESUMEIF_MASK;
         }
 #endif
-        if((otg_status & USB_OTGISTAT_ONEMSEC)) { // 1 ms timer
+        if((otg_status & _U1OTGIR_T1MSECIF_MASK)) { // 1 ms timer
                 if(timer_countdown) {
                         timer_countdown--;
                         counted = true;
                 }
-                USB0_OTGISTAT = USB_OTGISTAT_ONEMSEC;
+                U1OTGIR = _U1OTGIR_T1MSECIF_MASK; //todo: make bit clear consistent with the rest
         }
 
-        USB0_ISTAT = HW_CLEAR; // ack all USB0_ISTAT flags here at the same time.
+        U1EIR = HW_CLEAR; // ack all interrupt flags here at the same time.
 
         __DSB();
         if(!timer_countdown && !sof_countdown && !counted && !usb_task_polling_disabled) {
@@ -438,7 +440,7 @@ void UHS_NI UHS_PIC32::ISRTask(void) {
 }
 
 /**
- * Setup UHS_EpInfo structure
+ * Setting device address-related data in the SIE
  *
  * @param addr USB device address
  * @param ep Endpoint
@@ -476,7 +478,7 @@ uint8_t UHS_NI UHS_PIC32::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep
         USBTRACE("\r\n");
 
         // address and low speed enable
-        USB0_ADDR = addr | ((p->lowspeed) ? USB_ADDR_LSEN : 0);
+        U1ADDR = addr | ((p->lowspeed) ? USB_ADDR_LSEN : 0);
 
         //Serial.print("\r\nMode: ");
         //Serial.println( mode, HEX);
@@ -484,21 +486,21 @@ uint8_t UHS_NI UHS_PIC32::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep
         //Serial.println(p->lowspeed, HEX);
 
         // Disable automatic retries for 1 NAK, Set hub for low-speed device
-        USB0_ENDPT0 = USB_ENDPT_EPRXEN | USB_ENDPT_EPTXEN | USB_ENDPT_EPHSHK |
-                ((nak_limit != 1U) ? 0 : USB_ENDPT_RETRYDIS) |
-                ((p->lowspeed) ? USB_ENDPT_HOSTWOHUB : 0);
+        U1EP0 = _U1EP0_EPRXEN_MASK | _U1EP0_EPTXEN_MASK | _U1EP0_EPHSHK_MASK |
+                ((nak_limit != 1U) ? 0 : _U1EP0_RETRYDIS_MASK) |
+                ((p->lowspeed) ? _U1EP0_LSPD_MASK : 0);
 
         // set USB0_SOFTHLD depending on the maxPktSize
         // NOTE: This should actually be set per-packet, however this works.
         uint8_t mps = (*ppep)->maxPktSize;
         if(mps < 9) {
-                USB0_SOFTHLD = (18 + 16) *2; // 18;
+                U1SOF = (18 + 16) *2; // 18;
         } else if(mps < 17) {
-                USB0_SOFTHLD = (26 + 16)*2; // 26;
+                U1SOF = (26 + 16)*2; // 26;
         } else if(mps < 33) {
-                USB0_SOFTHLD = (42 + 16)*2; // 42;
+                U1SOF = (42 + 16)*2; // 42;
         } else {
-                USB0_SOFTHLD = (74 + 16)*2; // 74;
+                U1SOF = (74 + 16)*2; // 74;
         }
 
         return 0;
@@ -547,19 +549,20 @@ uint8_t UHS_NI UHS_PIC32::dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_li
         // that should make 12 bits per uS, but... we need to add how long until launch happens
         // We also are not checking if we are transmitting at low speed.
         // TO-DO: Use a different multiplier if low speed.
-        uint32_t tft = ((USB0_SOFTHLD) / 12LU);
+        uint32_t tft = ((U1SOF) / 12LU);
         if((long)sof_mark <= (long)(micros() + tft)) {
                 // wait for SOF
                 noInterrupts();
                 sofevent = true;
-                __DSB();
+                //__DSB();
+                _sync();
                 interrupts();
                 while(sofevent && !condet);
         }
 
         if(!condet) {
                 last_mark = micros(); // hopefully now in sync with the SOF
-                USB0_TOKEN = token | ep; //  Dispatch to endpoint.
+                U1TOK = token | ep; //  Dispatch to endpoint.
                 //wait for transfer completion
                 while(/*(long)(millis() - timeout) < 0L &&*/ !condet) {
                         if(newError || newToken) {
@@ -638,7 +641,7 @@ uint8_t UHS_NI UHS_PIC32::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint1
 
                 bytes_tosend = (bytes_left >= maxpktsize) ? maxpktsize : bytes_left;
                 endpoint0_transmit(p_buffer, bytes_tosend); // setup internal buffer
-                rcode = dispatchPkt(UHS_KINETIS_TOKEN_DATA_OUT, ep, nak_limit); //dispatch packet to ep
+                rcode = dispatchPkt(UHS_PIC32_TOKEN_DATA_OUT, ep, nak_limit); //dispatch packet to ep
                 bytes_left -= bytes_tosend;
                 p_buffer += bytes_tosend;
         }//while( bytes_left...
@@ -684,7 +687,7 @@ uint8_t UHS_NI UHS_PIC32::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16
                 }
                 HOST_DUBUG("datalen: %lu \r\n", datalen);
                 endpoint0_receive(data_in_buf, datalen); // setup internal buffer
-                rcode = dispatchPkt(UHS_KINETIS_TOKEN_DATA_IN, ep, nak_limit); //dispatch packet
+                rcode = dispatchPkt(UHS_PIC32_TOKEN_DATA_IN, ep, nak_limit); //dispatch packet
 
                 pktsize = b_newToken.desc >> 16; // how many bytes we actually got
 
@@ -771,18 +774,18 @@ UHS_EpInfo * UHS_NI UHS_PIC32::ctrlReqOpen(uint8_t addr, uint8_t bmReqType, uint
 
                 datalen = 8;
                 //data = setup_command_buffer;
-                ep0_tx_data_toggle = UHS_KINETIS_DATA0; // setup always uses DATA0
+                ep0_tx_data_toggle = UHS_PIC32_DATA0; // setup always uses DATA0
                 endpoint0_transmit(&setup_pkt, datalen); // setup internal buffer
 
-                rcode = dispatchPkt(UHS_KINETIS_TOKEN_SETUP, 0, nak_limit); //dispatch packet
+                rcode = dispatchPkt(UHS_PIC32_TOKEN_SETUP, 0, nak_limit); //dispatch packet
 
                 if(!rcode) {
                         if(dataptr != NULL) {
                                 // data phase begins with DATA1 after setup
                                 if((bmReqType & 0x80) == 0x80) {
-                                        pep->bmRcvToggle = UHS_KINETIS_DATA1; //bmRCVTOG1;
+                                        pep->bmRcvToggle = UHS_PIC32_DATA1; //bmRCVTOG1;
                                 } else {
-                                        pep->bmSndToggle = UHS_KINETIS_DATA1; //bmSNDTOG1;
+                                        pep->bmSndToggle = UHS_PIC32_DATA1; //bmSNDTOG1;
                                 }
                         }
                 } else {
@@ -859,13 +862,13 @@ uint8_t UHS_NI UHS_PIC32::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint1
         if(!rcode) {
                 //               Serial.println("Dispatching");
                 if(((bmReqType & 0x80) == 0x80)) {
-                        ep0_tx_data_toggle = UHS_KINETIS_DATA1; // make sure we use DATA1 for status phase
+                        ep0_tx_data_toggle = UHS_PIC32_DATA1; // make sure we use DATA1 for status phase
                         endpoint0_transmit(NULL, 0); // setup internal buffer, 0 bytes
-                        rcode = dispatchPkt(UHS_KINETIS_TOKEN_DATA_OUT, 0, 0);
+                        rcode = dispatchPkt(UHS_PIC32_TOKEN_DATA_OUT, 0, 0);
                 } else {
-                        ep0_rx_data_toggle = UHS_KINETIS_DATA1; // make sure we use DATA1 for status phase
+                        ep0_rx_data_toggle = UHS_PIC32_DATA1; // make sure we use DATA1 for status phase
                         endpoint0_receive(NULL, 0); // setup internal buffer, 0 bytes
-                        rcode = dispatchPkt(UHS_KINETIS_TOKEN_DATA_IN, 0, 0);
+                        rcode = dispatchPkt(UHS_PIC32_TOKEN_DATA_IN, 0, 0);
                 }
                 //        } else {
                 //                Serial.println("Bypassed Dispatch");
@@ -881,72 +884,108 @@ uint8_t UHS_NI UHS_PIC32::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint1
  */
 int16_t UHS_NI UHS_PIC32::Init(int16_t mseconds) {
 
-        ISR_kinetis = this;
+        ISR_pic32 = this;
 
         // assume 48 MHz clock already running
         // SIM - enable clock
-        SIM_SCGC4 |= SIM_SCGC4_USBOTG;
+//        SIM_SCGC4 |= SIM_SCGC4_USBOTG;
 
         // reset USB module
-        USB0_USBTRC0 = USB_USBTRC_USBRESET;
-        while((USB0_USBTRC0 & USB_USBTRC_USBRESET) != 0); // wait for reset to end
-
-        // set desc table base addr
-        USB0_BDTPAGE1 = ((uint32_t)table) >> 8;
-        USB0_BDTPAGE2 = ((uint32_t)table) >> 16;
-        USB0_BDTPAGE3 = ((uint32_t)table) >> 24;
+        //USB0_USBTRC0 = USB_USBTRC_USBRESET;
+        //while((USB0_USBTRC0 & USB_USBTRC_USBRESET) != 0); // wait for reset to end
+        
+        U1IE = 0;       //disable all module interrupts
+        U1IR = 0xff;    //clear all interrupt flags
+        U1EIE = 0;
+        U1EIR = 0xff;
+        U1OTGIE = 0;
+        U1OTGIR = 0xff;
+        
+        U1CONbits.HOSTEN = 1;   //USB module on
+        U1CONbits.SOFEN = 0;    //SOF generation off
+        U1CONbits.PPBRST = 1;   //ping-pong buffers reset
+        U1CONbits.PPBRST = 0;
+        
+        
+        // set buffer desc table base addr
+        U1BDTP1 = ((uint32_t)table) >> 8;
+        U1BDTP2 = ((uint32_t)table) >> 16;
+        U1BDTP3 = ((uint32_t)table) >> 24;
 
         // initialize BDT toggle bits
-        USB0_CTL = USB_CTL_ODDRST;
+        //USB0_CTL = USB_CTL_ODDRST;
         ep0_tx_bdt_bank = 0;
         ep0_rx_bdt_bank = 0;
-        ep0_tx_data_toggle = UHS_KINETIS_BDT_DATA0;
-        ep0_rx_data_toggle = UHS_KINETIS_BDT_DATA0;
+        ep0_tx_data_toggle = UHS_PIC32_BDT_DATA0;
+        ep0_rx_data_toggle = UHS_PIC32_BDT_DATA0;
 
         // setup buffers
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, UHS_KINETIS_EVEN)].desc = UHS_KINETIS_BDT_DESC(UHS_KINETIS_EP0_SIZE, 0);
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, UHS_KINETIS_EVEN)].addr = ep0_rx0_buf;
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, UHS_KINETIS_ODD)].desc = UHS_KINETIS_BDT_DESC(UHS_KINETIS_EP0_SIZE, 0);
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, UHS_KINETIS_ODD)].addr = ep0_rx1_buf;
+        table[UHS_PIC32_index(0, UHS_PIC32_RX, UHS_PIC32_EVEN)].desc = UHS_PIC32_BDT_DESC(UHS_PIC32_EP0_SIZE, 0);
+        table[UHS_PIC32_index(0, UHS_PIC32_RX, UHS_PIC32_EVEN)].addr = ep0_rx0_buf;
+        table[UHS_PIC32_index(0, UHS_PIC32_RX, UHS_PIC32_ODD)].desc = UHS_PIC32_BDT_DESC(UHS_PIC32_EP0_SIZE, 0);
+        table[UHS_PIC32_index(0, UHS_PIC32_RX, UHS_PIC32_ODD)].addr = ep0_rx1_buf;
 
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, UHS_KINETIS_EVEN)].desc = UHS_KINETIS_BDT_DESC(UHS_KINETIS_EP0_SIZE, 0);
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, UHS_KINETIS_EVEN)].addr = ep0_tx0_buf;
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, UHS_KINETIS_ODD)].desc = UHS_KINETIS_BDT_DESC(UHS_KINETIS_EP0_SIZE, 0);
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, UHS_KINETIS_ODD)].addr = ep0_tx1_buf;
+        table[UHS_PIC32_index(0, UHS_PIC32_TX, UHS_PIC32_EVEN)].desc = UHS_PIC32_BDT_DESC(UHS_PIC32_EP0_SIZE, 0);
+        table[UHS_PIC32_index(0, UHS_PIC32_TX, UHS_PIC32_EVEN)].addr = ep0_tx0_buf;
+        table[UHS_PIC32_index(0, UHS_PIC32_TX, UHS_PIC32_ODD)].desc = UHS_PIC32_BDT_DESC(UHS_PIC32_EP0_SIZE, 0);
+        table[UHS_PIC32_index(0, UHS_PIC32_TX, UHS_PIC32_ODD)].addr = ep0_tx1_buf;
 
         // clear interrupts
-        USB0_ERRSTAT = 0xFF;
-        USB0_ISTAT = 0xFF;
-        USB0_OTGISTAT = 0xFF;
+        //USB0_ERRSTAT = 0xFF;
+        //USB0_ISTAT = 0xFF;
+        //USB0_OTGISTAT = 0xFF;
 
-        USB0_USBFRMADJUST = 0x00;
+        //USB0_USBFRMADJUST = 0x00; - absent in pic32
         // enable USB
-        USB0_USBTRC0 |= 0x40; // undocumented bit
-        USB0_USBCTRL = 0;
+        //USB0_USBTRC0 |= 0x40; // undocumented bit
+        //USB0_USBCTRL = 0;
 
-        USB0_OTGCTL = USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW; // enable D+ and D- pulldowns, disable D+ pullup
+        //USB0_OTGCTL = USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW; // enable D+ and D- pulldowns, disable D+ pullup
 
-        USB0_INTEN = USB_INTEN_ATTACHEN |
-                USB_INTEN_TOKDNEEN |
-                USB_INTEN_STALLEN |
-                USB_INTEN_ERROREN |
-                USB_INTEN_SOFTOKEN |
-                USB_INTEN_USBRSTEN |
-                USB_INTEN_SLEEPEN; // enable attach interrupt, token done, stall, error and sleep
-        USB0_OTGICR = USB_OTGICR_ONEMSECEN; // activate 1ms timer interrupt
-        USB0_ERREN = 0xFF; // enable all error interrupts
+        U1OTGCONbits.DPPULDWN = 1; 
+        U1OTGCONbits.DMPULDWN = 1;
+        
+//        USB0_INTEN = USB_INTEN_ATTACHEN |
+//                USB_INTEN_TOKDNEEN |
+//                USB_INTEN_STALLEN |
+//                USB_INTEN_ERROREN |
+//                USB_INTEN_SOFTOKEN |
+//                USB_INTEN_USBRSTEN |
+//                USB_INTEN_SLEEPEN; // enable attach interrupt, token done, stall, error and sleep
+
+        //enable interrupt sources
+        U1IEbits.ATTACHIE = 1;
+        U1IEbits.DETACHIE = 1;
+        U1IEbits.TRNIE = 1;
+        U1IEbits.STALLIE = 1;
+        U1IEbits.IDLEIE = 1;
+        U1IEbits.SOFIE = 1;
+        U1IEbits.UERRIE = 1;
+        
+        U1OTGIEbits.T1MSECIE = 1;   //enable 1 ms timer intterupt
+        U1EIE = 0xff;           //enable all USB error interrupts
+        
+        //USB0_OTGICR = USB_OTGICR_ONEMSECEN; // activate 1mU1IEbits.U1IEbits.s timer interrupt
+        //USB0_ERREN = 0xFF; // enable all error interrupts
 
         // switch isr for USB
-        NVIC_DISABLE_IRQ(IRQ_USBOTG);
-        NVIC_SET_PRIORITY(IRQ_USBOTG, 112);
-        _VectorsRam[IRQ_USBOTG + 16] = call_ISR_kinetis;
+        IFS1CLR = _IFS1_USBIF_MASK;
+        IPC7CLR = _IPC7_USBIP_MASK | _IPC7_USBIS_MASK;
+        IPC7SET = _IPC7_USBIP_MASK & (0x00000004 << _IPC7_USBIP_POSITION);
+
+        //NVIC_DISABLE_IRQ(IRQ_USBOTG);
+        //NVIC_SET_PRIORITY(IRQ_USBOTG, 112);
+        //pic32 calls interrupts differently _VectorsRam[IRQ_USBOTG + 16] = call_ISR_kinetis;
         __DSB();
-        NVIC_ENABLE_IRQ(IRQ_USBOTG);
+
+        IEC1SET = _IEC1_USBIE_MASK;
+        //NVIC_ENABLE_IRQ(IRQ_USBOTG);
 
         // set address to zero during enumeration
-        USB0_ADDR = 0;
+        //USB0_ADDR = 0;
+        U1ADDR = 0;
 
-        USB0_CTL = USB_CTL_HOSTMODEEN; // host mode enable
+        //USB0_CTL = USB_CTL_HOSTMODEEN; // host mode enable
         // USB0_CTL &= ~USB_CTL_USBENSOFEN; // disable SOF generation to avoid noise until we detect attach
 
         return 0;
@@ -968,8 +1007,8 @@ void UHS_NI UHS_PIC32::endpoint0_transmit(const void *data, uint32_t len) {
         last_address = (void *)data;
         last_tx = true;
 
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, ep0_tx_bdt_bank)].addr = (void *)data;
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, ep0_tx_bdt_bank)].desc = UHS_KINETIS_BDT_DESC(len, ep0_tx_data_toggle);
+        table[UHS_PIC32_index(0, UHS_PIC32_TX, ep0_tx_bdt_bank)].addr = (void *)data;
+        table[UHS_PIC32_index(0, UHS_PIC32_TX, ep0_tx_bdt_bank)].desc = UHS_PIC32_BDT_DESC(len, ep0_tx_data_toggle);
         ep0_tx_data_toggle ^= 1;
         ep0_tx_bdt_bank ^= 1;
 }
@@ -984,8 +1023,8 @@ void UHS_NI UHS_PIC32::endpoint0_receive(const void *data, uint32_t len) {
         last_address = (void *)data;
         last_tx = false;
 
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, ep0_rx_bdt_bank)].addr = (void *)data;
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, ep0_rx_bdt_bank)].desc = UHS_KINETIS_BDT_DESC(len, ep0_rx_data_toggle);
+        table[UHS_PIC32_index(0, UHS_PIC32_RX, ep0_rx_bdt_bank)].addr = (void *)data;
+        table[UHS_PIC32_index(0, UHS_PIC32_RX, ep0_rx_bdt_bank)].desc = UHS_PIC32_BDT_DESC(len, ep0_rx_data_toggle);
         ep0_rx_data_toggle ^= 1;
         ep0_rx_bdt_bank ^= 1;
 }

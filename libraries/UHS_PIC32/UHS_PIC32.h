@@ -51,10 +51,10 @@ e-mail   :  support@circuitsathome.com
 #define UHS_PIC32_BDT_DATA0   0x00
 #define UHS_PIC32_BDT_DTS     0x08
 #define UHS_PIC32_BDT_STALL   0x04
-#define UHS_PIC32_BDT_PID(n)  (((n) >> 2) & 15)
+#define UHS_PIC32_BDT_PID(n)  (((n) >> 2) & 0x0f)
 
-#define UHS_PIC32_BDT_DESC(count, data)       (UHS_KINETIS_BDT_OWN | UHS_KINETIS_BDT_DTS \
-				        | ((data) ? UHS_KINETIS_BDT_DATA1 : UHS_KINETIS_BDT_DATA0) \
+#define UHS_PIC32_BDT_DESC(count, data)       (UHS_PIC32_BDT_OWN | UHS_PIC32_BDT_DTS \
+				        | ((data) ? UHS_PIC32_BDT_DATA1 : UHS_PIC32_BDT_DATA0) \
 				        | ((count) << 16))
 
 #define UHS_PIC32_TX   1
