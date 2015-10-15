@@ -110,7 +110,7 @@ void setup() {
         laststate = 0xff;
         tested = false;
         notified = false;
-        printf"\r\nPlug in a storage device now...");
+        printf("\r\nPlug in a storage device now...");
         fflush(stdout);
 }
 
@@ -123,7 +123,7 @@ void loop() {
                         case UHS_USB_HOST_STATE_IDLE:
                                 break;
                         case UHS_USB_HOST_STATE_ERROR:
-                                printf("\r\nUSB state machine reached error state 0x%2.2x"), KINETIS_Usb.usb_error);
+                                printf("\r\nUSB state machine reached error state 0x%2.2x", KINETIS_Usb.usb_error);
                                 break;
                         case UHS_USB_HOST_STATE_RUNNING:
                                 if(hub_KINETIS.bPollEnable) {
@@ -158,7 +158,7 @@ void loop() {
                 }
                 if(tested) printf("\r\nDone, you may now unplug storage device...");
         }
-        
+
         if(!Storage_KINETIS.bPollEnable && tested) {
                            tested = false;
                            notified = false;

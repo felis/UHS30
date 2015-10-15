@@ -456,7 +456,7 @@ uint8_t UHS_NI MAX3421E_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, ui
                 }
                 pktsize = regRd(rRCVBC); //number of received bytes
                 MAX_HOST_DEBUG("Got %i bytes \r\n", pktsize);
-                 
+
                 if(pktsize > nbytes) {  //certain devices send more than asked
                         //MAX_HOST_DEBUG(">>>>>>>> Warning: wanted %i bytes but got %i.\r\n", nbytes, pktsize);
                         pktsize = nbytes;
@@ -793,6 +793,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
                         usb_task_state = UHS_USB_HOST_STATE_RUNNING;
                         break;
                 case UHS_USB_HOST_STATE_RUNNING:
+                        Poll_Others();
                         for(x = 0; (usb_task_state == UHS_USB_HOST_STATE_RUNNING) && (x < UHS_HOST_MAX_INTERFACE_DRIVERS); x++) {
                                 if(devConfig[x]) {
                                         if(devConfig[x]->bPollEnable) devConfig[x]->Poll();

@@ -3,7 +3,7 @@ Pre-release of USB Host Library version 3.0. No technical support offered at thi
 
 __This set of libraries is EXTERMELY ALPHA!__
 
-# Arduino version 1.6.1 OR BETTER ONLY!
+# Arduino version 1.6.5 OR BETTER ONLY!
 * This library set does all USB host operations in an interrupt. This means that calling the Task() method no longer does anything, unless you disable the interrupt mode in your sketch.
 * This library set provides interrupt safe heap for AVR and ARM based boards.<BR>
 * Circuitsathome USB Host Shield support (of course!)

@@ -1,6 +1,6 @@
 BOARD=teensy31
 F_CPU=96000000
-USB_TYPE=USB_DISABLED
+
 
 PORT = /dev/ttyACM0
 

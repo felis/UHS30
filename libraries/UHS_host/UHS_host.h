@@ -35,9 +35,21 @@ e-mail   :  support@circuitsathome.com
 #include "UHS_printhex.h"
 #include "UHS_message.h"
 
+// Load system components as required
 #if defined(LOAD_USB_HOST_SYSTEM) && !defined(USB_HOST_SYSTEM_LOADED)
 #include "UHS_util_INLINE.h"
 #include "UHS_host_INLINE.h"
-#endif
 
-#endif //_usb_h_
+// Add BT and optionally HID if directed to do so
+#if defined(LOAD_UHS_BT)
+#include "../UHS_BT/UHS_BT.h"
+#endif // BT and optionally HID loaded
+
+// Add HID
+#if defined(LOAD_UHS_HID)
+#include "../UHS_HID/UHS_HID.h"
+#endif // HID loaded
+
+#endif // System code loaded
+
+#endif // _UHS_host_h_
