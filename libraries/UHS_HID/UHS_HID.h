@@ -33,7 +33,6 @@ struct UHS_HID_interface {
         UHS_HID_DEVICE_base *driver
         uint16_t vid;
         uint16_t pid;
-        uint8_t klass;
         uint8_t subklass;
         uint8_t protocol;
         uint8_t bMaxPacketSize0;
