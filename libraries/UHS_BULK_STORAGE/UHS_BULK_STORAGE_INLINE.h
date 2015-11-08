@@ -377,9 +377,10 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
         }
         if(bMaxLUN >= MASS_MAX_SUPPORTED_LUN) bMaxLUN = MASS_MAX_SUPPORTED_LUN - 1;
         ErrorMessage<uint8_t > (PSTR("MaxLUN"), bMaxLUN);
-        if(!UHS_SLEEP_MS(10)) goto FailUnPlug; // Delay a bit for slow firmware. (again)
+        if(!UHS_SLEEP_MS(150)) goto FailUnPlug; // Delay a bit for slow firmware. (again)
 
         for(uint8_t lun = 0; lun <= bMaxLUN; lun++) {
+                if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
                 SCSI_Inquiry_Response response;
                 rcode = Inquiry(lun, sizeof (SCSI_Inquiry_Response), (uint8_t*) & response);
                 BS_HOST_DEBUG("Inquiry 0x%2.2x 0x%2.2x\r\n", sizeof (SCSI_Inquiry_Response), rcode);
@@ -427,40 +428,39 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
         }
 
         for(uint8_t lun = 0; lun <= bMaxLUN; lun++) {
-                if(!UHS_SLEEP_MS(1)) goto FailUnPlug;
-                if(LockMedia(lun, 1) == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug;
-                if(!UHS_SLEEP_MS(1)) goto FailUnPlug;
-                if(MediaCTL(lun, 1) == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug; // I actually have a USB stick that needs this!
-                if(!UHS_SLEEP_MS(1)) goto FailUnPlug;
+                if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
                 uint8_t tries = 0xf0;
                 while((rcode = TestUnitReady(lun))) {
-                        BS_HOST_DEBUG("\r\nTry %2.2x TestUnitReady %2.2x\r\n", tries, rcode);
+                        BS_HOST_DEBUG("\r\nTry %2.2x TestUnitReady %2.2x\r\n", tries - 0xf0, rcode);
                         if(rcode == 0x08) break; // break on no media, this is OK to do.
                         if(rcode == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug;
                         if(rcode == UHS_BULK_ERR_INVALID_CSW) goto Fail;
-                        // try to lock media and spin up
-                        if(tries < 14) {
-                                BS_HOST_DEBUG("Locking media...");
-                                if(LockMedia(lun, 1) == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug;
-                                BS_HOST_DEBUG("Locked\r\nSpin up...");
-                                if(MediaCTL(lun, 1) == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug; // I actually have a USB stick that needs this!
-                                BS_HOST_DEBUG("Spun-up\r\n");
-                        } else {
-                                if(!UHS_SLEEP_MS(2 * (tries + 1))) goto FailUnPlug;
-                        }
+                        if(rcode != UHS_BULK_ERR_MEDIA_CHANGED) goto Fail;
+                        if(!UHS_SLEEP_MS(2 * (tries + 1))) goto FailUnPlug;
                         tries++;
                         if(!tries) break;
                 }
+                if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
+                LockMedia(lun, 1);
+                if(rcode == 0x08) {
+                        if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
+                        if(MediaCTL(lun, 1) == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug; // I actually have a USB stick that needs this!
+                }
+                BS_HOST_DEBUG("\r\nTry %2.2x TestUnitReady %2.2x\r\n", tries - 0xf0, rcode);
                 if(!rcode) {
-                        //BS_HOST_DEBUG("Snooze...\r\n");
-                        if(!UHS_SLEEP_MS(1)) goto FailUnPlug;
+                        if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
                         BS_HOST_DEBUG("CheckLUN...\r\n");
+                        BS_HOST_DEBUG("%u\r\n", millis()/1000);
+                        // Stalls on ***some*** devices, ***WHY***?! Device SAID it is READY!!
                         LUNOk[lun] = CheckLUN(lun);
+                        BS_HOST_DEBUG("%u\r\n", millis()/1000);
                         if(!LUNOk[lun]) LUNOk[lun] = CheckLUN(lun);
+                        if(!UHS_SLEEP_MS(1)) goto FailUnPlug;
+                        BS_HOST_DEBUG("Checked LUN...\r\n");
+                } else {
+                        LUNOk[lun] = false;
                 }
         }
-
-        //CheckMedia();
 
         rcode = OnStart();
 
@@ -514,6 +514,7 @@ void UHS_NI UHS_Bulk_Storage::Release(void) {
         OnRelease();
         DriverDefaults();
         // pUsb->EnablePoll();
+
         return;
 }
 
@@ -530,7 +531,7 @@ bool UHS_NI UHS_Bulk_Storage::CheckLUN(uint8_t lun) {
 
         rcode = ReadCapacity10(lun, (uint8_t*)capacity.data);
         if(rcode) {
-                //BS_HOST_DEBUG(">>>>>>>>>>>>>>>>ReadCapacity returned %i\r\n", rcode);
+                BS_HOST_DEBUG(">>>>>>>>>>>>>>>>ReadCapacity returned %i\r\n", rcode);
                 return false;
         }
 #ifdef DEBUG_USB_HOST
@@ -598,6 +599,7 @@ void UHS_NI UHS_Bulk_Storage::CheckMedia(void) {
  */
 void UHS_NI UHS_Bulk_Storage::Poll(void) {
         if((long)(millis() - qNextPollTime) >= 0L) {
+
                 CheckMedia();
         }
 
@@ -812,6 +814,7 @@ void UHS_NI UHS_Bulk_Storage::Reset(void) {
         while(pUsb->ctrlReq(bAddress, UHS_BULK_bmREQ_OUT, UHS_BULK_REQ_BOMSR, 0, 0, bIface, 0, 0, NULL) == 0x01) {
                 if(!UHS_SLEEP_MS(6)) break;
         }
+
         if(!bAddress) return;
 
         UHS_SLEEP_MS(2500);
@@ -833,6 +836,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::ResetRecovery(void) {
                 if(UHS_SLEEP_MS(6)) {
                         bLastUsbError = ClearEpHalt(epDataInIndex);
                         if(UHS_SLEEP_MS(6)) {
+
                                 bLastUsbError = ClearEpHalt(epDataOutIndex);
                                 UHS_SLEEP_MS(6);
                         }
@@ -880,6 +884,7 @@ bool UHS_NI UHS_Bulk_Storage::IsValidCSW(UHS_BULK_CommandStatusWrapper *pcsw, UH
                 Notify(PSTR("CSW:Wrong tag\r\n"), 0x80);
                 ErrorMessage<uint32_t > (PSTR("dCSWTag"), pcsw->dCSWTag);
                 ErrorMessage<uint32_t > (PSTR("dCBWTag"), pcbw->dCBWTag);
+
                 return false;
         }
         return true;
@@ -1033,6 +1038,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::Transaction(UHS_BULK_CommandBlockWrapper *pcbw,
                                 Notify(PSTR("Invalid CSW\r\n"), 0x80);
                                 Reset();
                                 ResetRecovery();
+
                                 return UHS_BULK_ERR_INVALID_CSW;
                         }
                 }
