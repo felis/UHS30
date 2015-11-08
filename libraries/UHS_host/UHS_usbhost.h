@@ -352,6 +352,7 @@ public:
         virtual void Release(void) {
                 OnRelease();
                 DriverDefaults();
+                return;
         };
 
         /**

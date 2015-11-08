@@ -54,6 +54,11 @@ e-mail   :  support@circuitsathome.com
 #define UHS_PIN_READ(p) digitalRead(p)
 #endif
 
+#if defined( __PIC32MX__ )  //compiling with Microchip XC32 compiler
+#define interrupts() __builtin_enable_interrupts()
+#edfine noInterrupts() __builtin_disable_interrupts()
+#endif
+
 #ifndef __AVR__
 #ifndef __PGMSPACE_H_
 // This define should prevent reading the system pgmspace.h if included elsewhere
