@@ -512,18 +512,12 @@ Fail:
  * @return
  */
 //void UHS_NI UHS_Bulk_Storage::Release(void) {
-        // pUsb->DisablePoll();
+// pUsb->DisablePoll();
 //        OnRelease();
 //        DriverDefaults();
-        // pUsb->EnablePoll();
-<<<<<<< HEAD
-
-        return;
-}
-=======
+//        pUsb->EnablePoll();
 //        return;
 //}
->>>>>>> 322a04f8d6e73e352133a53a7a9df9f1a29d68d3
 
 /**
  * For driver use only.
