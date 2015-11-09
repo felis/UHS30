@@ -109,7 +109,21 @@ uint8_t UHS_NI UHS_Bulk_Storage::SCSITransaction6(SCSI_CDB6_t *cdb, uint16_t buf
         pUsb->DisablePoll();
         // promote buf_size to 32bits.
         UHS_BULK_CommandBlockWrapper cbw = UHS_BULK_CommandBlockWrapper(++dCBWTag, (uint32_t)buf_size, cdb, dir);
-        //SetCurLUN(cdb->LUN);
+
+#if 0
+        // Lets check the CBW here:
+        printf("\r\n");
+        printf("\r\n");
+        uint8_t *dump = (uint8_t*)(&cbw);
+
+        for(int i=0; i<(sizeof (UHS_BULK_CommandBlockWrapper)); i++) {
+                printf("%02.2x ", *dump);
+                dump++;
+        }
+        printf("\r\n");
+        printf("\r\n");
+#endif
+
         uint8_t v = (HandleSCSIError(Transaction(&cbw, buf_size, buf)));
         pUsb->EnablePoll();
         return v;
@@ -512,7 +526,7 @@ Fail:
  * @return
  */
 //void UHS_NI UHS_Bulk_Storage::Release(void) {
-// pUsb->DisablePoll();
+//        pUsb->DisablePoll();
 //        OnRelease();
 //        DriverDefaults();
 //        pUsb->EnablePoll();
@@ -689,7 +703,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::ModeSense6(uint8_t lun, uint8_t pc, uint8_t pag
         Notify(PSTR("\r\rModeSense\r\n"), 0x80);
         Notify(PSTR("------------\r\n"), 0x80);
 
-        SCSI_CDB6_t cdb = SCSI_CDB6_t(SCSI_CMD_TEST_UNIT_READY, lun, (uint32_t)((((pc << 6) | page) << 8) | subpage), len, 0);
+        SCSI_CDB6_t cdb = SCSI_CDB6_t(SCSI_CMD_MODE_SENSE_6, lun, (uint32_t)((((pc << 6) | page) << 8) | subpage), len, 0);
 
         return SCSITransaction6(&cdb, len, pbuf, (uint8_t)UHS_BULK_CMD_DIR_IN);
 }
