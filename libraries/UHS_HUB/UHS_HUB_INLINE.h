@@ -275,7 +275,7 @@ uint8_t UHS_NI UHS_USBHub::PortStatusChange(uint8_t port, UHS_HubEvent &evt) {
         return 0;
 }
 
-void UHS_NI PrintHubPortStatus(UHS_USBHub *hubptr, uint8_t addr, uint8_t port, bool print_changes) {
+void UHS_NI PrintHubPortStatus(UHS_USBHub *hubptr, NOTUSED(uint8_t addr), uint8_t port, bool print_changes) {
         uint8_t rcode = 0;
         UHS_HubEvent evt;
         hubptr->pUsb->DisablePoll();

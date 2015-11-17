@@ -54,7 +54,7 @@ int PCPartition::Start(storage_t *sto) {
                                 if (!st && buf[0x52] == 0x46 && buf[0x53] == 0x41 && buf[0x54] == 0x54) st = -1;
                                 if (!st) {
                                         for (int i = 0; i < 4; i++) {
-                                                part[i] = MBR->part[i]; // Wow! This acts like memcpy?!
+                                                part[i] = MBR->part[i];
                                                 if (part[i].type != 0x00) {
                                                         if (part[i].boot != 0x80 && part[i].boot != 0x00) st = -1;
                                                 }

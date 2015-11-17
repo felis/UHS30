@@ -219,18 +219,24 @@
 #define GCONST const
 #endif
 
-#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN
+#ifndef _WORD_ACCESS
+
+#if defined(__BYTE_ORDER)
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 #define _WORD_ACCESS	1	/* 0 or 1 */
+#else 
+#define _WORD_ACCESS    0
 #endif
 
-/* on most arduino, it's LE, 'cept a few... */
-#ifndef _WORD_ACCESS
-#if defined(__AVR__) || defined(__ARM__)
+#elif defined(__AVR__) || defined(__ARM__)
 #define _WORD_ACCESS	1	/* 0 or 1 */
 #else
 #define _WORD_ACCESS	0	/* 0 or 1 */
 #endif
+
 #endif
+
 
 /* Set 0 first and it is always compatible with all platforms. The _WORD_ACCESS
 /  option defines which access method is used to the word data on the FAT volume.

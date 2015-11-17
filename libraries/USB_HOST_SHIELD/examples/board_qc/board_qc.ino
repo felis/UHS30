@@ -40,6 +40,23 @@ USB_DEVICE_DESCRIPTOR buf;
 
 MAX3421E_HOST UHS_Usb;
 
+
+#if defined(ARDUINO_ARCH_PIC32)
+/*
+ * For printf() output with pic32 Arduino
+ */
+extern "C"
+{
+        void _mon_putc(char s) {
+                USB_HOST_SERIAL.write(s);
+        }
+        int _mon_getc() {
+                while(!USB_HOST_SERIAL.available());
+                return USB_HOST_SERIAL.read();                
+        }
+}
+#endif
+
 #if defined(__AVR__)
 extern "C" {
 
@@ -166,10 +183,11 @@ void setup() {
         Init_dyn_SWI();
 #endif
         SPI.begin();
-        pinMode(UHS_Usb.irq, INPUT);
-        UHS_PIN_WRITE(UHS_Usb.irq, HIGH);
-        pinMode(UHS_Usb.ss, OUTPUT);
-        UHS_PIN_WRITE(UHS_Usb.ss, HIGH);
+        
+        pinMode(UHS_Usb.irq_pin, INPUT);
+        UHS_PIN_WRITE(UHS_Usb.irq_pin, HIGH);
+        pinMode(UHS_Usb.ss_pin, OUTPUT);
+        UHS_PIN_WRITE(UHS_Usb.ss_pin, HIGH);
 
         printf_P(PSTR("\r\nCircuits At Home 2011"));
         printf_P(PSTR("\r\nUSB Host Shield Quality Control Routine"));

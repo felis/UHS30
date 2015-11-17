@@ -98,6 +98,52 @@
           <buildCommand>${MAKE} -f Makefile</buildCommand>
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
           <executablePath></executablePath>
+          <cTool>
+            <incDir>
+              <pElem>.</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/variants/mega</pElem>
+              <pElem>../libraries/RTClib</pElem>
+              <pElem>../libraries/UHS_host</pElem>
+              <pElem>../libraries/USB_HOST_SHIELD</pElem>
+              <pElem>../libraries/UHS_HUB</pElem>
+              <pElem>../libraries/UHS_BULK_STORAGE</pElem>
+              <pElem>../libraries/UHS_FS</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/utility</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI</pElem>
+            </incDir>
+            <preprocessorList>
+              <Elem>ARDUINO=10606</Elem>
+              <Elem>ARDUINO_ARCH_AVR</Elem>
+              <Elem>ARDUINO_AVR_MEGA2560</Elem>
+              <Elem>F_CPU=16000000L</Elem>
+              <Elem>USING_MAKEFILE=1</Elem>
+            </preprocessorList>
+          </cTool>
+          <ccTool>
+            <incDir>
+              <pElem>.</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/variants/mega</pElem>
+              <pElem>../libraries/RTClib</pElem>
+              <pElem>../libraries/UHS_host</pElem>
+              <pElem>../libraries/USB_HOST_SHIELD</pElem>
+              <pElem>../libraries/UHS_HUB</pElem>
+              <pElem>../libraries/UHS_BULK_STORAGE</pElem>
+              <pElem>../libraries/UHS_FS</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/utility</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI</pElem>
+            </incDir>
+            <preprocessorList>
+              <Elem>ARDUINO=10606</Elem>
+              <Elem>ARDUINO_ARCH_AVR</Elem>
+              <Elem>ARDUINO_AVR_MEGA2560</Elem>
+              <Elem>F_CPU=16000000L</Elem>
+              <Elem>USING_MAKEFILE=1</Elem>
+            </preprocessorList>
+          </ccTool>
         </makeTool>
       </makefileType>
       <item path="libraries/UHS_BULK_STORAGE/examples/UHS_KINETIS_FS_HOST/TEST_BULK_K/TEST_BULK_K.ino"

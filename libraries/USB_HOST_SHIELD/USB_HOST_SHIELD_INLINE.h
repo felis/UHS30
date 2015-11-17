@@ -17,6 +17,10 @@ e-mail   :  support@circuitsathome.com
 
 #if defined(USB_HOST_SHIELD_H) && !defined(USB_HOST_SHIELD_LOADED)
 #define USB_HOST_SHIELD_LOADED
+#if !defined(digitalPinToInterrupt)
+#error digitalPinToInterrupt not defined, complain to your board maintainer.
+#endif
+
 
 // uncomment to get 'printf' console debugging. NOT FOR UNO!
 //#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD
@@ -40,7 +44,7 @@ e-mail   :  support@circuitsathome.com
 
 // allow two slots. this makes the maximum allowed shield count TWO
 // for AVRs this is limited to pins 2 and 3 ONLY
-// for ARM based boards, one odd and one even pin number.
+// for all other boards, one odd and one even pin number is allowed.
 static MAX3421E_HOST *ISReven;
 static MAX3421E_HOST *ISRodd;
 
@@ -57,7 +61,7 @@ static void UHS_NI call_ISRodd(void) {
 /* write single byte into MAX3421e register */
 void UHS_NI MAX3421E_HOST::regWr(uint8_t reg, uint8_t data) {
         SPI.beginTransaction(MAX3421E_SPI_Settings);
-        UHS_PIN_WRITE(ss, LOW);
+        UHS_PIN_WRITE(ss_pin, LOW);
 #if USING_SPI4TEENSY3
         uint8_t c[2];
         c[0] = reg | 0x02;
@@ -67,7 +71,7 @@ void UHS_NI MAX3421E_HOST::regWr(uint8_t reg, uint8_t data) {
         SPI.transfer(reg | 0x02);
         SPI.transfer(data);
 #endif
-        UHS_PIN_WRITE(ss, HIGH);
+        UHS_PIN_WRITE(ss_pin, HIGH);
         SPI.endTransaction();
 }
 
@@ -77,7 +81,7 @@ void UHS_NI MAX3421E_HOST::regWr(uint8_t reg, uint8_t data) {
 /* returns a pointer to memory position after last written */
 uint8_t* UHS_NI MAX3421E_HOST::bytesWr(uint8_t reg, uint8_t nbytes, uint8_t* data_p) {
         SPI.beginTransaction(MAX3421E_SPI_Settings);
-        UHS_PIN_WRITE(ss, LOW);
+        UHS_PIN_WRITE(ss_pin, LOW);
 #if USING_SPI4TEENSY3
         spi4teensy3::send(reg | 0x02);
         spi4teensy3::send(data_p, nbytes);
@@ -90,7 +94,7 @@ uint8_t* UHS_NI MAX3421E_HOST::bytesWr(uint8_t reg, uint8_t nbytes, uint8_t* dat
                 data_p++; // advance data pointer
         }
 #endif
-        UHS_PIN_WRITE(ss, HIGH);
+        UHS_PIN_WRITE(ss_pin, HIGH);
         SPI.endTransaction();
         return (data_p);
 }
@@ -108,7 +112,7 @@ void UHS_NI MAX3421E_HOST::gpioWr(uint8_t data) {
 /* single host register read    */
 uint8_t UHS_NI MAX3421E_HOST::regRd(uint8_t reg) {
         SPI.beginTransaction(MAX3421E_SPI_Settings);
-        UHS_PIN_WRITE(ss, LOW);
+        UHS_PIN_WRITE(ss_pin, LOW);
 #if USING_SPI4TEENSY3
         spi4teensy3::send(reg);
         uint8_t rv = spi4teensy3::receive();
@@ -116,7 +120,7 @@ uint8_t UHS_NI MAX3421E_HOST::regRd(uint8_t reg) {
         SPI.transfer(reg);
         uint8_t rv = SPI.transfer(0);
 #endif
-        UHS_PIN_WRITE(ss, HIGH);
+        UHS_PIN_WRITE(ss_pin, HIGH);
         SPI.endTransaction();
         return (rv);
 }
@@ -125,7 +129,7 @@ uint8_t UHS_NI MAX3421E_HOST::regRd(uint8_t reg) {
 /* returns a pointer to a memory position after last read   */
 uint8_t* UHS_NI MAX3421E_HOST::bytesRd(uint8_t reg, uint8_t nbytes, uint8_t* data_p) {
         SPI.beginTransaction(MAX3421E_SPI_Settings);
-        UHS_PIN_WRITE(ss, LOW);
+        UHS_PIN_WRITE(ss_pin, LOW);
 #if USING_SPI4TEENSY3
         spi4teensy3::send(reg);
         spi4teensy3::receive(data_p, nbytes);
@@ -137,7 +141,7 @@ uint8_t* UHS_NI MAX3421E_HOST::bytesRd(uint8_t reg, uint8_t nbytes, uint8_t* dat
                 nbytes--;
         }
 #endif
-        UHS_PIN_WRITE(ss, HIGH);
+        UHS_PIN_WRITE(ss_pin, HIGH);
         SPI.endTransaction();
         return ( data_p);
 }
@@ -277,10 +281,10 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
 #else
         SPI.begin();
 #endif
-        pinMode(irq, INPUT);
-        UHS_PIN_WRITE(irq, HIGH);
-        pinMode(ss, OUTPUT);
-        UHS_PIN_WRITE(ss, HIGH);
+        pinMode(irq_pin, INPUT);
+        UHS_PIN_WRITE(irq_pin, HIGH);
+        pinMode(ss_pin, OUTPUT);
+        UHS_PIN_WRITE(ss_pin, HIGH);
 
 #ifdef USB_HOST_SHIELD_TIMING_PIN
         pinMode(USB_HOST_SHIELD_TIMING_PIN, OUTPUT);
@@ -291,7 +295,7 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         interrupts();
 
 #if USB_HOST_SHIELD_USE_ISR
-        int intr = digitalPinToInterrupt(irq);
+        int intr = digitalPinToInterrupt(irq_pin);
         if(intr == NOT_AN_INTERRUPT) return (-2);
         SPI.usingInterrupt(intr);
 #else
@@ -325,9 +329,9 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         busprobe(); //check if anything is connected
         islowspeed = (VBUS_changed() == 0);
 
-        // Clear any pending interrupts on the MAX3421e
-        //uint8_t pen = regRd(rHIRQ) & ICLRALLBITS;
-        //regWr(rHIRQ, pen);
+        // Note: UNO32 Interrupts can only be RISING, FALLING or CHANGE.
+        // This poses an interesting problem, since we want to use levels
+        // So, what to do for that?!?
 
         // GPX pin on. This is done here so that a change is detected if we have a switch connected.
         regWr(rPINCTL, (bmFDUPSPI | bmINTLEVEL));
@@ -337,26 +341,14 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
 
 #if USB_HOST_SHIELD_USE_ISR
         // Attach ISR to service IRQ from MAX3421e
-        // supports only pins 2 and 3 int0 and int1 for avr
         noInterrupts();
-#ifdef __AVR__
-        if(irq == 2) {
-                ISReven = this;
-                attachInterrupt(INT_FOR_PIN2, call_ISReven, LOW); // avr
-        } else if(irq == 3) {
+        if(irq_pin & 1) {
                 ISRodd = this;
-                attachInterrupt(INT_FOR_PIN3, call_ISRodd, LOW); // avr
-        }
-#else
-        // Everybody else should be able to use any pin
-        if(irq & 1) {
-                ISRodd = this;
-                attachInterrupt(irq, call_ISRodd, LOW);
+                attachInterrupt(digitalPinToInterrupt(irq_pin), call_ISRodd, IRQ_SENSE);
         } else {
                 ISReven = this;
-                attachInterrupt(irq, call_ISReven, LOW);
+                attachInterrupt(digitalPinToInterrupt(irq_pin), call_ISReven, IRQ_SENSE);
         }
-#endif
         interrupts();
 #endif
 
@@ -838,7 +830,7 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
         uint8_t tmpdata;
 
         counted = false;
-        if(!UHS_PIN_READ(irq)) {
+        if(!UHS_PIN_READ(irq_pin)) {
                 uint8_t HIRQALL = regRd(rHIRQ); //determine interrupt source
                 uint8_t HIRQ = HIRQALL & IRQ_CHECK_MASK;
                 uint8_t HIRQ_sendback = 0x00;

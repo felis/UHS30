@@ -91,7 +91,7 @@ extern "C" {
                 return y;
         }
 
-        uint8_t UHS_USB_BulkOnly_Commit(storage_t *sto) {
+        uint8_t UHS_USB_BulkOnly_Commit(NOTUSED(storage_t *sto)) {
                 uint8_t x = 0;
                 return x;
         }

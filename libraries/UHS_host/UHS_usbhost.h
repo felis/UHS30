@@ -116,37 +116,37 @@ public:
                 return (current_state == usb_task_state);
         };
 
-        virtual UHS_EpInfo * UHS_NI ctrlReqOpen(uint8_t addr, uint8_t bmReqType, uint8_t bRequest, uint8_t wValLo, uint8_t wValHi, uint16_t wInd, uint16_t total, uint8_t* dataptr) {
+        virtual UHS_EpInfo * UHS_NI ctrlReqOpen(NOTUSED(uint8_t addr), NOTUSED(uint8_t bmReqType), NOTUSED(uint8_t bRequest), NOTUSED(uint8_t wValLo), NOTUSED(uint8_t wValHi), NOTUSED(uint16_t wInd), NOTUSED(uint16_t total), NOTUSED(uint8_t* dataptr)) {
                 return NULL;
         };
 
-        virtual void UHS_NI vbusPower(VBUS_t state) {
+        virtual void UHS_NI vbusPower(NOTUSED(VBUS_t state)) {
         };
 
         virtual void UHS_NI Task(void) {
         };
 
-        virtual uint8_t UHS_NI SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t &nak_limit) {
+        virtual uint8_t UHS_NI SetAddress(NOTUSED(uint8_t addr), NOTUSED(uint8_t ep), NOTUSED(UHS_EpInfo **ppep), NOTUSED(uint16_t &nak_limit)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual uint8_t UHS_NI OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data) {
+        virtual uint8_t UHS_NI OutTransfer(NOTUSED(UHS_EpInfo *pep), NOTUSED(uint16_t nak_limit), NOTUSED(uint16_t nbytes), NOTUSED(uint8_t *data)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual uint8_t UHS_NI InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data) {
+        virtual uint8_t UHS_NI InTransfer(NOTUSED(UHS_EpInfo *pep), NOTUSED(uint16_t nak_limit), NOTUSED(uint16_t *nbytesptr), NOTUSED(uint8_t *data)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual uint8_t UHS_NI ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr) {
+        virtual uint8_t UHS_NI ctrlReqClose(NOTUSED(UHS_EpInfo *pep), NOTUSED(uint8_t bmReqType), NOTUSED(uint16_t left), NOTUSED(uint16_t nbytes), NOTUSED(uint8_t *dataptr)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual uint8_t UHS_NI ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t *dataptr) {
+        virtual uint8_t UHS_NI ctrlReqRead(NOTUSED(UHS_EpInfo *pep), NOTUSED(uint16_t *left), NOTUSED(uint16_t *read), NOTUSED(uint16_t nbytes), NOTUSED(uint8_t *dataptr)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual uint8_t UHS_NI dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit) {
+        virtual uint8_t UHS_NI dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uint8_t ep), NOTUSED(uint16_t nak_limit)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
@@ -157,7 +157,7 @@ public:
         virtual void UHS_NI doHostReset(void) {
         };
 
-        virtual int16_t UHS_NI Init(int16_t mseconds) {
+        virtual int16_t UHS_NI Init(NOTUSED(int16_t mseconds)) {
                 return -1;
         };
 
@@ -294,7 +294,7 @@ public:
          * @param ei
          * @return true if the interface is supported
          */
-        virtual bool OKtoEnumerate(ENUMERATION_INFO *ei) {
+        virtual bool OKtoEnumerate(NOTUSED(ENUMERATION_INFO *ei)) {
                 return false;
         };
 
@@ -304,7 +304,7 @@ public:
          * @param ei
          * @return zero on success
          */
-        virtual uint8_t SetInterface(ENUMERATION_INFO *ei) {
+        virtual uint8_t SetInterface(NOTUSED(ENUMERATION_INFO *ei)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
@@ -377,7 +377,7 @@ public:
          * This is only for a hub.
          * @param port
          */
-        virtual void ResetHubPort(uint8_t port) {
+        virtual void ResetHubPort(NOTUSED(uint8_t port)) {
                 return;
         };
 

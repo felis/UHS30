@@ -20,7 +20,6 @@ e-mail   :  support@circuitsathome.com
 
 
 #ifdef LOAD_USB_HOST_SHIELD
-
 #include "UHS_max3421e.h"
 #include <SPI.h>
 
@@ -67,30 +66,59 @@ e-mail   :  support@circuitsathome.com
 //
 
 #ifdef BOARD_BLACK_WIDDOW
-#define UHS_MAX3421E_SS 6
-#define UHS_MAX3421E_INT 3
+#define UHS_MAX3421E_SS_ 6
+#define UHS_MAX3421E_INT_ 3
 #elif defined(CORE_TEENSY) && (defined(__AVR_AT90USB646__) || defined(__AVR_AT90USB1286__))
 #if EXT_RAM
 // Teensy++ 2.0 with XMEM2
-#define UHS_MAX3421E_SS 20
-#define UHS_MAX3421E_INT 7
+#define UHS_MAX3421E_SS_ 20
+#define UHS_MAX3421E_INT_ 7
 #else
-#define UHS_MAX3421E_SS 9
-#define UHS_MAX3421E_INT 8
+#define UHS_MAX3421E_SS_ 9
+#define UHS_MAX3421E_INT_ 8
 #endif
 #define UHS_MAX3421E_SPD
 #elif defined(BOARD_MEGA_ADK)
-#define UHS_MAX3421E_SS 53
-#define UHS_MAX3421E_INT 54
+#define UHS_MAX3421E_SS_ 53
+#define UHS_MAX3421E_INT_ 54
 #elif defined(ARDUINO_AVR_BALANDUINO)
-#define UHS_MAX3421E_SS 20
-#define UHS_MAX3421E_INT 19
+#define UHS_MAX3421E_SS_ 20
+#define UHS_MAX3421E_INT_ 19
 #else
-#define UHS_MAX3421E_SS 10
-#define UHS_MAX3421E_INT 9
+#define UHS_MAX3421E_SS_ 10
+#define UHS_MAX3421E_INT_ 9
 #endif
 
 #else
+
+#if defined(ARDUINO_ARCH_PIC32)
+// PIC32 only allows edge interrupts, isn't that lovely?
+#define IRQ_IS_EDGE 1
+#ifndef digitalPinToInterrupt
+// great, this isn't implemented.
+#warning digitalPinToInterrupt is not defined, complain here https://github.com/chipKIT32/chipKIT-core/issues/114
+#if defined(ARDUINO_BOARD_UNO_)
+#define digitalPinToInterrupt(p) ((p) == 2 ? 1 : ((p) == 7 ? 2 : ((p) == 8 ? 3 : ((p) == 35 ? 4 : ((p) == 38 ? 0 : NOT_AN_INTERRUPT)))))
+#warning digitalPinToInterrupt is now defined until this is taken care of.
+#endif
+#endif
+#else
+#define IRQ_IS_EDGE 0
+#endif
+
+// SAMD uses an enum for this instead of a define. Isn't that just dandy?
+#if !defined(NOT_AN_INTERRUPT) && !defined(ARDUINO_ARCH_SAMD)
+#warning NOT_AN_INTERRUPT not defined, possible problems ahead.
+#warning If NOT_AN_INTERRUPT is an enum or something else, complain to UHS30 developers on github.
+#warning Otherwise complain to your board core developer/maintainer.
+#define NOT_AN_INTERRUPT -1
+#endif
+
+#if IRQ_IS_EDGE
+#define IRQ_SENSE FALLING
+#else
+#define IRQ_SENSE LOW
+#endif
 
 //
 // Interrupt defaults. Int0 or Int1
@@ -103,19 +131,17 @@ e-mail   :  support@circuitsathome.com
 
 #if EXT_RAM
 // Teensy++ 2.0 with XMEM2
-#define UHS_MAX3421E_SS 20
-#define UHS_MAX3421E_INT 7
+#define UHS_MAX3421E_SS_ 20
+#define UHS_MAX3421E_INT_ 7
 #else
-#define UHS_MAX3421E_SS 9
-#define UHS_MAX3421E_INT 8
+#define UHS_MAX3421E_SS_ 9
+#define UHS_MAX3421E_INT_ 8
 #endif
 
-#elif defined(BOARD_MEGA_ADK)
-#error "HELP! Please send us an email, I don't know the values for Int0 and Int1 on the MEGA ADK board!"
 #elif defined(ARDUINO_AVR_BALANDUINO)
 #error "ISR mode is currently not supported on the Balanduino. Please set USB_HOST_SHIELD_USE_ISR to 0."
 #else
-#define UHS_MAX3421E_SS 10
+#define UHS_MAX3421E_SS_ 10
 #ifdef __AVR__
 #if defined(__AVR_ATmega32U4__)
 #define INT_FOR_PIN2 1
@@ -125,17 +151,30 @@ e-mail   :  support@circuitsathome.com
 #define INT_FOR_PIN2 0
 #define INT_FOR_PIN3 1
 #endif
-#define UHS_MAX3421E_INT 3
+#define UHS_MAX3421E_INT_ 3
 #else
 // Non-avr
-#define UHS_MAX3421E_INT 9
+#if defined(ARDUINO_BOARD_UNO_) && defined(ARDUINO_ARCH_PIC32)
+// UNO32 External Interrupts:
+// Pin 38 (INT0), Pin 2 (INT1), Pin 7 (INT2), Pin 8 (INT3), Pin 35 (INT4)
+#define UHS_MAX3421E_INT_ 7
+#else
+#define UHS_MAX3421E_INT_ 9
 #endif
 #endif
-
+#endif
 
 #endif
 #if !defined(UHS_MAX3421E_SPD)
 #define UHS_MAX3421E_SPD 25000000
+#endif
+
+#ifndef UHS_MAX3421E_INT
+#define UHS_MAX3421E_INT UHS_MAX3421E_INT_
+#endif
+
+#ifndef UHS_MAX3421E_SS
+#define UHS_MAX3421E_SS UHS_MAX3421E_SS_
 #endif
 
 // NOTE: On the max3421e the irq enable and irq bits are in the same position.
@@ -170,8 +209,8 @@ public UHS_USB_HOST_BASE
 
 public:
         SPISettings MAX3421E_SPI_Settings;
-        uint8_t ss;
-        uint8_t irq;
+        uint8_t ss_pin;
+        uint8_t irq_pin;
         // Will use the defaults UHS_MAX3421E_SS, UHS_MAX3421E_INT and speed
 
         UHS_NI MAX3421E_HOST(void) {
@@ -180,8 +219,8 @@ public:
                 busevent = false;
                 sofevent = false;
                 condet = false;
-                ss = UHS_MAX3421E_SS;
-                irq = UHS_MAX3421E_INT;
+                ss_pin = UHS_MAX3421E_SS;
+                irq_pin = UHS_MAX3421E_INT;
                 MAX3421E_SPI_Settings = SPISettings(UHS_MAX3421E_SPD, MSBFIRST, SPI_MODE0);
                 hub_present = 0;
         };
@@ -194,8 +233,8 @@ public:
                 busevent = false;
                 sofevent = false;
                 condet = false;
-                ss = pss;
-                irq = pirq;
+                ss_pin = pss;
+                irq_pin = pirq;
                 MAX3421E_SPI_Settings = SPISettings(UHS_MAX3421E_SPD, MSBFIRST, SPI_MODE0);
                 hub_present = 0;
         };
@@ -208,8 +247,8 @@ public:
                 busevent = false;
                 sofevent = false;
                 condet = false;
-                ss = pss;
-                irq = pirq;
+                ss_pin = pss;
+                irq_pin = pirq;
                 MAX3421E_SPI_Settings = SPISettings(pspd, MSBFIRST, SPI_MODE0);
                 hub_present = 0;
         };
@@ -232,7 +271,7 @@ public:
                 regWr(rPINCTL, (bmFDUPSPI | bmINTLEVEL) | (uint8_t)(state));
         };
 
-        virtual void Task(void);
+        void UHS_NI Task(void);
 
         virtual uint8_t SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t &nak_limit);
         virtual uint8_t OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data);

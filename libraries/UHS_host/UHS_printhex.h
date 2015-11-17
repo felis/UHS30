@@ -66,16 +66,19 @@ void PrintHex2(Print *prn, T val) {
         prn->print((T)val, HEX);
 }
 
-template <class T> void D_PrintHex(T val, int lvl) {
 #ifdef DEBUG_USB_HOST
+template <class T> void D_PrintHex(T val, int lvl) {
         PrintHex<T > (val, lvl);
+#else
+template <class T> void D_PrintHex(NOTUSED(T val), NOTUSED(int lvl)) {
 #endif
 }
 
-template <class T>
-void D_PrintBin(T val, int lvl) {
 #ifdef DEBUG_USB_HOST
+template <class T> void D_PrintBin(T val, int lvl) {
         PrintBin<T > (val, lvl);
+#else
+template <class T> void D_PrintBin(NOTUSED(T val), NOTUSED(int lvl)) {
 #endif
 }
 

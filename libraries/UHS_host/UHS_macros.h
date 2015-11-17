@@ -22,6 +22,13 @@ e-mail   :  support@circuitsathome.com
 /*
  * Universal Arduino(tm) "IDE" fixups.
  */
+
+
+// Just in case...
+#ifndef SERIAL_PORT_MONITOR
+#define SERIAL_PORT_MONITOR Serial
+#endif
+
 #ifndef INT16_MIN
 #define INT16_MIN -32768
 #endif
@@ -54,7 +61,7 @@ e-mail   :  support@circuitsathome.com
 #define UHS_PIN_READ(p) digitalRead(p)
 #endif
 
-#if defined( __PIC32MX__ )  //compiling with Microchip XC32 compiler
+#if defined( __PIC32MX__ ) && !defined(interrupts) //compiling with Microchip XC32 compiler
 #define interrupts() __builtin_enable_interrupts()
 #edfine noInterrupts() __builtin_disable_interrupts()
 #endif
@@ -316,5 +323,6 @@ typedef uint32_t prog_uint32_t;
 
 #define VOID0 ((void)0)
 
+#define NOTUSED(...)  __VA_ARGS__ __attribute__((unused))
 #endif /* MACROS_H */
 

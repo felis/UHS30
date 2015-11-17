@@ -1,7 +1,7 @@
 /* Modified from newlib-2012.09 to support ISR safety. */
 
 #include <limits.h>
-#if defined(_NEWLIB_VERSION) && defined(__arm__)
+#if defined(_NEWLIB_VERSION)
 #include <Arduino.h>
 #include <malloc.h>
 #include <sys/lock.h>
