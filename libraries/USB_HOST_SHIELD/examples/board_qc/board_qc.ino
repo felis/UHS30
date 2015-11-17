@@ -10,6 +10,10 @@
 #undef false
 #endif
 
+//#if !defined(SERIAL_PORT_MONITOR)
+//#define SERIAL_PORT_MONITOR Serial
+//#endif
+
 #define LOAD_USB_HOST_SYSTEM
 #define LOAD_USB_HOST_SHIELD
 #define USB_HOST_SHIELD_USE_ISR 1
@@ -183,7 +187,6 @@ void setup() {
         Init_dyn_SWI();
 #endif
         SPI.begin();
-        
         pinMode(UHS_Usb.irq_pin, INPUT);
         UHS_PIN_WRITE(UHS_Usb.irq_pin, HIGH);
         pinMode(UHS_Usb.ss_pin, OUTPUT);
