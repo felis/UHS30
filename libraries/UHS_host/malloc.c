@@ -274,7 +274,7 @@ _free(void *p) {
 static
 void *
 _realloc(void *ptr, size_t len) {
-        struct __freelist *fp1, *fp2, *fp3, *ofp3;
+        struct __freelist *fp1=NULL, *fp2, *fp3, *ofp3;
         char *cp, *cp1;
         void *memp;
         size_t s, incr;
