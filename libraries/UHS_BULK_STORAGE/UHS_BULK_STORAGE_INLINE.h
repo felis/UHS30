@@ -19,7 +19,7 @@ e-mail   :  support@circuitsathome.com
 #define UHS_BULK_STORAGE_LOADED
 
 // uncomment to get 'printf' console debugging. NOT FOR UNO!
-#define DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE
+//#define DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE
 
 #if DEBUG_PRINTF_EXTRA_HUGE
 #ifdef DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE
@@ -1188,5 +1188,5 @@ void UHS_NI UHS_Bulk_Storage::PrintEndpointDescriptor(const USB_ENDPOINT_DESCRIP
 }
 
 #else
-#error "Never include USB_HOST_SHIELD_INLINE.h, include USB_HOST_SHIELD.h instead"
+#error "Never include UHS_BULK_STORAGE_INLINE.h, include UHS_BULK_STORAGE.h instead"
 #endif

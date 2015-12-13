@@ -66,6 +66,12 @@ e-mail   :  support@circuitsathome.com
 #edfine noInterrupts() __builtin_disable_interrupts()
 #endif
 
+#if !defined(ARDUINO_SAMD_ZERO)
+#define UHS_GET_DPI(x) digitalPinToInterrupt(x)
+#else
+#define UHS_GET_DPI(x) (x)
+#endif
+
 #ifndef __AVR__
 #ifndef __PGMSPACE_H_
 // This define should prevent reading the system pgmspace.h if included elsewhere

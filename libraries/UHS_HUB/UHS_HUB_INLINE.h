@@ -14,7 +14,6 @@ Circuits At Home, LTD
 Web      :  http://www.circuitsathome.com
 e-mail   :  support@circuitsathome.com
  */
-//#include "UHS_HUB.h"
 
 // uncomment to get 'printf' console debugging. NOT FOR UNO!
 // #define DEBUG_PRINTF_EXTRA_HUGE_USB_HUB
@@ -28,6 +27,10 @@ e-mail   :  support@circuitsathome.com
 #else
 #define HUB_DUBUG(...) VOID0
 #endif
+
+
+#if defined(LOAD_UHS_HUB) && defined(__UHS_HUB_H__) && !defined(UHS_HUB_LOADED)
+#define UHS_HUB_LOADED
 
 UHS_NI UHS_USBHub::UHS_USBHub(UHS_USB_HOST_BASE *p) {
         pUsb = p;
@@ -329,3 +332,6 @@ void UHS_NI PrintHubPortStatus(UHS_USBHub *hubptr, NOTUSED(uint8_t addr), uint8_
         hubptr->pUsb->EnablePoll();
 
 }
+#else
+#error "Never include UHS_HUB_INLINE.h, include UHS_host.h instead"
+#endif

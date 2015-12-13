@@ -17,6 +17,8 @@ e-mail   :  support@circuitsathome.com
 
 #if defined(USB_HOST_SHIELD_H) && !defined(USB_HOST_SHIELD_LOADED)
 #define USB_HOST_SHIELD_LOADED
+#include <Arduino.h>
+
 #if !defined(digitalPinToInterrupt)
 #error digitalPinToInterrupt not defined, complain to your board maintainer.
 #endif
@@ -33,11 +35,6 @@ e-mail   :  support@circuitsathome.com
 #endif
 #else
 #define MAX_HOST_DEBUG(...) VOID0
-#endif
-
-// Because Arduino&co screwed up, and does not have this in 1.0.6...
-#ifndef NOT_AN_INTERRUPT
-#define NOT_AN_INTERRUPT -1
 #endif
 
 #if USB_HOST_SHIELD_USE_ISR
@@ -344,10 +341,10 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         noInterrupts();
         if(irq_pin & 1) {
                 ISRodd = this;
-                attachInterrupt(digitalPinToInterrupt(irq_pin), call_ISRodd, IRQ_SENSE);
+                attachInterrupt(UHS_GET_DPI(irq_pin), call_ISRodd, IRQ_SENSE);
         } else {
                 ISReven = this;
-                attachInterrupt(digitalPinToInterrupt(irq_pin), call_ISReven, IRQ_SENSE);
+                attachInterrupt(UHS_GET_DPI(irq_pin), call_ISReven, IRQ_SENSE);
         }
         interrupts();
 #endif
@@ -894,5 +891,5 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
 
 
 #else
-#error "Never include USB_HOST_SHIELD_INLINE.h, include USB_HOST_SHIELD.h instead"
+#error "Never include USB_HOST_SHIELD_INLINE.h, include UHS_host.h instead"
 #endif

@@ -51,11 +51,15 @@
 // HSMCI_IRQn Multimedia Card Interface (HSMCI)
 // EMAC_IRQn Ethernet MAC (EMAC)
 // EMAC is not broken out on the official DUE, but is on clones.
-// However it seems like a good default to me.
-#define SWI_IRQ_NUM EMAC_IRQn
+// SPI0_IRQn Serial Peripheral Interface (SPI0)
+// SPI0_IRQn seems to be the best choice, as long as nobody uses an ISR based master
+#define SWI_IRQ_NUM SPI0_IRQn
+#elif defined(ARDUINO_SAMD_ZERO)
+// Just use sercom4's unused IRQ vector.
+#define SWI_IRQ_NUM I2S_IRQn
+//#define SWI_IRQ_NUM SERCOM4_IRQn
 #endif
 #endif
-
 
 #ifndef SWI_IRQ_NUM
 #error SWI_IRQ_NUM not defined (CMSIS)
@@ -88,8 +92,7 @@
 
 #ifndef SWI_IRQ_NUM
 #error SWI_IRQ_NUM not defined
-#endif
-
+#else
 /**
  * Use this class to extend your class, in order to provide
  * a C++ context callable SWI.
@@ -108,6 +111,13 @@ extern int exec_SWI(const dyn_SWI* klass);
 
 #include "SWI_INLINE.h"
 
+// IMPORTANT! Define this so that you do NOT end up with a NULL stub!
+#define SWI_NO_STUB
+#endif SWI_IRQ_NUM
 #endif /* __arm__ */
-#endif	/* DYN_SWI_H */
 
+// if no SWI for CPU (e.g. AVR) make a void stub.
+#ifndef SWI_NO_STUB
+#define Init_dyn_SWI() (void(0))
+#endif
+#endif	/* DYN_SWI_H */

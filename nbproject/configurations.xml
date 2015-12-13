@@ -17,6 +17,16 @@
             </df>
           </df>
         </df>
+        <df name="UHS_CDC_ACM">
+          <df name="examples">
+            <df name="USB_HOST_SHIELD">
+              <df name="acm_terminal">
+                <in>acm_terminal.ino</in>
+              </df>
+            </df>
+          </df>
+          <in>UHS_CDC_ACM_MULTIPLEX_INLINE.h</in>
+        </df>
         <df name="UHS_FS">
           <df name="examples">
             <df name="UHS_KINETIS_FS_HOST">
@@ -109,6 +119,8 @@
               <pElem>../libraries/UHS_HUB</pElem>
               <pElem>../libraries/UHS_BULK_STORAGE</pElem>
               <pElem>../libraries/UHS_FS</pElem>
+              <pElem>libraries/UHS_CDC</pElem>
+              <pElem>libraries/UHS_CDC_ACM</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/utility</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI</pElem>
@@ -132,6 +144,8 @@
               <pElem>../libraries/UHS_HUB</pElem>
               <pElem>../libraries/UHS_BULK_STORAGE</pElem>
               <pElem>../libraries/UHS_FS</pElem>
+              <pElem>libraries/UHS_CDC</pElem>
+              <pElem>libraries/UHS_CDC_ACM</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/utility</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI</pElem>
@@ -155,6 +169,16 @@
             ex="false"
             tool="1"
             flavor2="4">
+      </item>
+      <item path="libraries/UHS_CDC_ACM/UHS_CDC_ACM_MULTIPLEX_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_CDC_ACM/examples/USB_HOST_SHIELD/acm_terminal/acm_terminal.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="libraries/UHS_FS/FAT/FAT.cpp" ex="false" tool="1" flavor2="4">
       </item>

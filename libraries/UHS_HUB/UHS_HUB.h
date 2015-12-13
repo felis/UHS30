@@ -14,8 +14,8 @@ Circuits At Home, LTD
 Web      :  http://www.circuitsathome.com
 e-mail   :  support@circuitsathome.com
  */
-#if !defined(__UHS_USBHUB_H__)
-#define __UHS_USBHUB_H__
+#if !defined(__UHS_HUB_H__)
+#define __UHS_HUB_H__
 
 #include <UHS_host.h>
 
@@ -231,6 +231,7 @@ inline uint8_t UHS_USBHub::SetPortFeature(uint8_t fid, uint8_t port, uint8_t sel
 }
 
 void UHS_NI PrintHubPortStatus(UHS_USB_HOST_BASE *usbptr, uint8_t addr, uint8_t port, bool print_changes = false);
-
+#if defined(LOAD_UHS_HUB) && !defined(UHS_HUB_LOADED)
 #include "UHS_HUB_INLINE.h"
-#endif // __USBHUB_H__
+#endif
+#endif // __UHS_USBHUB_H__

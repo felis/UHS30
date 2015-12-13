@@ -8,7 +8,7 @@
  * There are no 'c' or 'cpp' files.
  *
  */
-
+#ifdef DYN_SWI_H
 #ifndef SWI_INLINE_H
 #define	SWI_INLINE_H
 
@@ -136,3 +136,6 @@ int exec_SWI(const dyn_SWI* klass) {
 
 #endif /* defined(__arm__) */
 #endif	/* SWI_INLINE_H */
+#else
+#error "Never include SWI_INLINE.h directly, include dyn_SWI.h instead"
+#endif

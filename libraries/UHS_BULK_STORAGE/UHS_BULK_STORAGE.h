@@ -206,7 +206,6 @@ public:
                 return bPollEnable;
         }
 
-//        void Release(void);
         void Poll(void);
 
         void DriverDefaults(void);

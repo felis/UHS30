@@ -4,6 +4,7 @@
 #define LOAD_USB_HOST_SYSTEM
 #define LOAD_UHS_KINETIS_FS_HOST
 #define LOAD_UHS_BULK_STORAGE
+#define LOAD_UHS_HUB
 
 // Uncomment to debug
 //#define ENABLE_UHS_DEBUGGING 1
@@ -25,11 +26,7 @@
 #include <Arduino.h>
 
 
-#include <dyn_SWI.h>
 #include <UHS_host.h>
-#include <UHS_KINETIS_FS_HOST.h>
-#include <UHS_HUB.h>
-#include <UHS_BULK_STORAGE.h>
 
 UHS_KINETIS_FS_HOST KINETIS_Usb;
 UHS_USBHub hub_KINETIS(&KINETIS_Usb);

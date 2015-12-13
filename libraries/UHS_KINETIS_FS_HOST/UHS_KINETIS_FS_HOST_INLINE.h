@@ -959,5 +959,5 @@ void UHS_NI UHS_KINETIS_FS_HOST::endpoint0_receive(const void *data, uint32_t le
 }
 
 #else
-#error "Never include UHS_KINETIS_FS_HOST_INLINE.h, include UHS_KINETIS_FS_HOST.h instead"
+#error "Never include UHS_KINETIS_FS_HOST_INLINE.h, include UHS_host.h instead"
 #endif

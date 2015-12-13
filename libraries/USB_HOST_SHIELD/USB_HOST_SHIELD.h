@@ -166,7 +166,11 @@ e-mail   :  support@circuitsathome.com
 
 #endif
 #if !defined(UHS_MAX3421E_SPD)
+#if !defined(ARDUINO_SAMD_ZERO)
 #define UHS_MAX3421E_SPD 25000000
+#else
+#define UHS_MAX3421E_SPD 10000000
+#endif
 #endif
 
 #ifndef UHS_MAX3421E_INT

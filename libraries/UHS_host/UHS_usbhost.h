@@ -273,7 +273,7 @@ public:
 
         UHS_USB_HOST_BASE *pUsb; // Parent USB host
         volatile uint8_t bNumEP; // total number of EP in this interface
-        volatile UHS_EpInfo epInfo[16]; // This is a stub, override in the driver header.
+        volatile UHS_EpInfo epInfo[16]; // This is a stub, override in the driver.
 
         volatile uint8_t bAddress; // address of the device
         volatile uint8_t bConfNum; // configuration number

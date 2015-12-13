@@ -2,6 +2,9 @@
 #define LOAD_USB_HOST_SHIELD
 #define LOAD_UHS_BULK_STORAGE
 #define _USE_MAX3421E_HOST 1
+#define LOAD_UHS_HUB
+#define USB_HOST_SHIELD_USE_ISR 1
+
 //#define ENABLE_UHS_DEBUGGING 1
 //#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define USB_HOST_SHIELD_USE_ISR 0
@@ -15,32 +18,7 @@
 #undef false
 #endif
 
-
-#ifndef USB_HOST_SHIELD_USE_ISR
-#if defined(__arm__) && defined(CORE_TEENSY)
-#include <dyn_SWI.h>
-#include <SWI_INLINE.h>
-#define USB_HOST_SHIELD_USE_ISR 1
-#endif
-#endif
-
-#ifndef USB_HOST_SHIELD_USE_ISR
-#if defined(__AVR__)
-#define USB_HOST_SHIELD_USE_ISR 1
-#else
-// Not yet working on Arduino ARM yet because of IRQ limitations.
-#define USB_HOST_SHIELD_USE_ISR 0
-#endif
-#endif
-
-
-#include <stdio.h>
-#include <Wire.h>
-#include <SPI.h>
 #include <UHS_host.h>
-#include <USB_HOST_SHIELD.h>
-#include <UHS_HUB.h>
-#include <UHS_BULK_STORAGE.h>
 
 MAX3421E_HOST MAX3421E_Usb;
 UHS_USBHub hub_MAX3421E(&MAX3421E_Usb);
@@ -89,7 +67,7 @@ void setup() {
         while(!Serial);
         Serial.begin(115200);
         //USB_HOST_SERIAL.begin(115200);
-        
+
 #if DEBUG_PRINTF_EXTRA_HUGE
         mystdout.put = my_putc;
         mystdout.get = NULL;
@@ -97,9 +75,7 @@ void setup() {
         mystdout.udata = 0;
         stdout = &mystdout;
 #endif
-#if defined(SWI_IRQ_NUM)
         Init_dyn_SWI();
-#endif
         while(MAX3421E_Usb.Init(1000) !=0);
         E_Notify(PSTR("\r\n\r\ngo!\r\n"), 0);
         laststate = 0xff;
@@ -110,6 +86,7 @@ void setup() {
 
 void loop() {
 #if !USB_HOST_SHIELD_USE_ISR
+        // This is broken
         MAX3421E_Usb.Task();
 #endif
         usbstate = MAX3421E_Usb.getUsbTaskState();
@@ -160,7 +137,7 @@ void loop() {
                 }
                 //if(tested) Storage_MAX3421E.bPollEnable = false;
         }
-        
+
         if(!Storage_MAX3421E.bPollEnable && tested) {
                            tested = false;
                            notified = false;
