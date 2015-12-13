@@ -8,28 +8,17 @@
 
 #define LOAD_USB_HOST_SYSTEM
 #define LOAD_UHS_KINETIS_FS_HOST
-#define ENABLE_UHS_DEBUGGING 1
-#define DEBUG_PRINTF_EXTRA_HUGE 1
 
 #define USB_HOST_SERIAL SERIAL_PORT_HARDWARE
 // SERIAL_PORT_MONITOR
 
 #include <stdio.h>
 
-#ifndef __AVR__
 #ifndef printf_P
 #define printf_P(...) printf(__VA_ARGS__)
 #endif
-#endif
 
-#if defined(__arm__)
-#include <dyn_SWI.h>
-#endif
-
-#include <Wire.h>
-#include <SPI.h>
 #include <UHS_host.h>
-#include <UHS_KINETIS_FS_HOST.h>
 
 uint8_t rcode;
 uint8_t usbstate;
@@ -38,38 +27,6 @@ USB_DEVICE_DESCRIPTOR buf;
 
 UHS_KINETIS_FS_HOST UHS_Usb;
 
-#if defined(__AVR__)
-extern "C" {
-
-        static FILE tty_stdio;
-        static FILE tty_stderr;
-
-        static int tty_stderr_putc(char c, FILE *t) {
-                USB_HOST_SERIAL.write(c);
-                return 0;
-        }
-
-        static int tty_stderr_flush(FILE *t) {
-                USB_HOST_SERIAL.flush();
-                return 0;
-        }
-
-        static int tty_std_putc(char c, FILE *t) {
-                USB_HOST_SERIAL.write(c);
-                return 0;
-        }
-
-        static int tty_std_getc(FILE *t) {
-                while(!USB_HOST_SERIAL.available());
-                return USB_HOST_SERIAL.read();
-        }
-
-        static int tty_std_flush(FILE *t) {
-                USB_HOST_SERIAL.flush();
-                return 0;
-        }
-}
-#else
 #if defined(CORE_TEENSY)
 extern "C" {
 
@@ -107,7 +64,6 @@ extern "C" {
         }
 }
 #endif // TEENSY_CORE
-#endif // AVR
 
 uint8_t retries;
 UHS_Device *p;
@@ -116,31 +72,8 @@ uint8_t dtp;
 void setup() {
         laststate = 0;
         USB_HOST_SERIAL.begin(115200);
-#if defined(__AVR__)
-        // Set up stdio/stderr
-        tty_stdio.put = tty_std_putc;
-        tty_stdio.get = tty_std_getc;
-        tty_stdio.flags = _FDEV_SETUP_RW;
-        tty_stdio.udata = 0;
 
-        tty_stderr.put = tty_stderr_putc;
-        tty_stderr.get = NULL;
-        tty_stderr.flags = _FDEV_SETUP_WRITE;
-        tty_stderr.udata = 0;
-
-        stdout = &tty_stdio;
-        stdin = &tty_stdio;
-        stderr = &tty_stderr;
-#endif
-
-#ifdef BOARD_MEGA_ADK
-        // For Mega ADK, which has a Max3421e on-board, set MAX_RESET to output mode, and then set it to HIGH
-        pinMode(55, OUTPUT);
-        UHS_PIN_WRITE(55, HIGH);
-#endif
-#if defined(SWI_IRQ_NUM)
         Init_dyn_SWI();
-#endif
         while(UHS_Usb.Init(1000) == -1);
         printf_P(PSTR("\r\n\r\n\r\n\r\nUSB HOST READY.\r\n"));
 

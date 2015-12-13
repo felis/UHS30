@@ -14,14 +14,7 @@
 #endif
 
 
-#include <dyn_SWI.h>
-
-
-#include <stdio.h>
 #include <UHS_host.h>
-#include <UHS_KINETIS_FS_HOST.h>
-//#include <UHS_HUB.h>
-#include <UHS_BULK_STORAGE.h>
 
 UHS_KINETIS_FS_HOST KINETIS_Usb;
 UHS_Bulk_Storage Storage_KINETIS(&KINETIS_Usb);

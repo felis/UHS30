@@ -13,21 +13,18 @@
 #undef false
 #endif
 
-#include <stdio.h>
-
-#define TESTdsize 512
-#define TESTcycles (1048576/TESTdsize)
-
-
 #ifndef printf_P
 #define printf_P(...) printf(__VA_ARGS__)
 #endif
 
-#include <dyn_SWI.h>
-
 #include <UHS_host.h>
-#include <UHS_KINETIS_FS_HOST.h>
+
 UHS_KINETIS_FS_HOST KINETIS_Usb;
+uint8_t current_state = 128;
+uint8_t last_state = 255;
+
+uint8_t d;
+
 
 #if defined(CORE_TEENSY)
 extern "C" {
@@ -76,9 +73,6 @@ void setup() {
         delay(10000);
         Serial1.println("Start.");
         Init_dyn_SWI();
-
-        // It locks around here! -Pedvide
-
         printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
         while(KINETIS_Usb.Init(1000) != 0);
         printf("\r\n\r\nUSB HOST READY.\r\n");
@@ -86,16 +80,7 @@ void setup() {
         pinMode(LED_BUILTIN, OUTPUT);
 }
 
-uint8_t current_state = 128;
-uint8_t last_state = 255;
-
-uint8_t d;
-
 void loop() {
-#if !USB_HOST_SHIELD_USE_ISR
-        KINETIS_Usb.Task();
-#endif
-
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 
         current_state = KINETIS_Usb.getUsbTaskState();
@@ -103,8 +88,6 @@ void loop() {
                 last_state = current_state;
                 printf("USB HOST state %2.2x\r\n", current_state);
         }
-
-
 
         if (Serial1.available() > 0) {
 
