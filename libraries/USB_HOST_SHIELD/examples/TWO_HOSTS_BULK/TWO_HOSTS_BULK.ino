@@ -1,8 +1,9 @@
 #define LOAD_USB_HOST_SYSTEM
 #define LOAD_USB_HOST_SHIELD
-#define LOAD_UHS_BULK_STORAGE
 #define _USE_MAX3421E_HOST 1
 #define USB_HOST_SHIELD_USE_ISR 1
+#define LOAD_UHS_HUB
+#define LOAD_UHS_BULK_STORAGE
 //#define ENABLE_UHS_DEBUGGING 1
 //#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define USB_HOST_SHIELD_USE_ISR 0
@@ -16,20 +17,7 @@
 #undef false
 #endif
 
-
-#if defined(__arm__)
-#include <dyn_SWI.h>
-#include <SWI_INLINE.h>
-#endif
-
-
-#include <stdio.h>
-#include <Wire.h>
-#include <SPI.h>
 #include <UHS_host.h>
-#include <USB_HOST_SHIELD.h>
-#include <UHS_HUB.h>
-#include <UHS_BULK_STORAGE.h>
 
 MAX3421E_HOST MAX3421E_Usb_A;
 UHS_USBHub hub_MAX3421E_A(&MAX3421E_Usb_A);
@@ -88,7 +76,7 @@ void setup() {
         while(!Serial);
         Serial.begin(115200);
         //USB_HOST_SERIAL.begin(115200);
-        
+
 #if DEBUG_PRINTF_EXTRA_HUGE
         mystdout.put = my_putc;
         mystdout.get = NULL;
@@ -96,9 +84,7 @@ void setup() {
         mystdout.udata = 0;
         stdout = &mystdout;
 #endif
-#if defined(SWI_IRQ_NUM)
         Init_dyn_SWI();
-#endif
         while(MAX3421E_Usb_A.Init(1000) !=0);
         while(MAX3421E_Usb_B.Init(1000) !=0);
         E_Notify(PSTR("\r\n\r\ngo!\r\n"), 0);
@@ -156,7 +142,7 @@ void loop() {
                         }
                 }
         }
-        
+
         if(!Storage_MAX3421E_A.bPollEnable && tested_A) {
                            tested_A = false;
                            notified_A = false;
@@ -213,7 +199,7 @@ void loop() {
                         }
                 }
         }
-        
+
         if(!Storage_MAX3421E_B.bPollEnable && tested_B) {
                            tested_B = false;
                            notified_B = false;

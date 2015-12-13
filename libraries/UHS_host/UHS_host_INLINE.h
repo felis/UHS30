@@ -813,7 +813,7 @@ uint8_t UHS_USB_HOST_BASE::eat(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, 
 uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint8_t bmReqType, uint8_t bRequest, uint8_t wValLo, uint8_t wValHi,
         uint16_t wInd, uint16_t total, uint16_t nbytes, uint8_t* dataptr) {
         //bool direction = bmReqType & 0x80; //request direction, IN or OUT
-        uint8_t rcode;
+        uint8_t rcode = 0;
 
         //        Serial.println("");
         UHS_EpInfo *pep = ctrlReqOpen(addr, bmReqType, bRequest, wValLo, wValHi, wInd, total, dataptr);

@@ -113,7 +113,7 @@ extern int exec_SWI(const dyn_SWI* klass);
 
 // IMPORTANT! Define this so that you do NOT end up with a NULL stub!
 #define SWI_NO_STUB
-#endif SWI_IRQ_NUM
+#endif /* SWI_IRQ_NUM */
 #endif /* __arm__ */
 
 // if no SWI for CPU (e.g. AVR) make a void stub.

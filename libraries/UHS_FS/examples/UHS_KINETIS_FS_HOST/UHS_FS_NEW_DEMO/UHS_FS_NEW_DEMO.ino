@@ -5,6 +5,7 @@
 #define LOAD_UHS_KINETIS_FS_HOST
 #define LOAD_UHS_BULK_STORAGE
 #define LOAD_RTCLIB
+#define LOAD_UHS_HUB
 #define LOAD_GENERIC_STORAGE
 
 // Uncomment to debug
@@ -83,17 +84,10 @@
 // Arduino.h, if not already included
 #include <Arduino.h>
 
-// RTClib needs this
-#include <Wire.h>
 
 // Load the wanted libraries here
-#include <dyn_SWI.h> // provides a software interrupt fo use to run code as a light thread
 #include <RTClib.h> // Clock functions
 #include <UHS_host.h> // UHS USB HOST base classes
-#include <UHS_KINETIS_FS_HOST.h> // Kinetis hardware driver
-#include <UHS_HUB.h> // HUB interface driver
-#include <UHS_BULK_STORAGE.h> // Bulk storage interface driver
-#include <UHS_FS.h> // File system driver
 
 UHS_KINETIS_FS_HOST KINETIS_Usb;
 UHS_USBHub hub_KINETIS(&KINETIS_Usb);
@@ -227,9 +221,6 @@ uint8_t current_state = 128;
 uint8_t last_state = 255;
 
 void loop() {
-#if !USB_HOST_SHIELD_USE_ISR
-        KINETIS_Usb.Task();
-#endif
 
 #if 0
         current_state = KINETIS_Usb.getUsbTaskState();
