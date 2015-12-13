@@ -61,7 +61,9 @@ e-mail   :  support@circuitsathome.com
 #include "../UHS_BULK_STORAGE/UHS_BULK_STORAGE.h"
 #endif
 
-
+#if defined(LOAD_GENERIC_STORAGE)
+#include "../UHS_FS/UHS_FS.h"
+#endif
 // Add BT and optionally HID if directed to do so
 #if defined(LOAD_UHS_BT)
 #include "../UHS_BT/UHS_BT.h"

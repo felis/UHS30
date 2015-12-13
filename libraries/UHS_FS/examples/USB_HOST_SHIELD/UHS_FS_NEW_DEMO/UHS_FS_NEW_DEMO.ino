@@ -14,6 +14,7 @@
 #define LOAD_GENERIC_STORAGE
 //#define UHS_MAX3421E_SPD 4000000
 #define _USE_MAX3421E_HOST 1
+//#define UHS_MAX3421E_SPD 4000000
 //#define USB_HOST_SHIELD_USE_ISR 0
 
 #include <Arduino.h>
@@ -23,10 +24,6 @@
 #ifdef false
 #undef false
 #endif
-
-#include <stdio.h>
-#include <Wire.h>
-#include <SPI.h>
 
 // This figures out how much of the demo we can use
 #ifdef __AVR__
@@ -75,6 +72,7 @@
 #define MAKE_BIG_DEMO 0
 #else
 #define MAKE_BIG_DEMO 1
+#define LOAD_UHS_HUB
 #endif
 
 
@@ -90,23 +88,6 @@
 #ifndef __AVR__
 #ifndef printf_P
 #define printf_P(...) printf(__VA_ARGS__)
-#endif
-#endif
-
-#ifndef USB_HOST_SHIELD_USE_ISR
-#if defined(__arm__) && defined(CORE_TEENSY)
-#include <dyn_SWI.h>
-#include <SWI_INLINE.h>
-#define USB_HOST_SHIELD_USE_ISR 1
-#endif
-#endif
-
-#ifndef USB_HOST_SHIELD_USE_ISR
-#if defined(__AVR__)
-#define USB_HOST_SHIELD_USE_ISR 1
-#else
-// Not yet working on Arduino ARM yet because of IRQ limitations.
-#define USB_HOST_SHIELD_USE_ISR 0
 #endif
 #endif
 
@@ -167,10 +148,6 @@
 
 #include <RTClib.h>
 #include <UHS_host.h>
-#include <USB_HOST_SHIELD.h>
-#include <UHS_HUB.h>
-#include <UHS_BULK_STORAGE.h>
-#include <UHS_FS.h>
 
 
 MAX3421E_HOST MAX3421E_Usb;
@@ -189,28 +166,34 @@ extern "C" {
         static FILE tty_stdio;
         static FILE tty_stderr;
 
-        static int tty_stderr_putc(char c, FILE *t) {
+        static int tty_stderr_putc(char c, NOTUSED(FILE *t)) __attribute__((unused));
+        static int tty_stderr_flush (NOTUSED(FILE *t)) __attribute__((unused));
+        static int tty_std_putc(char c, NOTUSED(FILE *t)) __attribute__((unused));
+        static int tty_std_getc(NOTUSED(FILE *t)) __attribute__((unused));
+        static int tty_std_flush(NOTUSED(FILE *t)) __attribute__((unused));
+
+        static int tty_stderr_putc(char c, NOTUSED(FILE *t)) {
                 USB_HOST_SERIAL.write(c);
                 return 0;
         }
 
-        static int tty_stderr_flush(FILE *t) {
+        static int tty_stderr_flush (NOTUSED(FILE *t)) {
                 USB_HOST_SERIAL.flush();
                 return 0;
         }
 
-        static int tty_std_putc(char c, FILE *t) {
-                Serial.write(c);
+        static int tty_std_putc(char c, NOTUSED(FILE *t)) {
+                USB_HOST_SERIAL.write(c);
                 return 0;
         }
 
-        static int tty_std_getc(FILE *t) {
-                while(!Serial.available());
-                return Serial.read();
+        static int tty_std_getc(NOTUSED(FILE *t)) {
+                while(!USB_HOST_SERIAL.available());
+                return USB_HOST_SERIAL.read();
         }
 
-        static int tty_std_flush(FILE *t) {
-                Serial.flush();
+        static int tty_std_flush(NOTUSED(FILE *t)) {
+                USB_HOST_SERIAL.flush();
                 return 0;
         }
 }

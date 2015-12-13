@@ -20,22 +20,13 @@
 
 #define USB_HOST_SERIAL SERIAL_PORT_MONITOR
 
-#include <stdio.h>
-
 #ifndef __AVR__
 #ifndef printf_P
 #define printf_P(...) printf(__VA_ARGS__)
 #endif
 #endif
 
-#if defined(__arm__)
-#include <dyn_SWI.h>
-#endif
-
-#include <Wire.h>
-#include <SPI.h>
 #include <UHS_host.h>
-#include <USB_HOST_SHIELD.h>
 
 uint8_t rcode;
 uint8_t usbstate;
@@ -56,7 +47,7 @@ extern "C"
         }
         int _mon_getc() {
                 while(!USB_HOST_SERIAL.available());
-                return USB_HOST_SERIAL.read();                
+                return USB_HOST_SERIAL.read();
         }
 }
 #endif
@@ -67,27 +58,33 @@ extern "C" {
         static FILE tty_stdio;
         static FILE tty_stderr;
 
-        static int tty_stderr_putc(char c, FILE *t) {
+        static int tty_stderr_putc(char c, NOTUSED(FILE *t)) __attribute__((unused));
+        static int tty_stderr_flush (NOTUSED(FILE *t)) __attribute__((unused));
+        static int tty_std_putc(char c, NOTUSED(FILE *t)) __attribute__((unused));
+        static int tty_std_getc(NOTUSED(FILE *t)) __attribute__((unused));
+        static int tty_std_flush(NOTUSED(FILE *t)) __attribute__((unused));
+
+        static int tty_stderr_putc(char c, NOTUSED(FILE *t)) {
                 USB_HOST_SERIAL.write(c);
                 return 0;
         }
 
-        static int tty_stderr_flush(FILE *t) {
+        static int tty_stderr_flush (NOTUSED(FILE *t)) {
                 USB_HOST_SERIAL.flush();
                 return 0;
         }
 
-        static int tty_std_putc(char c, FILE *t) {
+        static int tty_std_putc(char c, NOTUSED(FILE *t)) {
                 USB_HOST_SERIAL.write(c);
                 return 0;
         }
 
-        static int tty_std_getc(FILE *t) {
+        static int tty_std_getc(NOTUSED(FILE *t)) {
                 while(!USB_HOST_SERIAL.available());
                 return USB_HOST_SERIAL.read();
         }
 
-        static int tty_std_flush(FILE *t) {
+        static int tty_std_flush(NOTUSED(FILE *t)) {
                 USB_HOST_SERIAL.flush();
                 return 0;
         }
@@ -183,9 +180,7 @@ void setup() {
         pinMode(55, OUTPUT);
         UHS_PIN_WRITE(55, HIGH);
 #endif
-#if defined(SWI_IRQ_NUM)
         Init_dyn_SWI();
-#endif
         SPI.begin();
         pinMode(UHS_Usb.irq_pin, INPUT);
         UHS_PIN_WRITE(UHS_Usb.irq_pin, HIGH);
