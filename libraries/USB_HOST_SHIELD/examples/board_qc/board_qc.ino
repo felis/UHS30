@@ -25,7 +25,8 @@
 #define printf_P(...) printf(__VA_ARGS__)
 #endif
 #endif
-
+#include <Wire.h>
+#include <SPI.h>
 #include <UHS_host.h>
 
 uint8_t rcode;
