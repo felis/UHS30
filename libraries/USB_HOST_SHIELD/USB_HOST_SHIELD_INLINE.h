@@ -298,9 +298,8 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
 #else
         SPI.usingInterrupt(255);
 #endif
-        /* MAX3421E - full-duplex SPI, level interrupt, vbus off */
-        regWr(rPINCTL, (bmFDUPSPI | bmINTLEVEL | GPX_VBDET));
-
+        /* MAX3421E - full-duplex SPI, interrupt kind, vbus off */
+        regWr(rPINCTL, (bmFDUPSPI | bmIRQ_SENSE | GPX_VBDET));
         if(reset() == 0) { //OSCOKIRQ hasn't asserted in time
                 return ( -1);
         }
@@ -316,8 +315,8 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
 
         // Enable interrupts on the MAX3421e
         regWr(rHIEN, IRQ_CHECK_MASK);
-        // Enable interrupt pin on the MAX3421e
-        regWr(rCPUCTL, bmIE);
+        // Enable interrupt pin on the MAX3421e, set pulse width for edge
+        regWr(rCPUCTL, (bmIE | bmPUSLEWIDTH));
 
         /* check if device is connected */
         regWr(rHCTL, bmSAMPLEBUS); // sample USB bus
@@ -326,14 +325,11 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         busprobe(); //check if anything is connected
         islowspeed = (VBUS_changed() == 0);
 
-        // Note: UNO32 Interrupts can only be RISING, FALLING or CHANGE.
-        // This poses an interesting problem, since we want to use levels
-        // So, what to do for that?!?
-
         // GPX pin on. This is done here so that a change is detected if we have a switch connected.
-        regWr(rPINCTL, (bmFDUPSPI | bmINTLEVEL));
+        /* MAX3421E - full-duplex SPI, interrupt kind, vbus on */
+        regWr(rPINCTL, (bmFDUPSPI | bmIRQ_SENSE));
         regWr(rHIRQ, bmBUSEVENTIRQ); // see data sheet.
-        regWr(rHCTL, bmBUSRST); // issue bus reset
+        regWr(rHCTL, bmBUSRST); // issue bus reset to force generate yet another possible IRQ
 
 
 #if USB_HOST_SHIELD_USE_ISR

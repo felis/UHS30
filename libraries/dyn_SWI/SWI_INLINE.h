@@ -69,13 +69,13 @@ void softISR(void) {
         for(int i = 0; i < SWI_MAXIMUM_ALLOWED; i++) {
                 if(dyn_SWI_EXEC[i]) {
 #if defined(__DYN_SWI_DEBUG_LED__)
-                        digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
+                        digitalWrite(__DYN_SWI_DEBUG_LED__, HIGH);
 #endif
                         dyn_SWI_EXEC[i]->dyn_SWISR();
                         //dyn_SWI* klass = dyn_SWI_EXEC[i];
                         //klass->dyn_SWISR();
 #if defined(__DYN_SWI_DEBUG_LED__)
-                        digitalWrite(__DYN_SWI_DEBUG_LED__, HIGH);
+                        digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
 #endif
                 }
         }
@@ -105,7 +105,7 @@ static void Init_dyn_SWI(void) {
         NVIC_ENABLE_IRQ(SWI_IRQ_NUM);
 #if defined(__DYN_SWI_DEBUG_LED__)
         pinMode(__DYN_SWI_DEBUG_LED__, OUTPUT);
-        digitalWrite(__DYN_SWI_DEBUG_LED__, HIGH);
+        digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
 #endif
 }
 
