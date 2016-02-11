@@ -66,13 +66,6 @@ class UHS_HID_DEVICE_base {
         };
 };
 
-
-
-
-void UHS_HID_SetUSBInterface(UHS_USB_HOST_BASE *host, ENUMERATION_INFO *ei);
-void UHS_HID_ScanUninitialized(void);
-void UHS_HID_Poll(void);
-
 #if defined(LOAD_UHS_HID) && !defined(UHS_HID_LOADED)
 #include "UHS_HID_INLINE.h"
 #endif

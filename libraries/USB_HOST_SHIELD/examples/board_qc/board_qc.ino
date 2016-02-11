@@ -190,6 +190,12 @@ void setup() {
         printf_P(PSTR("\r\nCircuits At Home 2011"));
         printf_P(PSTR("\r\nUSB Host Shield Quality Control Routine"));
         /* SPI quick test - check revision register */
+        UHS_Usb.regWr(rPINCTL, (bmFDUPSPI | bmINTLEVEL | GPX_VBDET));
+        if(UHS_Usb.reset() == 0) {
+                printf_P(PSTR("Initial reset failed."));
+                halt55();
+        }
+
         printf_P(PSTR("\r\nReading REVISION register... Die revision "));
         fflush(stdout);
         //UHS_Usb.Init(1000);

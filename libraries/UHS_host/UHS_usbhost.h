@@ -61,6 +61,23 @@ e-mail   :  support@circuitsathome.com
 #define UHS_HOST_ERROR_NOT_IMPLEMENTED                  0xFE
 #define UHS_HOST_ERROR_TRANSFER_TIMEOUT                 0xFF
 
+// Very early prototypes
+#if defined(UHS_LOAD_BT)
+void UHS_BT_SetUSBInterface(UHS_USB_HOST_BASE *host, ENUMERATION_INFO *ei);
+void UHS_BT_ScanUninitialized(UHS_USB_HOST_BASE *host);
+void UHS_BT_Poll(UHS_USB_HOST_BASE *host);
+#endif
+#if defined(UHS_LOAD_HID)
+void UHS_HID_SetUSBInterface(UHS_USB_HOST_BASE *host, ENUMERATION_INFO *ei);
+void UHS_HID_ScanUninitialized(UHS_USB_HOST_BASE *host);
+void UHS_HID_Poll(UHS_USB_HOST_BASE *host);
+#endif
+#if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
+void UHS_CDC_ACM_SetUSBInterface(UHS_USB_HOST_BASE *host, ENUMERATION_INFO *ei);
+void UHS_CDC_ACM_ScanUninitialized(UHS_USB_HOST_BASE *host);
+void UHS_CDC_ACM_Poll(UHS_USB_HOST_BASE *host);
+#endif
+
 class UHS_USBInterface; // forward class declaration
 
 // enumerator to turn the VBUS on/off
@@ -177,10 +194,13 @@ public:
 
         inline void Poll_Others(void) {
 #if defined(UHS_LOAD_BT)
-                UHS_BT_Poll();
+                UHS_BT_Poll(this);
 #endif
 #if defined(UHS_LOAD_HID)
-                UHS_HID_Poll();
+                UHS_HID_Poll(this);
+#endif
+#if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
+                UHS_CDC_ACM_Poll(this);
 #endif
         }
 

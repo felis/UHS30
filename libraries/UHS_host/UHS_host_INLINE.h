@@ -452,7 +452,6 @@ again:
                         }
 #if defined(UHS_HID_LOADED)
                         // Now do HID
-
 #endif
                         }
         } else {
