@@ -114,33 +114,6 @@ e-mail   :  support@circuitsathome.com
 #define NOT_AN_INTERRUPT -1
 #endif
 
-#if IRQ_IS_EDGE
-// Note: UNO32 Interrupts can only be RISING, FALLING or CHANGE.
-// This poses an interesting problem, since we want to use a LOW level.
-// The MAX3421E provides for pulse width control for an IRQ.
-// We do need to watch the timing on this, as a second IRQ could cause
-// a missed IRQ, since we read the level of the line to check if the IRQ
-// is actually for this chip. The only other alternative is to add a capacitor
-// and an NPN transistor, and use two lines. We can try this first, though.
-// Worse case, we can ignore reading the pin for verification on UNO32.
-// Too bad there is no minimum low width setting.
-//
-//   Single    Clear     First  Second   Clear first      Clear last
-//   IRQ       Single    IRQ    IRQ      Second active    pending IRQ
-//      |      |         |      |        |                |
-//      V      V         V      V        V                V
-// _____        _________        _        _                _______
-//      |______|         |______| |______| |______________|
-//
-#define IRQ_SENSE FALLING
-#define bmPUSLEWIDTH PUSLEWIDTH1_3
-#define bmIRQ_SENSE (0)
-#else
-#define IRQ_SENSE LOW
-#define bmPUSLEWIDTH (0)
-#define bmIRQ_SENSE (bmINTLEVEL)
-#endif
-
 //
 // Interrupt defaults. Int0 or Int1
 //
@@ -211,9 +184,39 @@ e-mail   :  support@circuitsathome.com
 
 #if !USB_HOST_SHIELD_USE_ISR
 #define IRQ_CHECK_MASK (ENIBITSPOLLED & ICLRALLBITS)
+#define IRQ_IS_EDGE 0
 #else
 #define IRQ_CHECK_MASK (ENIBITSISR & ICLRALLBITS)
 #endif
+
+#if IRQ_IS_EDGE
+// Note: UNO32 Interrupts can only be RISING, FALLING or CHANGE.
+// This poses an interesting problem, since we want to use a LOW level.
+// The MAX3421E provides for pulse width control for an IRQ.
+// We do need to watch the timing on this, as a second IRQ could cause
+// a missed IRQ, since we read the level of the line to check if the IRQ
+// is actually for this chip. The only other alternative is to add a capacitor
+// and an NPN transistor, and use two lines. We can try this first, though.
+// Worse case, we can ignore reading the pin for verification on UNO32.
+// Too bad there is no minimum low width setting.
+//
+//   Single    Clear     First  Second   Clear first      Clear last
+//   IRQ       Single    IRQ    IRQ      Second active    pending IRQ
+//      |      |         |      |        |                |
+//      V      V         V      V        V                V
+// _____        _________        _        _                _______
+//      |______|         |______| |______| |______________|
+//
+#define IRQ_SENSE FALLING
+#define bmPULSEWIDTH PUSLEWIDTH1_3
+#define bmIRQ_SENSE 0
+#else
+#define IRQ_SENSE LOW
+#define bmPULSEWIDTH 0
+#define bmIRQ_SENSE bmINTLEVEL
+#endif
+
+
 
 class MAX3421E_HOST :
 public UHS_USB_HOST_BASE

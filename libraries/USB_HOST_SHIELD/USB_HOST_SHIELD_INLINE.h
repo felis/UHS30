@@ -316,7 +316,7 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         // Enable interrupts on the MAX3421e
         regWr(rHIEN, IRQ_CHECK_MASK);
         // Enable interrupt pin on the MAX3421e, set pulse width for edge
-        regWr(rCPUCTL, (bmIE | bmPUSLEWIDTH));
+        regWr(rCPUCTL, (bmIE | bmPULSEWIDTH));
 
         /* check if device is connected */
         regWr(rHCTL, bmSAMPLEBUS); // sample USB bus
@@ -344,7 +344,10 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         }
         interrupts();
 #endif
-
+        printf("\r\nrPINCTL 0x%2.2X\r\n", rPINCTL);
+        printf("rCPUCTL 0x%2.2X\r\n", rCPUCTL);
+        printf("rHIEN 0x%2.2X\r\n", rHIEN);
+        printf("irq_pin %i\r\n", irq_pin);
         return 0;
 }
 

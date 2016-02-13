@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <PCpartition/PCPartition.h>
+#include "PCPartition.h"
 #include <FAT/FatFS/src/ffconf.h>
 
 PCPartition::PCPartition() {
