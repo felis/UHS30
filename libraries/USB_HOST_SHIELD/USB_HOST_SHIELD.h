@@ -23,16 +23,14 @@ e-mail   :  support@circuitsathome.com
 #include "UHS_max3421e.h"
 #include <SPI.h>
 
-#if 0
 
 #if !defined(SPI_HAS_TRANSACTION)
 #error "Your SPI library installation is too old."
 #else
 #if !defined(SPI_ATOMIC_VERSION)
-#error "Your SPI library installation is too old."
+#warning "Your SPI library installation lacks 'SPI_ATOMIC_VERSION'. Please complaint to the maintainer."
 #elif SPI_ATOMIC_VERSION < 1
 #error "Your SPI library installation is too old."
-#endif
 #endif
 
 #endif
@@ -48,18 +46,20 @@ e-mail   :  support@circuitsathome.com
 #define XMEM_SOFT_SEI() VOID0
 #endif
 
-#if !defined(UHS_USB_USES_ISRS)
+#if !defined(USB_HOST_SHIELD_USE_ISR)
 #if defined(USE_MULTIPLE_APP_API)
-#define UHS_USB_USES_ISRS 0
+#define USB_HOST_SHIELD_USE_ISR 0
 #else
-#define UHS_USB_USES_ISRS 1
+#define USB_HOST_SHIELD_USE_ISR 1
 #endif
 #else
-#define UHS_USB_USES_ISRS 1
+#define USB_HOST_SHIELD_USE_ISR 1
 #endif
+
 
 
 #if !USB_HOST_SHIELD_USE_ISR
+#error NOISR Polled mode _NOT SUPPORTED YET_
 
 //
 // Polled defaults
@@ -90,9 +90,9 @@ e-mail   :  support@circuitsathome.com
 #endif
 
 #else
-
 #if defined(ARDUINO_ARCH_PIC32)
 // PIC32 only allows edge interrupts, isn't that lovely?
+#warning ARDUINO_ARCH_PIC32
 #define IRQ_IS_EDGE 1
 #ifndef digitalPinToInterrupt
 // great, this isn't implemented.
