@@ -160,7 +160,22 @@ uint8_t *data;
 uint8_t mounted = PFAT_VOLUMES;
 uint8_t wasmounted = 0;
 
-#if defined(__AVR__)
+#if defined(ARDUINO_ARCH_PIC32)
+/*
+ * For printf() output with pic32 Arduino
+ */
+extern "C"
+{
+        void _mon_putc(char s) {
+                USB_HOST_SERIAL.write(s);
+        }
+        int _mon_getc() {
+                while(!USB_HOST_SERIAL.available());
+                return USB_HOST_SERIAL.read();
+        }
+}
+
+#elif defined(__AVR__)
 extern "C" {
 
         static FILE tty_stdio;
@@ -197,15 +212,14 @@ extern "C" {
                 return 0;
         }
 }
-#else
-#if defined(CORE_TEENSY)
+#elif defined(CORE_TEENSY)
 extern "C" {
 
         int _write(int fd, const char *ptr, int len) {
                 int j;
                 for(j = 0; j < len; j++) {
                         if(fd == 1)
-                                Serial.write(*ptr++);
+                                USB_HOST_SERIAL.write(*ptr++);
                         else if(fd == 2)
                                 USB_HOST_SERIAL.write(*ptr++);
                 }
@@ -214,8 +228,8 @@ extern "C" {
 
         int _read(int fd, char *ptr, int len) {
                 if(len > 0 && fd == 0) {
-                        while(!Serial.available());
-                        *ptr = Serial.read();
+                        while(!USB_HOST_SERIAL.available());
+                        *ptr = USB_HOST_SERIAL.read();
                         return 1;
                 }
                 return 0;
@@ -234,8 +248,11 @@ extern "C" {
                 return (fd < 3) ? 1 : 0;
         }
 }
-#endif // TEENSY_CORE
-#endif // AVR
+#elif defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAM_DUE)
+// Nothing to do, stdout/stderr is on programming port
+#else
+#error no STDOUT
+#endif // defined(ARDUINO_ARCH_PIC32)
 
 #if MAKE_BIG_DEMO
 

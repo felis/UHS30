@@ -16,8 +16,7 @@
 
 #define LOAD_USB_HOST_SYSTEM
 #define LOAD_USB_HOST_SHIELD
-#define USB_HOST_SHIELD_USE_ISR 1
-
+#define _USE_MAX3421E_HOST 1
 #define USB_HOST_SERIAL SERIAL_PORT_MONITOR
 
 #ifndef __AVR__
@@ -25,8 +24,6 @@
 #define printf_P(...) printf(__VA_ARGS__)
 #endif
 #endif
-#include <Wire.h>
-#include <SPI.h>
 #include <UHS_host.h>
 
 uint8_t rcode;
@@ -51,9 +48,8 @@ extern "C"
                 return USB_HOST_SERIAL.read();
         }
 }
-#endif
 
-#if defined(__AVR__)
+#elif defined(__AVR__)
 extern "C" {
 
         static FILE tty_stdio;
@@ -90,8 +86,7 @@ extern "C" {
                 return 0;
         }
 }
-#else
-#if defined(CORE_TEENSY)
+#elif defined(CORE_TEENSY)
 extern "C" {
 
         int _write(int fd, const char *ptr, int len) {
@@ -127,8 +122,11 @@ extern "C" {
                 return (fd < 3) ? 1 : 0;
         }
 }
-#endif // TEENSY_CORE
-#endif // AVR
+#elif defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAM_DUE)
+// Nothing to do, stdout/stderr is on programming port
+#else
+#error no STDOUT
+#endif // defined(ARDUINO_ARCH_PIC32)
 
 uint8_t retries;
 UHS_Device *p;
@@ -183,6 +181,9 @@ void setup() {
 #endif
         Init_dyn_SWI();
         SPI.begin();
+        UHS_Usb.ss_pin = UHS_MAX3421E_SS;
+        UHS_Usb.irq_pin = UHS_MAX3421E_INT;
+        UHS_Usb.MAX3421E_SPI_Settings = SPISettings(UHS_MAX3421E_SPD, MSBFIRST, SPI_MODE0);
         pinMode(UHS_Usb.irq_pin, INPUT);
         UHS_PIN_WRITE(UHS_Usb.irq_pin, HIGH);
         pinMode(UHS_Usb.ss_pin, OUTPUT);

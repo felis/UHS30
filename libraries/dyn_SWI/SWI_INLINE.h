@@ -18,36 +18,31 @@
 
 
 
-#if defined(__arm__) || defined(__PIC32__)
+#if defined(__arm__) || defined(ARDUINO_ARCH_PIC32)
 
 static dyn_SWI* dyn_SWI_LIST[SWI_MAXIMUM_ALLOWED];
 static dyn_SWI* dyn_SWI_EXEC[SWI_MAXIMUM_ALLOWED];
 #if defined(__arm__)
-
-
 #if defined(__USE_CMSIS_VECTORS__)
-
 extern "C" {
         void (*_VectorsRam[VECTORTABLE_SIZE])(void)__attribute__((aligned(VECTORTABLE_ALIGNMENT)));
 }
 #else
-
 __attribute__((always_inline)) static inline void __DSB(void) {
         __asm__ volatile ("dsb");
 }
-
-#endif
-#else
+#endif // defined(__USE_CMSIS_VECTORS__)
+#else // defined(__arm__)
 #define __DSB() (void(0))
-#endif
+#endif // defined(__arm__)
 
 /**
  * Execute queued class ISR routines.
  */
-#if defined(__PIC32__)
+#if defined(ARDUINO_ARCH_PIC32)
 static p32_regset *ifs = ((p32_regset *)&IFS0) + (SWI_IRQ_NUM / 32); //interrupt flag register set
 static p32_regset *iec = ((p32_regset *)&IEC0) + (SWI_IRQ_NUM / 32); //interrupt enable control reg set
-static uint32_t swibit = 1 << (irq % 32);
+static uint32_t swibit = 1 << (SWI_IRQ_NUM % 32);
 void __attribute__((interrupt(),nomips16)) softISR(void) {
 #else
 void softISR(void) {
@@ -60,7 +55,7 @@ void softISR(void) {
 
         // Make a working copy, while clearing the queue.
         noInterrupts();
-#if defined(__PIC32__)
+#if defined(ARDUINO_ARCH_PIC32)
         ifs->clr = swibit;
 #endif
         for(int i = 0; i < SWI_MAXIMUM_ALLOWED; i++) {
@@ -80,10 +75,15 @@ void softISR(void) {
                         //dyn_SWI* klass = dyn_SWI_EXEC[i];
                         //klass->dyn_SWISR();
 #if defined(__DYN_SWI_DEBUG_LED__)
-                        digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
+//                        digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
 #endif
                 }
         }
+#if defined(ARDUINO_ARCH_PIC32)
+        noInterrupts();
+        ifs->clr = swibit;
+        interrupts();
+#endif
 }
 
 
@@ -103,7 +103,7 @@ static inline unsigned char __interruptsStatus(void) {
 #endif
 
 
-
+#if defined(__arm__)
 /**
  * Initialize the Dynamic (class) Software Interrupt
  */
@@ -156,10 +156,7 @@ int exec_SWI(const dyn_SWI* klass) {
         if(irestore) interrupts();
         return rc;
 }
-#elif defined(__PIC32__)
-static p32_regset *ifs = ((p32_regset *)&IFS0) + (SWI_IRQ_NUM / 32); //interrupt flag register set
-static p32_regset *iec = ((p32_regset *)&IEC0) + (SWI_IRQ_NUM / 32); //interrupt enable control reg set
-static uint32_t swibit = 1 << (irq % 32);
+#elif defined(ARDUINO_ARCH_PIC32)
 /**
  * Initialize the Dynamic (class) Software Interrupt
  */
@@ -167,11 +164,15 @@ static void Init_dyn_SWI(void) {
         uint32_t sreg = disableInterrupts();
 
         setIntVector(SWI_VECTOR, softISR);
-        setIntPriority(SWI_VECTOR, 7, 7); // Lowest priority, ever.
+        setIntPriority(SWI_VECTOR, 1, 1); // Lowest priority, ever.
         ifs->clr = swibit;
         iec->clr = swibit;
         iec->set = swibit;
         restoreInterrupts(sreg);
+#if defined(__DYN_SWI_DEBUG_LED__)
+        pinMode(__DYN_SWI_DEBUG_LED__, OUTPUT);
+        UHS_PIN_WRITE(__DYN_SWI_DEBUG_LED__, LOW);
+#endif
 }
 /**
  *

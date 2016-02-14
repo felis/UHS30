@@ -147,7 +147,7 @@ e-mail   :  support@circuitsathome.com
 #define UHS_MAX3421E_INT_ 3
 #else
 // Non-avr
-#if defined(ARDUINO_BOARD_UNO_) && defined(ARDUINO_ARCH_PIC32)
+#if defined(ARDUINO_ARCH_PIC32)
 // UNO32 External Interrupts:
 // Pin 38 (INT0), Pin 2 (INT1), Pin 7 (INT2), Pin 8 (INT3), Pin 35 (INT4)
 #define UHS_MAX3421E_INT_ 7
@@ -162,11 +162,7 @@ e-mail   :  support@circuitsathome.com
 #if defined(ARDUINO_SAMD_ZERO)
 #define UHS_MAX3421E_SPD 10000000
 #elif defined(ARDUINO_ARCH_PIC32)
-#if F_CPU <= 80
-#define UHS_MAX3421E_SPD (F_CPU / 4)
-#else
-#define UHS_MAX3421E_SPD 20000000
-#endif
+#define UHS_MAX3421E_SPD 18000000
 #else
 #define UHS_MAX3421E_SPD 25000000
 #endif
@@ -213,8 +209,13 @@ e-mail   :  support@circuitsathome.com
 //      |______|         |______| |______| |______________|
 //
 #define IRQ_SENSE FALLING
+#if defined(ARDUINO_ARCH_PIC32)
+#define bmPULSEWIDTH 0
+#define bmIRQ_SENSE bmINTLEVEL
+#else
 #define bmPULSEWIDTH PUSLEWIDTH1_3
 #define bmIRQ_SENSE 0
+#endif
 #else
 #define IRQ_SENSE LOW
 #define bmPULSEWIDTH 0

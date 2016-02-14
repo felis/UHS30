@@ -344,10 +344,10 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         }
         interrupts();
 #endif
-        printf("\r\nrPINCTL 0x%2.2X\r\n", rPINCTL);
-        printf("rCPUCTL 0x%2.2X\r\n", rCPUCTL);
-        printf("rHIEN 0x%2.2X\r\n", rHIEN);
-        printf("irq_pin %i\r\n", irq_pin);
+        //printf("\r\nrPINCTL 0x%2.2X\r\n", rPINCTL);
+        //printf("rCPUCTL 0x%2.2X\r\n", rCPUCTL);
+        //printf("rHIEN 0x%2.2X\r\n", rHIEN);
+        //printf("irq_pin %i\r\n", irq_pin);
         return 0;
 }
 

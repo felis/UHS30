@@ -9,9 +9,11 @@
 #define	DYN_SWI_H
 
 
-#if defined(__arm__) || (defined(__PIC32__) && defined(_PMP_ERROR_IRQ))
+#if defined(__arm__) || defined(ARDUINO_ARCH_PIC32)
 #include <Arduino.h>
-
+#if defined(ARDUINO_ARCH_PIC32)
+#include <p32xxxx.h>
+#endif
 #ifdef __cplusplus
 
 #if defined(true)
@@ -24,10 +26,17 @@
 
 #endif
 
-#if defined(__PIC32__)
+#if defined(ARDUINO_ARCH_PIC32)
 #ifndef SWI_IRQ_NUM
+#if defined(_PMP_ERROR_IRQ)
 #define SWI_IRQ_NUM _PMP_ERROR_IRQ
 #define SWI_VECTOR _PMP_VECTOR
+#elif defined(_SPI1_ERR_IRQ)
+#define SWI_IRQ_NUM _SPI1_ERR_IRQ
+#define SWI_VECTOR _SPI_1_VECTOR
+#else
+#error SWI_IRQ_NUM and SWI_VECTOR need a definition
+#endif
 #ifdef __cplusplus
 extern "C"
 {
