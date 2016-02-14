@@ -8,8 +8,8 @@
 #ifndef DYN_SWI_H
 #define	DYN_SWI_H
 
-#if defined(__arm__)
 
+#if defined(__arm__) || (defined(__PIC32__) && defined(_PMP_ERROR_IRQ))
 #include <Arduino.h>
 
 #ifdef __cplusplus
@@ -24,7 +24,18 @@
 
 #endif
 
-#if !defined(NVIC_NUM_INTERRUPTS)
+#if defined(__PIC32__)
+#ifndef SWI_IRQ_NUM
+#define SWI_IRQ_NUM _PMP_ERROR_IRQ
+#define SWI_VECTOR _PMP_VECTOR
+#ifdef __cplusplus
+extern "C"
+{
+void __attribute__((interrupt(),nomips16)) softISR(void);
+}
+#endif
+#endif
+#elif !defined(NVIC_NUM_INTERRUPTS)
 
 // Assume CMSIS
 #define __USE_CMSIS_VECTORS__
@@ -84,7 +95,7 @@
 #endif
 #endif
 
-#else // Not CMSIS or PJRC CORE_TEENSY
+#else // Not CMSIS or PJRC CORE_TEENSY or PIC32
 #error Do not know how to relocate IRQ vectors
 #endif
 #endif // SWI_IRQ_NUM

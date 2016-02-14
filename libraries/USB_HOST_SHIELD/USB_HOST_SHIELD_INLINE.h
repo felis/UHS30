@@ -278,8 +278,8 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
 #else
         SPI.begin();
 #endif
-        pinMode(irq_pin, INPUT);
-        UHS_PIN_WRITE(irq_pin, HIGH);
+        pinMode(irq_pin, INPUT_PULLUP);
+        //UHS_PIN_WRITE(irq_pin, HIGH);
         pinMode(ss_pin, OUTPUT);
         UHS_PIN_WRITE(ss_pin, HIGH);
 

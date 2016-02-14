@@ -92,15 +92,14 @@ e-mail   :  support@circuitsathome.com
 #else
 #if defined(ARDUINO_ARCH_PIC32)
 // PIC32 only allows edge interrupts, isn't that lovely?
-#warning ARDUINO_ARCH_PIC32
 #define IRQ_IS_EDGE 1
 #ifndef digitalPinToInterrupt
 // great, this isn't implemented.
 #warning digitalPinToInterrupt is not defined, complain here https://github.com/chipKIT32/chipKIT-core/issues/114
-#if defined(ARDUINO_BOARD_UNO_)
+//#if defined(ARDUINO_BOARD_UNO_)
 #define digitalPinToInterrupt(p) ((p) == 2 ? 1 : ((p) == 7 ? 2 : ((p) == 8 ? 3 : ((p) == 35 ? 4 : ((p) == 38 ? 0 : NOT_AN_INTERRUPT)))))
 #warning digitalPinToInterrupt is now defined until this is taken care of.
-#endif
+//#endif
 #endif
 #else
 #define IRQ_IS_EDGE 0
@@ -157,13 +156,19 @@ e-mail   :  support@circuitsathome.com
 #endif
 #endif
 #endif
-
 #endif
+
 #if !defined(UHS_MAX3421E_SPD)
-#if !defined(ARDUINO_SAMD_ZERO)
-#define UHS_MAX3421E_SPD 25000000
-#else
+#if defined(ARDUINO_SAMD_ZERO)
 #define UHS_MAX3421E_SPD 10000000
+#elif defined(ARDUINO_ARCH_PIC32)
+#if F_CPU <= 80
+#define UHS_MAX3421E_SPD (F_CPU / 4)
+#else
+#define UHS_MAX3421E_SPD 20000000
+#endif
+#else
+#define UHS_MAX3421E_SPD 25000000
 #endif
 #endif
 

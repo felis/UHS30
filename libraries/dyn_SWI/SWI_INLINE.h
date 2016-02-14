@@ -12,11 +12,18 @@
 #ifndef SWI_INLINE_H
 #define	SWI_INLINE_H
 
-#if defined(__arm__)
-
 #ifndef SWI_MAXIMUM_ALLOWED
 #define SWI_MAXIMUM_ALLOWED 4
 #endif
+
+
+
+#if defined(__arm__) || defined(__PIC32__)
+
+static dyn_SWI* dyn_SWI_LIST[SWI_MAXIMUM_ALLOWED];
+static dyn_SWI* dyn_SWI_EXEC[SWI_MAXIMUM_ALLOWED];
+#if defined(__arm__)
+
 
 #if defined(__USE_CMSIS_VECTORS__)
 
@@ -30,26 +37,21 @@ __attribute__((always_inline)) static inline void __DSB(void) {
 }
 
 #endif
-
-#ifndef interruptsStatus
-#define interruptsStatus() __interruptsStatus()
-static inline unsigned char __interruptsStatus(void) __attribute__((always_inline, unused));
-
-static inline unsigned char __interruptsStatus(void) {
-        unsigned int primask;
-        asm volatile ("mrs %0, primask" : "=r" (primask));
-        if(primask) return 0;
-        return 1;
-}
+#else
+#define __DSB() (void(0))
 #endif
-
-static dyn_SWI* dyn_SWI_LIST[SWI_MAXIMUM_ALLOWED];
-static dyn_SWI* dyn_SWI_EXEC[SWI_MAXIMUM_ALLOWED];
 
 /**
  * Execute queued class ISR routines.
  */
+#if defined(__PIC32__)
+static p32_regset *ifs = ((p32_regset *)&IFS0) + (SWI_IRQ_NUM / 32); //interrupt flag register set
+static p32_regset *iec = ((p32_regset *)&IEC0) + (SWI_IRQ_NUM / 32); //interrupt enable control reg set
+static uint32_t swibit = 1 << (irq % 32);
+void __attribute__((interrupt(),nomips16)) softISR(void) {
+#else
 void softISR(void) {
+#endif
 
         //
         // TO-DO: Perhaps limit to 8, and inline this?
@@ -58,6 +60,9 @@ void softISR(void) {
 
         // Make a working copy, while clearing the queue.
         noInterrupts();
+#if defined(__PIC32__)
+        ifs->clr = swibit;
+#endif
         for(int i = 0; i < SWI_MAXIMUM_ALLOWED; i++) {
                 dyn_SWI_EXEC[i] = dyn_SWI_LIST[i];
                 dyn_SWI_LIST[i] = NULL;
@@ -80,6 +85,24 @@ void softISR(void) {
                 }
         }
 }
+
+
+#endif
+
+
+#ifndef interruptsStatus
+#define interruptsStatus() __interruptsStatus()
+static inline unsigned char __interruptsStatus(void) __attribute__((always_inline, unused));
+
+static inline unsigned char __interruptsStatus(void) {
+        unsigned int primask;
+        asm volatile ("mrs %0, primask" : "=r" (primask));
+        if(primask) return 0;
+        return 1;
+}
+#endif
+
+
 
 /**
  * Initialize the Dynamic (class) Software Interrupt
@@ -131,6 +154,42 @@ int exec_SWI(const dyn_SWI* klass) {
         }
         // Restore interrupts, if they were on.
         if(irestore) interrupts();
+        return rc;
+}
+#elif defined(__PIC32__)
+static p32_regset *ifs = ((p32_regset *)&IFS0) + (SWI_IRQ_NUM / 32); //interrupt flag register set
+static p32_regset *iec = ((p32_regset *)&IEC0) + (SWI_IRQ_NUM / 32); //interrupt enable control reg set
+static uint32_t swibit = 1 << (irq % 32);
+/**
+ * Initialize the Dynamic (class) Software Interrupt
+ */
+static void Init_dyn_SWI(void) {
+        uint32_t sreg = disableInterrupts();
+
+        setIntVector(SWI_VECTOR, softISR);
+        setIntPriority(SWI_VECTOR, 7, 7); // Lowest priority, ever.
+        ifs->clr = swibit;
+        iec->clr = swibit;
+        iec->set = swibit;
+        restoreInterrupts(sreg);
+}
+/**
+ *
+ * @param klass class that extends dyn_SWI
+ * @return 0 on queue full, else returns queue position (ones based)
+ */
+int exec_SWI(const dyn_SWI* klass) {
+        int rc = 0;
+        uint32_t sreg = disableInterrupts();
+        for(int i = 0; i < SWI_MAXIMUM_ALLOWED; i++) {
+                if(!dyn_SWI_LIST[i]) {
+                        rc = 1 + i; // Success!
+                        dyn_SWI_LIST[i] = (dyn_SWI*)klass;
+                        if(!(ifs->reg & swibit)) ifs->set = swibit;;
+                        break;
+                }
+        }
+        restoreInterrupts(sreg);
         return rc;
 }
 
