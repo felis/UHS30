@@ -5,7 +5,7 @@ __This set of libraries is EXTERMELY ALPHA!__
 
 # Arduino version 1.6.7 OR BETTER ONLY!
 * This library set does all USB host operations in an interrupt. This means that calling the Task() method no longer does anything, unless you disable the interrupt mode in your sketch.
-* This library set provides interrupt safe heap for AVR and ARM based boards.<BR>
+* This library set provides interrupt safe heap for AVR, ARM, and PIC32 based boards.<BR>
 * Circuitsathome USB Host Shield support (of course!)
 * Freescale Kinetis native full-speed host support!
     * NOTE! To use the Teensy 3.0/3.1/LC in host mode, select "No USB" from the tools menu for USB Type.
