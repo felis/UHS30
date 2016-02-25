@@ -3,7 +3,7 @@ Pre-release of USB Host Library version 3.0. No technical support offered at thi
 
 __This set of libraries is EXTERMELY ALPHA!__
 
-# Arduino version 1.6.6 OR BETTER ONLY!
+# Arduino version 1.6.7 OR BETTER ONLY!
 * This library set does all USB host operations in an interrupt. This means that calling the Task() method no longer does anything, unless you disable the interrupt mode in your sketch.
 * This library set provides interrupt safe heap for AVR and ARM based boards.<BR>
 * Circuitsathome USB Host Shield support (of course!)
@@ -23,9 +23,25 @@ OR
 
 Cut the INT solder bridge. Install right angle headers and use a female jumper wire.
 
-## NON-AVR Arduino hardware instructions
+## ARM Arduino hardware instructions
 No special modifications are required!
 ARM boards have interrupt capabilities on nearly every pin.
+
+## PIC32
+UNO32 only supported at this moment.
+
+You must do one of the following:
+
+Connect pin 9 to pin 7 with a jumper wire.
+
+OR
+
+Cut the INT solder bridge. Connect from the INT thru-hole to pin 7 thru-hole with a jumper wire.
+
+OR
+
+Cut the INT solder bridge. Install right angle headers and use a female jumper wire.
+
 
 ### Installation
 Copy each of the directories in the libraries directory into your USER LIBARIES directories. DO NOT copy these to your system-wide installation. (you should never do that anyway!)
