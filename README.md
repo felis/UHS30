@@ -46,4 +46,4 @@ Cut the INT solder bridge. Install right angle headers and use a female jumper w
 
 
 ### Installation
-Copy each of the directories in the libraries directory into your USER LIBARIES directories. DO NOT copy these to your system-wide installation. (you should never do that anyway!)
+Copy each of the directories in the libraries directory into your USER LIBRARIES directory. DO NOT copy these to your system-wide installation. (you should never do that anyway!)
