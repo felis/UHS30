@@ -30,7 +30,9 @@ ARM boards have interrupt capabilities on nearly every pin.
 ## PIC32
 UNO32 only supported at this moment.
 
-You must do one of the following:
+Digilent messed up on the ICSP connector. You need to modify your shield. Pull the 2x3 header plastic cover, and break off pin recepticle contacts for pins 2 and 5. Run a patch wire from +5V to pin 2. Run a patch wire from RESET to pin 5. Put plastic cover back on Don't worry, the board will still work on all other development boards still. Alternatly, modify the Digilent board. More recent boards have an option jumper which you could use to do this fix as well, however you still need to patch 5v onto pin 2.
+
+Then you must do one of the following:
 
 Connect pin 9 to pin 7 with a jumper wire.
 
