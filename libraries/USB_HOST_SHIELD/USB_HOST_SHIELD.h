@@ -91,15 +91,21 @@ e-mail   :  support@circuitsathome.com
 
 #else
 #if defined(ARDUINO_ARCH_PIC32)
-// PIC32 only allows edge interrupts, isn't that lovely?
-#define IRQ_IS_EDGE 1
+// PIC32 only allows edge interrupts, isn't that lovely? We'll emulate it...
+#if CHANGE < 2
+#error core too old.
+#endif
+
+#define IRQ_IS_EDGE 0
 #ifndef digitalPinToInterrupt
 // great, this isn't implemented.
 #warning digitalPinToInterrupt is not defined, complain here https://github.com/chipKIT32/chipKIT-core/issues/114
-//#if defined(ARDUINO_BOARD_UNO_)
+#if defined(_BOARD_UNO_) || defined(_BOARD_UC32_)
 #define digitalPinToInterrupt(p) ((p) == 2 ? 1 : ((p) == 7 ? 2 : ((p) == 8 ? 3 : ((p) == 35 ? 4 : ((p) == 38 ? 0 : NOT_AN_INTERRUPT)))))
 #warning digitalPinToInterrupt is now defined until this is taken care of.
-//#endif
+#else
+#error digitalPinToInterrupt not defined for your board, complain here https://github.com/chipKIT32/chipKIT-core/issues/114
+#endif
 #endif
 #else
 #define IRQ_IS_EDGE 0
@@ -191,7 +197,7 @@ e-mail   :  support@circuitsathome.com
 #endif
 
 #if IRQ_IS_EDGE
-// Note: UNO32 Interrupts can only be RISING, FALLING or CHANGE.
+// Note: UNO32 Interrupts can only be RISING, or FALLING.
 // This poses an interesting problem, since we want to use a LOW level.
 // The MAX3421E provides for pulse width control for an IRQ.
 // We do need to watch the timing on this, as a second IRQ could cause
@@ -210,8 +216,8 @@ e-mail   :  support@circuitsathome.com
 //
 #define IRQ_SENSE FALLING
 #if defined(ARDUINO_ARCH_PIC32)
-#define bmPULSEWIDTH 0
-#define bmIRQ_SENSE bmINTLEVEL
+#define bmPULSEWIDTH PUSLEWIDTH10_6
+#define bmIRQ_SENSE 0
 #else
 #define bmPULSEWIDTH PUSLEWIDTH1_3
 #define bmIRQ_SENSE 0

@@ -32,11 +32,11 @@ e-mail   :  support@circuitsathome.com
 #ifndef INT16_MIN
 #define INT16_MIN -32768
 #endif
-// WILL require 10600+ when ready
-#if defined(ARDUINO) && ARDUINO >=105
+// require 10607+
+#if defined(ARDUINO) && ARDUINO >=10607
 // nop :-)
 #else
-#error "Arduino version too old, and must be at least 1.0.5"
+#error "Arduino version too old, and must be at least 1.6.7"
 #endif
 
 // Nuke screwed up macro junk from the IDE.
