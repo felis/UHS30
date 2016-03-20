@@ -1188,5 +1188,5 @@ void UHS_NI UHS_Bulk_Storage::PrintEndpointDescriptor(const USB_ENDPOINT_DESCRIP
 }
 
 #else
-#error "Never include UHS_BULK_STORAGE_INLINE.h, include UHS_BULK_STORAGE.h instead"
+#error "Never include UHS_BULK_STORAGE_INLINE.h, include UHS_host.h instead"
 #endif

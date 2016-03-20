@@ -848,7 +848,8 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqT
  * @return 0 on success, -1 on error
  */
 int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
-
+        Init_dyn_SWI();
+        UHS_printf_HELPER_init();
         ISR_kinetis = this;
 
         // assume 48 MHz clock already running

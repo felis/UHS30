@@ -19,7 +19,7 @@
 
 
 #if defined(__arm__) || defined(ARDUINO_ARCH_PIC32)
-
+static char dyn_SWI_initied = 0;
 static dyn_SWI* dyn_SWI_LIST[SWI_MAXIMUM_ALLOWED];
 static dyn_SWI* dyn_SWI_EXEC[SWI_MAXIMUM_ALLOWED];
 #if defined(__arm__)
@@ -28,6 +28,7 @@ extern "C" {
         void (*_VectorsRam[VECTORTABLE_SIZE])(void)__attribute__((aligned(VECTORTABLE_ALIGNMENT)));
 }
 #else
+
 __attribute__((always_inline)) static inline void __DSB(void) {
         __asm__ volatile ("dsb");
 }
@@ -40,11 +41,13 @@ __attribute__((always_inline)) static inline void __DSB(void) {
  * Execute queued class ISR routines.
  */
 #if defined(ARDUINO_ARCH_PIC32)
-static p32_regset *ifs = ((p32_regset *)&IFS0) + (SWI_IRQ_NUM / 32); //interrupt flag register set
-static p32_regset *iec = ((p32_regset *)&IEC0) + (SWI_IRQ_NUM / 32); //interrupt enable control reg set
+static p32_regset *ifs = ((p32_regset *) & IFS0) + (SWI_IRQ_NUM / 32); //interrupt flag register set
+static p32_regset *iec = ((p32_regset *) & IEC0) + (SWI_IRQ_NUM / 32); //interrupt enable control reg set
 static uint32_t swibit = 1 << (SWI_IRQ_NUM % 32);
-void __attribute__((interrupt(),nomips16)) softISR(void) {
+
+void __attribute__((interrupt(), nomips16)) softISR(void) {
 #else
+
 void softISR(void) {
 #endif
 
@@ -75,7 +78,7 @@ void softISR(void) {
                         //dyn_SWI* klass = dyn_SWI_EXEC[i];
                         //klass->dyn_SWISR();
 #if defined(__DYN_SWI_DEBUG_LED__)
-//                        digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
+                        //                        digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
 #endif
                 }
         }
@@ -104,32 +107,35 @@ static inline unsigned char __interruptsStatus(void) {
 
 
 #if defined(__arm__)
+
 /**
  * Initialize the Dynamic (class) Software Interrupt
  */
 static void Init_dyn_SWI(void) {
+        if(!dyn_SWI_initied) {
 #if defined(__USE_CMSIS_VECTORS__)
-        uint32_t *X_Vectors = (uint32_t*)SCB->VTOR;
-        for(int i = 0; i < VECTORTABLE_SIZE; i++) {
-                _VectorsRam[i] = reinterpret_cast<void (*)()>(X_Vectors[i]); /* copy vector table to RAM */
-        }
-        /* relocate vector table */
-        noInterrupts();
-        SCB->VTOR = reinterpret_cast<uint32_t>(&_VectorsRam);
-        __DSB();
-        interrupts();
+                uint32_t *X_Vectors = (uint32_t*)SCB->VTOR;
+                for(int i = 0; i < VECTORTABLE_SIZE; i++) {
+                        _VectorsRam[i] = reinterpret_cast<void (*)()>(X_Vectors[i]); /* copy vector table to RAM */
+                }
+                /* relocate vector table */
+                noInterrupts();
+                SCB->VTOR = reinterpret_cast<uint32_t>(&_VectorsRam);
+                __DSB();
+                interrupts();
 #endif
-        for(int i = 0; i < SWI_MAXIMUM_ALLOWED; i++) dyn_SWI_LIST[i] = NULL;
-        noInterrupts();
-        _VectorsRam[SWI_IRQ_NUM + 16] = reinterpret_cast<void (*)()>(softISR);
-        __DSB();
-        interrupts();
-        NVIC_SET_PRIORITY(SWI_IRQ_NUM, 255);
-        NVIC_ENABLE_IRQ(SWI_IRQ_NUM);
+                for(int i = 0; i < SWI_MAXIMUM_ALLOWED; i++) dyn_SWI_LIST[i] = NULL;
+                noInterrupts();
+                _VectorsRam[SWI_IRQ_NUM + 16] = reinterpret_cast<void (*)()>(softISR);
+                __DSB();
+                interrupts();
+                NVIC_SET_PRIORITY(SWI_IRQ_NUM, 255);
+                NVIC_ENABLE_IRQ(SWI_IRQ_NUM);
 #if defined(__DYN_SWI_DEBUG_LED__)
-        pinMode(__DYN_SWI_DEBUG_LED__, OUTPUT);
-        digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
+                pinMode(__DYN_SWI_DEBUG_LED__, OUTPUT);
+                digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
 #endif
+        }
 }
 
 /**
@@ -157,23 +163,27 @@ int exec_SWI(const dyn_SWI* klass) {
         return rc;
 }
 #elif defined(ARDUINO_ARCH_PIC32)
+
 /**
  * Initialize the Dynamic (class) Software Interrupt
  */
 static void Init_dyn_SWI(void) {
-        uint32_t sreg = disableInterrupts();
+        if(!dyn_SWI_initied) {
+                uint32_t sreg = disableInterrupts();
 
-        setIntVector(SWI_VECTOR, softISR);
-        setIntPriority(SWI_VECTOR, 1, 1); // Lowest priority, ever.
-        ifs->clr = swibit;
-        iec->clr = swibit;
-        iec->set = swibit;
-        restoreInterrupts(sreg);
+                setIntVector(SWI_VECTOR, softISR);
+                setIntPriority(SWI_VECTOR, 1, 1); // Lowest priority, ever.
+                ifs->clr = swibit;
+                iec->clr = swibit;
+                iec->set = swibit;
+                restoreInterrupts(sreg);
 #if defined(__DYN_SWI_DEBUG_LED__)
-        pinMode(__DYN_SWI_DEBUG_LED__, OUTPUT);
-        UHS_PIN_WRITE(__DYN_SWI_DEBUG_LED__, LOW);
+                pinMode(__DYN_SWI_DEBUG_LED__, OUTPUT);
+                UHS_PIN_WRITE(__DYN_SWI_DEBUG_LED__, LOW);
 #endif
+        }
 }
+
 /**
  *
  * @param klass class that extends dyn_SWI
@@ -186,7 +196,8 @@ int exec_SWI(const dyn_SWI* klass) {
                 if(!dyn_SWI_LIST[i]) {
                         rc = 1 + i; // Success!
                         dyn_SWI_LIST[i] = (dyn_SWI*)klass;
-                        if(!(ifs->reg & swibit)) ifs->set = swibit;;
+                        if(!(ifs->reg & swibit)) ifs->set = swibit;
+                        ;
                         break;
                 }
         }

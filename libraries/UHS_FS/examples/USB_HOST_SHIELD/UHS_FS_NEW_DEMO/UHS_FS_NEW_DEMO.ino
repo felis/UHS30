@@ -7,15 +7,18 @@
 #define VOL_PATH "/"
 
 // inline library loading
+// Patch printf so we can use it.
+#define LOAD_UHS_PRINTF_HELPER
+// Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
+// Load USB Host Shield
 #define LOAD_USB_HOST_SHIELD
+// Bulk Storage
 #define LOAD_UHS_BULK_STORAGE
+// RTC/clock
 #define LOAD_RTCLIB
+// Filesystem
 #define LOAD_GENERIC_STORAGE
-//#define UHS_MAX3421E_SPD 4000000
-#define _USE_MAX3421E_HOST 1
-//#define UHS_MAX3421E_SPD 4000000
-//#define USB_HOST_SHIELD_USE_ISR 0
 
 #include <Arduino.h>
 #ifdef true
@@ -72,6 +75,7 @@
 #define MAKE_BIG_DEMO 0
 #else
 #define MAKE_BIG_DEMO 1
+// Use USB hub
 #define LOAD_UHS_HUB
 #endif
 
@@ -84,12 +88,6 @@
 
 #define TESTcycles (1048576/TESTdsize)
 
-
-#ifndef __AVR__
-#ifndef printf_P
-#define printf_P(...) printf(__VA_ARGS__)
-#endif
-#endif
 
 #define _USE_FASTSEEK 0
 
@@ -160,99 +158,6 @@ uint8_t *data;
 uint8_t mounted = PFAT_VOLUMES;
 uint8_t wasmounted = 0;
 
-#if defined(ARDUINO_ARCH_PIC32)
-/*
- * For printf() output with pic32 Arduino
- */
-extern "C"
-{
-        void _mon_putc(char s) {
-                USB_HOST_SERIAL.write(s);
-        }
-        int _mon_getc() {
-                while(!USB_HOST_SERIAL.available());
-                return USB_HOST_SERIAL.read();
-        }
-}
-
-#elif defined(__AVR__)
-extern "C" {
-
-        static FILE tty_stdio;
-        static FILE tty_stderr;
-
-        static int tty_stderr_putc(char c, NOTUSED(FILE *t)) __attribute__((unused));
-        static int tty_stderr_flush (NOTUSED(FILE *t)) __attribute__((unused));
-        static int tty_std_putc(char c, NOTUSED(FILE *t)) __attribute__((unused));
-        static int tty_std_getc(NOTUSED(FILE *t)) __attribute__((unused));
-        static int tty_std_flush(NOTUSED(FILE *t)) __attribute__((unused));
-
-        static int tty_stderr_putc(char c, NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.write(c);
-                return 0;
-        }
-
-        static int tty_stderr_flush (NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.flush();
-                return 0;
-        }
-
-        static int tty_std_putc(char c, NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.write(c);
-                return 0;
-        }
-
-        static int tty_std_getc(NOTUSED(FILE *t)) {
-                while(!USB_HOST_SERIAL.available());
-                return USB_HOST_SERIAL.read();
-        }
-
-        static int tty_std_flush(NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.flush();
-                return 0;
-        }
-}
-#elif defined(CORE_TEENSY)
-extern "C" {
-
-        int _write(int fd, const char *ptr, int len) {
-                int j;
-                for(j = 0; j < len; j++) {
-                        if(fd == 1)
-                                USB_HOST_SERIAL.write(*ptr++);
-                        else if(fd == 2)
-                                USB_HOST_SERIAL.write(*ptr++);
-                }
-                return len;
-        }
-
-        int _read(int fd, char *ptr, int len) {
-                if(len > 0 && fd == 0) {
-                        while(!USB_HOST_SERIAL.available());
-                        *ptr = USB_HOST_SERIAL.read();
-                        return 1;
-                }
-                return 0;
-        }
-
-#include <sys/stat.h>
-
-        int _fstat(int fd, struct stat *st) {
-                memset(st, 0, sizeof (*st));
-                st->st_mode = S_IFCHR;
-                st->st_blksize = 1024;
-                return 0;
-        }
-
-        int _isatty(int fd) {
-                return (fd < 3) ? 1 : 0;
-        }
-}
-#elif defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAM_DUE)
-// Nothing to do, stdout/stderr is on programming port
-#else
-#error no STDOUT
-#endif // defined(ARDUINO_ARCH_PIC32)
 
 #if MAKE_BIG_DEMO
 
@@ -336,35 +241,16 @@ void setup() {
         de = (PFAT_DIRINFO *)malloc(sizeof (PFAT_DIRINFO));
         data = (uint8_t *)malloc(TESTdsize);
 #endif
-        while(!Serial);
-        Serial.begin(115200);
+        while(!USB_HOST_SERIAL);
+        USB_HOST_SERIAL.begin(115200);
         delay(10000);
-        Serial.println("Start.");
-#if defined(SWI_IRQ_NUM)
-        Init_dyn_SWI();
-#endif
-#if defined(__AVR__)
-        // Set up stdio/stderr
-        tty_stdio.put = tty_std_putc;
-        tty_stdio.get = tty_std_getc;
-        tty_stdio.flags = _FDEV_SETUP_RW;
-        tty_stdio.udata = 0;
-
-        tty_stderr.put = tty_stderr_putc;
-        tty_stderr.get = NULL;
-        tty_stderr.flags = _FDEV_SETUP_WRITE;
-        tty_stderr.udata = 0;
-
-        stdout = &tty_stdio;
-        stdin = &tty_stdio;
-        stderr = &tty_stderr;
-#endif
+        USB_HOST_SERIAL.println("Start.");
         // Initialize generic storage. This must be done before USB starts.
         Init_Generic_Storage(&MAX3421E_Usb);
+        while(MAX3421E_Usb.Init(1000) != 0);
 #if defined(SWI_IRQ_NUM)
         printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
 #endif
-        while(MAX3421E_Usb.Init(1000) != 0);
         printf("\r\n\r\nUSB HOST READY.\r\n");
 }
 
@@ -372,6 +258,7 @@ uint8_t current_state = 128;
 uint8_t last_state = 255;
 
 void loop() {
+        // The following does not work yet!
 #if !USB_HOST_SHIELD_USE_ISR
         MAX3421E_Usb.Task();
 #endif

@@ -340,6 +340,7 @@ again:
                                 // iterate for each interface on this config
                                 rcode = getNextInterface(&ei, pep, data, &left, &read, &offset);
                                 if(rcode == UHS_HOST_ERROR_END_OF_STREAM) {
+                                        HOST_DUBUG("USB_INTERFACE END OF STREAM\r\n");
                                         ctrlReqClose(pep, UHS_bmREQ_GET_DESCR, left, ei.bMaxPacketSize0, data);
                                         rcode = 0;
                                         break;
@@ -438,7 +439,7 @@ again:
                                                 rcode = devConfig[devConfigIndex]->Finalize();
                                                 rcode = devConfig[devConfigIndex]->Start();
                                                 if(!rcode) {
-                                                        HOST_DUBUG("Total endpoints = %i\r\n", p->epcount);
+                                                        HOST_DUBUG("Total endpoints = (%i)%i\r\n", p->epcount,devConfig[devConfigIndex]->bNumEP);
                                                 } else {
                                                         break;
                                                 }
@@ -598,13 +599,14 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
         ei->interface.subklass = 0;
         ei->interface.protocol = 0;
         while(*left + *read) {
-                remain = data[*offset] - 1; // bLength
+                remain = data[*offset]; // bLength
                 rcode = getone(pep, left, read, data, offset);
                 if(rcode)
                         return rcode;
                 ty = data[*offset]; // bDescriptorType
-                HOST_DUBUG("bLength: %i ", remain + 1);
+                HOST_DUBUG("bLength: %i ", remain);
                 HOST_DUBUG("bDescriptorType: %2.2x\r\n", ty);
+                remain--;
                 if(ty == USB_DESCRIPTOR_INTERFACE) {
                         HOST_DUBUG("INTERFACE DESCRIPTOR FOUND\r\n");
                         ptr = (uint8_t *)(&(ei->interface.bInterfaceNumber));
@@ -632,15 +634,16 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
                                         HOST_DUBUG("ENDPOINT DESCRIPTOR DIED WAY EARLY\r\n");
                                         return rcode;
                                 }
-                                remain = data[*offset] - 1; // bLength
+                                remain = data[*offset]; // bLength
                                 rcode = getone(pep, left, read, data, offset);
                                 if(rcode) {
                                         HOST_DUBUG("ENDPOINT DESCRIPTOR DIED EARLY\r\n");
                                         return rcode;
                                 }
                                 ty = data[*offset]; // bDescriptorType
-                                HOST_DUBUG("bLength: %i ", remain + 1);
+                                HOST_DUBUG("bLength: %i ", remain);
                                 HOST_DUBUG("bDescriptorType: %2.2x\r\n", ty);
+                                remain -= 2;
                                 if(ty == USB_DESCRIPTOR_ENDPOINT) {
                                         HOST_DUBUG("ENDPOINT DESCRIPTOR: %i\r\n", epc);
                                         ptr = (uint8_t *)(&(ei->interface.epInfo[epc].bEndpointAddress));
@@ -654,11 +657,8 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
                                                 ptr++;
                                                 remain--;
                                         }
-                                        remain--;
                                         epc++;
                                         HOST_DUBUG("ENDPOINT DESCRIPTOR OK\r\n");
-                                } else {
-                                        remain--;
                                 }
                                 rcode = eat(pep, left, read, data, offset, &remain);
                                 if(rcode) {
@@ -667,14 +667,17 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
                                 }
                                 remain = 0;
                         }
+                        remain = 1;
+                        // queue ahead, but do not report if error.
+                        eat(pep, left, read, data, offset, &remain);
                         HOST_DUBUG("ENDPOINT DESCRIPTORS FILLED\r\n");
-
                         return 0;
                 } else {
                         rcode = eat(pep, left, read, data, offset, &remain);
                         if(rcode)
                                 return rcode;
                 }
+                rcode = UHS_HOST_ERROR_END_OF_STREAM;
         }
         return rcode;
 }
@@ -799,10 +802,11 @@ uint8_t UHS_USB_HOST_BASE::getone(UHS_EpInfo *pep, uint16_t *left, uint16_t *rea
         return rcode;
 }
 
-uint8_t UHS_USB_HOST_BASE::eat(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint8_t *dataptr, uint8_t *offset, uint16_t *eat) {
+uint8_t UHS_USB_HOST_BASE::eat(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint8_t *dataptr, uint8_t *offset, uint16_t *yum) {
         uint8_t rcode;
-        while(*eat) {
-                *eat -= 1;
+        HOST_DUBUG("eating %i\r\n", *yum);
+        while(*yum) {
+                *yum -= 1;
                 rcode = getone(pep, left, read, dataptr, offset);
                 if(rcode) break;
         }

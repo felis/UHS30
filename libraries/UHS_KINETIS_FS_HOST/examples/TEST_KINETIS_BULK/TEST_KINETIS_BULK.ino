@@ -1,9 +1,13 @@
-#define LOAD_USB_HOST_SYSTEM
-#define LOAD_UHS_KINETIS_FS_HOST
-#define LOAD_UHS_BULK_STORAGE
-
-// Redirect debugging
+// Redirect debugging and printf
 #define USB_HOST_SERIAL Serial1
+// inline library loading
+// Patch printf so we can use it.
+#define LOAD_UHS_PRINTF_HELPER
+// Loads the Kinetis core
+#define LOAD_UHS_KINETIS_FS_HOST
+// Load the USB Host System core
+#define LOAD_USB_HOST_SYSTEM
+
 
 #include <Arduino.h>
 #ifdef true
@@ -13,65 +17,18 @@
 #undef false
 #endif
 
-
+// Bring in all the libraries that we requested above.
 #include <UHS_host.h>
 
 UHS_KINETIS_FS_HOST KINETIS_Usb;
 UHS_Bulk_Storage Storage_KINETIS(&KINETIS_Usb);
 
-#if defined(CORE_TEENSY)
-extern "C" {
-
-        int _write(int fd, const char *ptr, int len) {
-                int j;
-                for(j = 0; j < len; j++) {
-                        if(fd == 1)
-                                Serial1.write(*ptr++);
-                        else if(fd == 2)
-                                USB_HOST_SERIAL.write(*ptr++);
-                }
-                return len;
-        }
-
-        int _read(int fd, char *ptr, int len) {
-                if(len > 0 && fd == 0) {
-                        while(!Serial1.available());
-                        *ptr = Serial1.read();
-                        return 1;
-                }
-                return 0;
-        }
-
-#include <sys/stat.h>
-
-        int _fstat(int fd, struct stat *st) {
-                memset(st, 0, sizeof (*st));
-                st->st_mode = S_IFCHR;
-                st->st_blksize = 1024;
-                return 0;
-        }
-
-        int _isatty(int fd) {
-                return (fd < 3) ? 1 : 0;
-        }
-
-}
-// Else we are using CMSIS DAP (possibly) or debug output
-#endif // TEENSY_CORE
-
 uint8_t usbstate;
 uint8_t laststate;
+uint8_t d;
 boolean tested;
 boolean notified;
 boolean lastEnable = false;
-
-#if DEBUG_PRINTF_EXTRA_HUGE
-static FILE mystdout;
-static int my_putc(char c, FILE *t) {
-        USB_HOST_SERIAL.write(c);
-        return 0;
-}
-#endif
 
 uint8_t buf[512]; // WARNING! Assumes a sector is 512bytes!
 
@@ -79,8 +36,7 @@ void test_bulk(uint8_t lun) {
         uint8_t rcode = 0;
         uint16_t loops = 0;
         tested = true;
-        E_Notify(PSTR("\r\nTesting LUN "), 0);
-        USB_HOST_SERIAL.print(lun);
+        printf("\r\nTesting LUN %i", lun);
         uint32_t xnow = millis();
         while(!rcode && loops < 2048) {
                 loops++;
@@ -88,11 +44,11 @@ void test_bulk(uint8_t lun) {
         }
         uint32_t finish = millis();
         if(!rcode) {
-                E_Notify(PSTR("\r\nRead passed, Read 2048 sectors (1024K) in "), 0);
+                printf("\r\nRead passed, Read 2048 sectors (1024K) in ");
                 USB_HOST_SERIAL.print(finish - xnow);
-                E_Notify(PSTR("ms "), 0);
+                printf("ms ");
         } else {
-                E_Notify(PSTR("\r\nERROR: Read Failed"), 0);
+                printf("\r\nERROR: Read Failed");
 
         }
         //USB_HOST_SERIAL.flush();
@@ -105,10 +61,10 @@ void setup() {
         Serial1.println("Waiting...");
         delay(10000);
         Serial1.println("Start.");
-        Init_dyn_SWI();
 
-        printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
         while(KINETIS_Usb.Init(1000) != 0);
+        // printf may be used after atleast 1 host init
+        printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
         printf("\r\n\r\nUSB HOST READY.\r\n");
 
         pinMode(LED_BUILTIN, OUTPUT);
@@ -118,8 +74,6 @@ void setup() {
         notified = false;
         E_Notify(PSTR("\r\nPlug in a storage device now..."), 0);
 }
-
-uint8_t d;
 
 void loop() {
 

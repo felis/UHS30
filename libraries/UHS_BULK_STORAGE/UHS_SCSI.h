@@ -8,8 +8,6 @@
 #ifndef UHS_SCSI_H
 #define	UHS_SCSI_H
 
-#include <UHS_host.h>
-
 /*
  * Reference documents from T10 (http://www.t10.org)
  * SCSI Primary Commands - 3 (SPC-3)

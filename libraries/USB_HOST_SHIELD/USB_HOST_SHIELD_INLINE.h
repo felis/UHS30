@@ -263,7 +263,8 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         //        Serial.println((uint32_t)this, HEX);
         //        Serial.print("MAX3421E 'this' USB Host Address Pool @ 0x");
         //        Serial.println((uint32_t)GetAddressPool(), HEX);
-
+        Init_dyn_SWI();
+        UHS_printf_HELPER_init();
         noInterrupts();
 #ifdef BOARD_MEGA_ADK
         // For Mega ADK, which has a Max3421e on-board, set MAX_RESET to output mode, and then set it to HIGH

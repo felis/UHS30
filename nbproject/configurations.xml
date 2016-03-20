@@ -25,6 +25,8 @@
               </df>
             </df>
           </df>
+        </df>
+        <df name="UHS_CDC_ACM_MULTIPLEX">
           <in>UHS_CDC_ACM_MULTIPLEX_INLINE.h</in>
         </df>
         <df name="UHS_FS">
@@ -53,6 +55,7 @@
           </df>
         </df>
         <df name="UHS_host">
+          <in>UHS_printf_HELPER.h</in>
           <in>malloc.c</in>
           <in>mlock.c</in>
         </df>
@@ -170,14 +173,14 @@
             tool="1"
             flavor2="4">
       </item>
-      <item path="libraries/UHS_CDC_ACM/UHS_CDC_ACM_MULTIPLEX_INLINE.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
       <item path="libraries/UHS_CDC_ACM/examples/USB_HOST_SHIELD/acm_terminal/acm_terminal.ino"
             ex="false"
             tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_CDC_ACM_MULTIPLEX/UHS_CDC_ACM_MULTIPLEX_INLINE.h"
+            ex="false"
+            tool="3"
             flavor2="0">
       </item>
       <item path="libraries/UHS_FS/FAT/FAT.cpp" ex="false" tool="1" flavor2="4">
@@ -216,6 +219,11 @@
             ex="false"
             tool="1"
             flavor2="4">
+      </item>
+      <item path="libraries/UHS_host/UHS_printf_HELPER.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
       </item>
       <item path="libraries/UHS_host/malloc.c" ex="false" tool="0" flavor2="2">
       </item>

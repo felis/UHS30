@@ -328,7 +328,8 @@ typedef uint32_t prog_uint32_t;
 #define USBTRACE2X(s,r) (USBTRACE3X((s),(r),0x80)); USB_HOST_SERIAL.flush()
 
 #define VOID0 ((void)0)
-
+#if !defined(NOTUSED)
 #define NOTUSED(...)  __VA_ARGS__ __attribute__((unused))
+#endif
 #endif /* MACROS_H */
 

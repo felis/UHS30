@@ -72,11 +72,12 @@ void UHS_HID_SetUSBInterface(UHS_USB_HOST_BASE *host, ENUMERATION_INFO *ei);
 void UHS_HID_ScanUninitialized(UHS_USB_HOST_BASE *host);
 void UHS_HID_Poll(UHS_USB_HOST_BASE *host);
 #endif
-#if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
-void UHS_CDC_ACM_SetUSBInterface(UHS_USB_HOST_BASE *host, ENUMERATION_INFO *ei);
-void UHS_CDC_ACM_ScanUninitialized(UHS_USB_HOST_BASE *host);
-void UHS_CDC_ACM_Poll(UHS_USB_HOST_BASE *host);
-#endif
+
+//#if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
+//void UHS_CDC_ACM_SetUSBInterface(UHS_USB_HOST_BASE *host, ENUMERATION_INFO *ei);
+//void UHS_CDC_ACM_ScanUninitialized(UHS_USB_HOST_BASE *host);
+//void UHS_CDC_ACM_Poll(UHS_USB_HOST_BASE *host);
+//#endif
 
 class UHS_USBInterface; // forward class declaration
 
@@ -199,9 +200,9 @@ public:
 #if defined(UHS_LOAD_HID)
                 UHS_HID_Poll(this);
 #endif
-#if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
-                UHS_CDC_ACM_Poll(this);
-#endif
+//#if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
+//                UHS_CDC_ACM_Poll(this);
+//#endif
         }
 
         inline void DisablePoll(void) {
@@ -283,7 +284,7 @@ public:
         uint8_t inTransfer(uint8_t addr, uint8_t ep, uint16_t *nbytesptr, uint8_t* data);
         uint8_t doSoftReset(uint8_t parent, uint8_t port, uint8_t address);
         uint8_t getone(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint8_t *dataptr, uint8_t *offset);
-        uint8_t eat(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint8_t *dataptr, uint8_t *offset, uint16_t *eat);
+        uint8_t eat(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint8_t *dataptr, uint8_t *offset, uint16_t *yum);
 
 };
 

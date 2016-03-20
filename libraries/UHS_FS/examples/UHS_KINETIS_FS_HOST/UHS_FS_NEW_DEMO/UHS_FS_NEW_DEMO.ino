@@ -1,12 +1,25 @@
 //////////////////////////////////////
 // libraries that we will be using
 //////////////////////////////////////
-#define LOAD_USB_HOST_SYSTEM
+
+// inline library loading
+// Patch printf so we can use it.
+#define LOAD_UHS_PRINTF_HELPER
+// Load the Kinetis core
 #define LOAD_UHS_KINETIS_FS_HOST
+// Load the USB Host System core
+#define LOAD_USB_HOST_SYSTEM
+// Bulk Storage
 #define LOAD_UHS_BULK_STORAGE
+// RTC/clock
 #define LOAD_RTCLIB
+// USB hub
 #define LOAD_UHS_HUB
+// Filesystem
 #define LOAD_GENERIC_STORAGE
+
+// Redirect debugging and printf
+#define USB_HOST_SERIAL Serial1
 
 // Uncomment to debug
 //#define ENABLE_UHS_DEBUGGING 1
@@ -17,8 +30,6 @@
 // OPTIONS
 //////////////////////////////////////
 
-// Where to redirect debugging, also used for the program output
-#define USB_HOST_SERIAL Serial1
 
 #define TESTdsize 512
 #define TESTcycles (1048576/TESTdsize)
@@ -83,6 +94,12 @@
 
 // Arduino.h, if not already included
 #include <Arduino.h>
+#ifdef true
+#undef true
+#endif
+#ifdef false
+#undef false
+#endif
 
 
 // Load the wanted libraries here
@@ -96,46 +113,6 @@ PFAT_DIRINFO *de;
 uint8_t *data;
 uint8_t mounted = PFAT_VOLUMES;
 uint8_t wasmounted = 0;
-
-#if defined(CORE_TEENSY)
-extern "C" {
-
-        int _write(int fd, const char *ptr, int len) {
-                int j;
-                for(j = 0; j < len; j++) {
-                        if(fd == 1)
-                                USB_HOST_SERIAL.write(*ptr++);
-                        else if(fd == 2)
-                                USB_HOST_SERIAL.write(*ptr++);
-                }
-                return len;
-        }
-
-        int _read(int fd, char *ptr, int len) {
-                if(len > 0 && fd == 0) {
-                        while(!USB_HOST_SERIAL.available());
-                        *ptr = USB_HOST_SERIAL.read();
-                        return 1;
-                }
-                return 0;
-        }
-
-#include <sys/stat.h>
-
-        int _fstat(int fd, struct stat *st) {
-                memset(st, 0, sizeof (*st));
-                st->st_mode = S_IFCHR;
-                st->st_blksize = 1024;
-                return 0;
-        }
-
-        int _isatty(int fd) {
-                return (fd < 3) ? 1 : 0;
-        }
-}
-
-// Else we are using CMSIS DAP
-#endif // TEENSY_CORE
 
 void show_dir(PFAT_DIRINFO *de) {
         int res;
@@ -207,9 +184,8 @@ void show_dir(PFAT_DIRINFO *de) {
 void setup() {
         de = (PFAT_DIRINFO *)malloc(sizeof (PFAT_DIRINFO));
         data = (uint8_t *)malloc(TESTdsize);
-        Serial1.begin(115200);
+        USB_HOST_SERIAL.begin(115200);
         printf("\r\n\r\nStart.");
-        Init_dyn_SWI();
         // Initialize generic storage. This must be done before USB starts.
         Init_Generic_Storage(&KINETIS_Usb);
         printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);

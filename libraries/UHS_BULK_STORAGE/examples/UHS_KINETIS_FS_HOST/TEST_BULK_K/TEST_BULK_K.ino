@@ -1,9 +1,15 @@
 //////////////////////////////////////
 // libraries that we will be using
 //////////////////////////////////////
+// Patch printf so we can use it.
+#define LOAD_UHS_PRINTF_HELPER
+// Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
+// Load the Kinetis core
 #define LOAD_UHS_KINETIS_FS_HOST
+// Bulk Storage
 #define LOAD_UHS_BULK_STORAGE
+// USB hub
 #define LOAD_UHS_HUB
 
 // Uncomment to debug
@@ -24,7 +30,12 @@
 
 // Arduino.h, if not already included
 #include <Arduino.h>
-
+#ifdef true
+#undef true
+#endif
+#ifdef false
+#undef false
+#endif
 
 #include <UHS_host.h>
 
@@ -36,47 +47,6 @@ uint8_t laststate;
 boolean tested;
 boolean notified;
 boolean lastEnable = false;
-
-#if defined(CORE_TEENSY)
-extern "C" {
-
-        int _write(int fd, const char *ptr, int len) {
-                int j;
-                for(j = 0; j < len; j++) {
-                        if(fd == 1)
-                                USB_HOST_SERIAL.write(*ptr++);
-                        else if(fd == 2)
-                                USB_HOST_SERIAL.write(*ptr++);
-                }
-                return len;
-        }
-
-        int _read(int fd, char *ptr, int len) {
-                if(len > 0 && fd == 0) {
-                        while(!USB_HOST_SERIAL.available());
-                        *ptr = USB_HOST_SERIAL.read();
-                        return 1;
-                }
-                return 0;
-        }
-
-#include <sys/stat.h>
-
-        int _fstat(int fd, struct stat *st) {
-                memset(st, 0, sizeof (*st));
-                st->st_mode = S_IFCHR;
-                st->st_blksize = 1024;
-                return 0;
-        }
-
-        int _isatty(int fd) {
-                return (fd < 3) ? 1 : 0;
-        }
-}
-
-// Else we are using CMSIS DAP
-#endif // TEENSY_CORE
-
 
 uint8_t buf[512]; // WARNING! Assumes a sector is 512bytes!
 
@@ -101,7 +71,6 @@ void test_bulk(uint8_t lun) {
 
 void setup() {
         USB_HOST_SERIAL.begin(115200);
-        Init_dyn_SWI();
         while(KINETIS_Usb.Init(1000) !=0);
         printf("\r\n\r\ngo!\r\n");
         laststate = 0xff;

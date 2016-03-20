@@ -2,6 +2,17 @@
 /* To see the output set your terminal speed to 115200 */
 /* for GPIO test to pass you need to connect GPIN0 to GPOUT7, GPIN1 to GPOUT6, etc. */
 /* otherwise press any key after getting GPIO error to complete the test */
+
+
+// inline library loading
+// Patch printf so we can use it.
+#define LOAD_UHS_PRINTF_HELPER
+// Load the USB Host System core
+#define LOAD_USB_HOST_SYSTEM
+// Load USB Host Shield
+#define LOAD_USB_HOST_SHIELD
+
+
 #include <Arduino.h>
 #ifdef true
 #undef true
@@ -10,20 +21,7 @@
 #undef false
 #endif
 
-//#if !defined(SERIAL_PORT_MONITOR)
-//#define SERIAL_PORT_MONITOR Serial
-//#endif
 
-#define LOAD_USB_HOST_SYSTEM
-#define LOAD_USB_HOST_SHIELD
-#define _USE_MAX3421E_HOST 1
-#define USB_HOST_SERIAL SERIAL_PORT_MONITOR
-
-#ifndef __AVR__
-#ifndef printf_P
-#define printf_P(...) printf(__VA_ARGS__)
-#endif
-#endif
 #include <UHS_host.h>
 
 uint8_t rcode;
@@ -32,101 +30,6 @@ uint8_t laststate;
 USB_DEVICE_DESCRIPTOR buf;
 
 MAX3421E_HOST UHS_Usb;
-
-
-#if defined(ARDUINO_ARCH_PIC32)
-/*
- * For printf() output with pic32 Arduino
- */
-extern "C"
-{
-        void _mon_putc(char s) {
-                USB_HOST_SERIAL.write(s);
-        }
-        int _mon_getc() {
-                while(!USB_HOST_SERIAL.available());
-                return USB_HOST_SERIAL.read();
-        }
-}
-
-#elif defined(__AVR__)
-extern "C" {
-
-        static FILE tty_stdio;
-        static FILE tty_stderr;
-
-        static int tty_stderr_putc(char c, NOTUSED(FILE *t)) __attribute__((unused));
-        static int tty_stderr_flush (NOTUSED(FILE *t)) __attribute__((unused));
-        static int tty_std_putc(char c, NOTUSED(FILE *t)) __attribute__((unused));
-        static int tty_std_getc(NOTUSED(FILE *t)) __attribute__((unused));
-        static int tty_std_flush(NOTUSED(FILE *t)) __attribute__((unused));
-
-        static int tty_stderr_putc(char c, NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.write(c);
-                return 0;
-        }
-
-        static int tty_stderr_flush (NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.flush();
-                return 0;
-        }
-
-        static int tty_std_putc(char c, NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.write(c);
-                return 0;
-        }
-
-        static int tty_std_getc(NOTUSED(FILE *t)) {
-                while(!USB_HOST_SERIAL.available());
-                return USB_HOST_SERIAL.read();
-        }
-
-        static int tty_std_flush(NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.flush();
-                return 0;
-        }
-}
-#elif defined(CORE_TEENSY)
-extern "C" {
-
-        int _write(int fd, const char *ptr, int len) {
-                int j;
-                for(j = 0; j < len; j++) {
-                        if(fd == 1)
-                                USB_HOST_SERIAL.write(*ptr++);
-                        else if(fd == 2)
-                                USB_HOST_SERIAL.write(*ptr++);
-                }
-                return len;
-        }
-
-        int _read(int fd, char *ptr, int len) {
-                if(len > 0 && fd == 0) {
-                        while(!USB_HOST_SERIAL.available());
-                        *ptr = USB_HOST_SERIAL.read();
-                        return 1;
-                }
-                return 0;
-        }
-
-#include <sys/stat.h>
-
-        int _fstat(int fd, struct stat *st) {
-                memset(st, 0, sizeof (*st));
-                st->st_mode = S_IFCHR;
-                st->st_blksize = 1024;
-                return 0;
-        }
-
-        int _isatty(int fd) {
-                return (fd < 3) ? 1 : 0;
-        }
-}
-#elif defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAM_DUE)
-// Nothing to do, stdout/stderr is on programming port
-#else
-#error no STDOUT
-#endif // defined(ARDUINO_ARCH_PIC32)
 
 uint8_t retries;
 UHS_Device *p;
@@ -156,31 +59,18 @@ void press_any_key() {
 
 void setup() {
         laststate = 0;
-        Serial.begin( 115200 );
-#if defined(__AVR__)
-        // Set up stdio/stderr
-        tty_stdio.put = tty_std_putc;
-        tty_stdio.get = tty_std_getc;
-        tty_stdio.flags = _FDEV_SETUP_RW;
-        tty_stdio.udata = 0;
-
-        tty_stderr.put = tty_stderr_putc;
-        tty_stderr.get = NULL;
-        tty_stderr.flags = _FDEV_SETUP_WRITE;
-        tty_stderr.udata = 0;
-
-        stdout = &tty_stdio;
-        stdin = &tty_stdio;
-        stderr = &tty_stderr;
-#endif
+        USB_HOST_SERIAL.begin( 115200 );
 
 #ifdef BOARD_MEGA_ADK
         // For Mega ADK, which has a Max3421e on-board, set MAX_RESET to output mode, and then set it to HIGH
         pinMode(55, OUTPUT);
         UHS_PIN_WRITE(55, HIGH);
 #endif
+        // Manually initialize ahead of time
         Init_dyn_SWI();
+        UHS_printf_HELPER_init();
         SPI.begin();
+
         UHS_Usb.ss_pin = UHS_MAX3421E_SS;
         UHS_Usb.irq_pin = UHS_MAX3421E_INT;
         UHS_Usb.MAX3421E_SPI_Settings = SPISettings(UHS_MAX3421E_SPD, MSBFIRST, SPI_MODE0);
@@ -191,16 +81,16 @@ void setup() {
 
         printf_P(PSTR("\r\nCircuits At Home 2011"));
         printf_P(PSTR("\r\nUSB Host Shield Quality Control Routine"));
-        /* SPI quick test - check revision register */
+        // Do a reset ahead of time, since sometimes the chip is in an unknown state.
         UHS_Usb.regWr(rPINCTL, (bmFDUPSPI | bmINTLEVEL | GPX_VBDET));
         if(UHS_Usb.reset() == 0) {
                 printf_P(PSTR("Initial reset failed."));
                 halt55();
         }
 
+        /* SPI quick test - check revision register */
         printf_P(PSTR("\r\nReading REVISION register... Die revision "));
         fflush(stdout);
-        //UHS_Usb.Init(1000);
         {
                 uint8_t tmpbyte = UHS_Usb.regRd( rREVISION );
                 switch( tmpbyte ) {

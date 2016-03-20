@@ -43,6 +43,8 @@ e-mail   :  support@circuitsathome.com
 #include "UHS_host_INLINE.h"
 #include "../dyn_SWI/dyn_SWI.h"
 
+#include "UHS_printf_HELPER.h"
+
 #if defined(LOAD_USB_HOST_SHIELD)
 #include "../USB_HOST_SHIELD/USB_HOST_SHIELD.h"
 #endif
@@ -77,6 +79,19 @@ e-mail   :  support@circuitsathome.com
 // Add CDC multiplexers (currently only ACM)
 #if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
 #include "../UHS_CDC/UHS_CDC.h"
+#include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
+// Basic CDC_ACM loaded
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+#include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
+#endif // FTDI loaded
+#if defined(LOAD_UHS_CDC_ACM_PROLIFIC)
+#include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
+#endif // Prolific loaded
+#if defined(LOAD_UHS_CDC_ACM_XR21B1411)
+#include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
+#endif // XR21B1411 loaded
+
+//#if defined()
 #endif // CDC loaded
 
 #endif // System code loaded

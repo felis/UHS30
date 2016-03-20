@@ -1,14 +1,12 @@
+// inline library loading
+// Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
+// Load USB Host Shield
 #define LOAD_USB_HOST_SHIELD
+// Bulk Storage
 #define LOAD_UHS_BULK_STORAGE
-#define _USE_MAX3421E_HOST 1
+// USB hub
 #define LOAD_UHS_HUB
-#define USB_HOST_SHIELD_USE_ISR 1
-
-//#define ENABLE_UHS_DEBUGGING 1
-//#define DEBUG_PRINTF_EXTRA_HUGE 1
-//#define USB_HOST_SHIELD_USE_ISR 0
-//#define USB_HOST_SERIAL Serial1
 
 #include <Arduino.h>
 #ifdef true
@@ -28,14 +26,6 @@ uint8_t laststate;
 boolean tested;
 boolean notified;
 boolean lastEnable = false;
-
-#if DEBUG_PRINTF_EXTRA_HUGE
-static FILE mystdout;
-static int my_putc(char c, FILE *t) {
-        USB_HOST_SERIAL.write(c);
-        return 0;
-}
-#endif
 
 uint8_t buf[512]; // WARNING! Assumes a sector is 512bytes!
 
@@ -64,18 +54,9 @@ void test_bulk(uint8_t lun) {
 }
 
 void setup() {
-        while(!Serial);
-        Serial.begin(115200);
-        //USB_HOST_SERIAL.begin(115200);
+        while(!USB_HOST_SERIAL);
+        USB_HOST_SERIAL.begin(115200);
 
-#if DEBUG_PRINTF_EXTRA_HUGE
-        mystdout.put = my_putc;
-        mystdout.get = NULL;
-        mystdout.flags = _FDEV_SETUP_WRITE;
-        mystdout.udata = 0;
-        stdout = &mystdout;
-#endif
-        Init_dyn_SWI();
         while(MAX3421E_Usb.Init(1000) !=0);
         E_Notify(PSTR("\r\n\r\ngo!\r\n"), 0);
         laststate = 0xff;
