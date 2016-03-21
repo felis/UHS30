@@ -81,8 +81,6 @@ e-mail   :  support@circuitsathome.com
 // Add CDC multiplexers (currently only ACM)
 #if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
 #include "../UHS_CDC/UHS_CDC.h"
-#include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
-// Basic CDC_ACM loaded
 #endif // CDC loaded
 
 #endif // System code loaded

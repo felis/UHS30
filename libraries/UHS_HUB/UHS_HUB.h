@@ -186,9 +186,6 @@ public:
         virtual uint8_t UHS_NI GetAddress(void) {
                 return bAddress;
         };
-        virtual bool UHS_NI Polling(void) {
-                return bPollEnable;
-        }
 };
 
 // Clear Hub Feature

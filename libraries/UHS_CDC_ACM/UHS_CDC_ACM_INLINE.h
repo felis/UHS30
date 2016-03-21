@@ -50,10 +50,11 @@ bool UHS_NI UHS_CDC_ACM::OKtoEnumerate(ENUMERATION_INFO *ei) {
         ACM_HOST_DEBUG("ACM: checking interface.protocol %2.2x\r\n", ei->interface.protocol);
 
         return (
-                (
+                (((
 #if !defined(LOAD_UHS_CDC_ACM_XR21B1411)
                 !
 #endif
+
                 TEST_XR21B1411())
 #if !defined(LOAD_UHS_CDC_ACM_XR21B1411)
                 &&
@@ -64,7 +65,7 @@ bool UHS_NI UHS_CDC_ACM::OKtoEnumerate(ENUMERATION_INFO *ei) {
 #if !defined(LOAD_UHS_CDC_ACM_FTDI)
                 !
 #endif
-                TEST_ACM_FTDI())
+                TEST_ACM_FTDI()))
 #if !defined(LOAD_UHS_CDC_ACM_FTDI)
                 &&
 #else
@@ -74,7 +75,7 @@ bool UHS_NI UHS_CDC_ACM::OKtoEnumerate(ENUMERATION_INFO *ei) {
 #if !defined(LOAD_UHS_CDC_ACM_PROLIFIC)
                 !
 #endif
-                TEST_ACM_PROLIFIC())
+                TEST_ACM_PROLIFIC()))
 #if !defined(LOAD_UHS_CDC_ACM_PROLIFIC)
                 &&
 #else
@@ -85,6 +86,9 @@ bool UHS_NI UHS_CDC_ACM::OKtoEnumerate(ENUMERATION_INFO *ei) {
 
 }
 
+/**
+ * Resets interface driver to unused state
+ */
 void UHS_NI UHS_CDC_ACM::DriverDefaults(void) {
         pUsb->DeviceDefaults(ACM_MAX_ENDPOINTS, this);
         ready = false;
@@ -109,10 +113,12 @@ void UHS_NI UHS_CDC_ACM::DriverDefaults(void) {
 
 /**
  * WARNING:
- *          Assumes UHS_USB_CLASS_COM_AND_CDC_CTRL 0
- *          Assumes UHS_USB_CLASS_CDC_DATA 1
+ *          Assumes UHS_USB_CLASS_COM_AND_CDC_CTRL and
+ *          Assumes UHS_USB_CLASS_CDC_DATA are IN THE SAME ORDER
  *          CDC descriptors are NOT YET PARSED.
  *          For MOST cases it will work.
+ *          If you know of a device that DOES NOT have them in the same order,
+ *          PLEASE post a report and donate this device to us.
  *
  * @param ei Enumeration information
  * @return 0 always
@@ -125,12 +131,13 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
         } else {
                 // master
                 MbAddress = ei->address;
+                bControlIface = ei->interface.bInterfaceNumber;
         }
         ACM_HOST_DEBUG("ACM: SLAVE %i\r\n", SbAddress);
         ACM_HOST_DEBUG("ACM: MASTER %i\r\n", MbAddress);
         // Fill in the endpoint info structure
         for(uint8_t ep = 0; ep < ei->interface.numep; ep++) {
-                if(ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_BULK) {
+                if((ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_BULK) && (ei->interface.klass == UHS_USB_CLASS_CDC_DATA)){
                         index = ((ei->interface.epInfo[ep].bEndpointAddress & USB_TRANSFER_DIRECTION_IN) == USB_TRANSFER_DIRECTION_IN) ? epDataInIndex : epDataOutIndex;
                         epInfo[index].epAddr = (ei->interface.epInfo[ep].bEndpointAddress & 0x0F);
                         epInfo[index].maxPktSize = (uint8_t)(ei->interface.epInfo[ep].wMaxPacketSize);
@@ -156,7 +163,15 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
 
         if(SbAddress && (SbAddress == MbAddress)) {
                 ACM_HOST_DEBUG("ACM: SLAVE and MASTER match!\r\n");
-                bControlIface = 0;
+                if(TEST_XR21B1411()) {
+                        adaptor = UHS_USB_ACM_XR21B1411;
+                } else if(TEST_ACM_FTDI()) {
+                        adaptor = UHS_USB_ACM_FTDI;
+                } else if(TEST_ACM_PROLIFIC()) {
+                        adaptor = UHS_USB_ACM_PROLIFIC;
+                } else {
+                        adaptor = UHS_USB_ACM_PLAIN;
+                }
                 //bDataIface = 1;
                 // Both interfaces have finally been set and match
                 bAddress = SbAddress;
@@ -186,6 +201,11 @@ uint8_t UHS_NI UHS_CDC_ACM::Start(void) {
                 rcode = OnStart();
                 if(!rcode) {
                         ACM_HOST_DEBUG("ACM: OnStart OK\r\n");
+                        half_duplex(false);
+                        autoflowRTS(false);
+                        autoflowDSR(false);
+                        autoflowXON(false);
+                        wide(false);
                         qNextPollTime = millis() + qPollRate;
                         bPollEnable = true;
                         ready = true;
@@ -200,6 +220,7 @@ uint8_t UHS_NI UHS_CDC_ACM::Start(void) {
 
 void UHS_NI UHS_CDC_ACM::Poll(void) {
         if((long)(millis() - qNextPollTime) >= 0L) {
+                OnPoll(); // Do user stuff...
                 qNextPollTime = millis() + qPollRate;
         }
 }

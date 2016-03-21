@@ -204,9 +204,6 @@ public:
                 return bAddress;
         };
 
-        bool Polling(void) {
-                return bPollEnable;
-        }
 
         void Poll(void);
 

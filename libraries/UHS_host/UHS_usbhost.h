@@ -305,7 +305,8 @@ public:
         volatile uint32_t qNextPollTime; // next poll time
 
         /**
-         * Resets interface driver to unused state
+         * Resets interface driver to unused state. You should override this in
+         * your driver if it requires extra class variable cleanup.
          */
         virtual void DriverDefaults(void) {
                 pUsb->DeviceDefaults(bNumEP, this);
@@ -323,6 +324,7 @@ public:
 
         /**
          * Configures any needed endpoint information for an interface.
+         * You must provide this in your driver.
          *
          * @param ei
          * @return zero on success
@@ -370,7 +372,8 @@ public:
         };
 
         /**
-         * Release resources when device is disconnected
+         * Release resources when device is disconnected.
+         * Normally this does not need to be overridden.
          */
         virtual void Release(void) {
                 OnRelease();
@@ -379,7 +382,9 @@ public:
         };
 
         /**
-         * Executed when there is an important change detected during polling.
+         * Executed After driver polls.
+         * Can be used when there is an important change detected during polling
+         * and you want to handle it elsewhere.
          * Examples:
          * Media status change for bulk, e.g. ready, not-ready, media changed, door opened.
          * Button state/joystick position/etc changes on a HID device.
@@ -390,11 +395,18 @@ public:
         };
 
         /**
-         * Poll interface driver
+         * Poll interface driver. You should override this in your driver if you
+         * require polling faster or slower than every 100 milliseconds, or your
+         * driver requires special housekeeping.
          */
         virtual void Poll() {
                 OnPoll();
+                qNextPollTime = millis() + 100;
         };
+
+        virtual bool UHS_NI Polling(void) {
+                return bPollEnable;
+        }
 
         /**
          * This is only for a hub.
@@ -422,6 +434,9 @@ public:
  * You can also add an instance of this class within the interface constructor
  * if you expect the interface.
  *
+ * If this is not needed, it may be removed. Nothing I have written needs this.
+ * Let me know if it is not required, then IsVSI method can also be shit-canned.
+ * -- AJK
  */
 
 class UHS_VSI: public UHS_USBInterface {

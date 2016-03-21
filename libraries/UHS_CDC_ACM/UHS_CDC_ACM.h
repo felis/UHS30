@@ -18,20 +18,6 @@ e-mail   :  support@circuitsathome.com
  */
 #if !defined(__UHS_CDC_ACM_H__)
 #define __UHS_CDC_ACM_H__
-#include <UHS_CDC.h>
-#if defined(LOAD_UHS_CDC_ACM_XR21B1411)
-#include "UHS_CDC_ACM/UHS_CDC_ACM_XR21B1411.h"
-#endif // XR21B1411 loaded
-#if defined(LOAD_UHS_CDC_ACM_FTDI)
-#include "UHS_CDC_ACM/UHS_CDC_ACM_FTDI.h"
-#endif // FTDI loaded
-#if defined(LOAD_UHS_CDC_ACM_PROLIFIC)
-#include "UHS_CDC_ACM/UHS_CDC_ACM_PROLIFIC.h"
-#endif // Prolific loaded
-
-//#if defined()
-
-
 
 #define ACM_MAX_ENDPOINTS 4
 
@@ -138,7 +124,10 @@ public:
         void Poll(void);
 
         virtual bool isReady() {
-                return ready;
+                pUsb->DisablePoll();
+                bool rv = ready;
+                pUsb->EnablePoll();
+                return rv;
         };
 
         virtual tty_features enhanced_status(void) {
@@ -148,11 +137,17 @@ public:
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411)
 
         uint8_t XR_read_register(uint16_t reg, uint16_t *val) {
-                return (pUsb->ctrlReq(bAddress, XR_READ_REQUEST_TYPE, 1, 0, 0, reg, 2, 2, (uint8_t *)val, NULL));
+                                pUsb->DisablePoll();
+                uint8_t rv= (pUsb->ctrlReq(bAddress, XR_READ_REQUEST_TYPE, 1, 0, 0, reg, 2, 2, (uint8_t *)val));
+                pUsb->EnablePoll();
+                return rv;
         }
 
         uint8_t XR_write_register(uint16_t reg, uint16_t val) {
-                return (pUsb->ctrlReq(bAddress, XR_WRITE_REQUEST_TYPE, 0, BGRAB0(val), BGRAB1(val), reg, 0, 0, NULL, NULL));
+                                pUsb->DisablePoll();
+                uint8_t rv= (pUsb->ctrlReq(bAddress, XR_WRITE_REQUEST_TYPE, 0, UHS_UINT8_BYTE0(val), UHS_UINT8_BYTE1(val), reg, 0, 0, NULL));
+                pUsb->EnablePoll();
+                return rv;
         }
 #endif
 
@@ -197,7 +192,7 @@ public:
                                         rval = XR_write_register(XR_REG_ACM_GPIO_MODE, XR_REG_GPIO_MODE_GPIO);
                                         if(!rval) {
                                                 // ACM commands apply the new settings.
-                                                LINE_CODING LCT;
+                                                UHS_CDC_LINE_CODING LCT;
                                                 rval = GetLineCoding(&LCT);
                                                 if(!rval) {
                                                         rval = SetLineCoding(&LCT);
@@ -236,7 +231,7 @@ public:
                                         }
                                         if(!rval) {
                                                 // ACM commands apply the new settings.
-                                                LINE_CODING LCT;
+                                                UHS_CDC_LINE_CODING LCT;
                                                 rval = GetLineCoding(&LCT);
                                                 if(!rval) {
                                                         rval = SetLineCoding(&LCT);
@@ -272,7 +267,7 @@ public:
                                         rval = XR_write_register(XR_REG_ACM_GPIO_MODE, XR_REG_GPIO_MODE_GPIO);
                                         if(!rval) {
                                                 // ACM commands apply the new settings.
-                                                LINE_CODING LCT;
+                                                UHS_CDC_LINE_CODING LCT;
                                                 rval = GetLineCoding(&LCT);
                                                 if(!rval) {
                                                         rval = SetLineCoding(&LCT);
@@ -304,7 +299,7 @@ public:
                                 rval = XR_write_register(XR_REG_ACM_FLOW_CTL, val);
                                 if(!rval) {
                                         // ACM commands apply the new settings.
-                                        LINE_CODING LCT;
+                                        UHS_CDC_LINE_CODING LCT;
                                         rval = GetLineCoding(&LCT);
                                         if(!rval) {
                                                 rval = SetLineCoding(&LCT);

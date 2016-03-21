@@ -152,9 +152,6 @@ typedef struct {
         };
 } UHS_CDC_tty_features;
 
-#if defined(LOAD_UHS_CDC_ACM) && !defined(UHS_CDC_ACM_LOADED)
-#include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
-#endif // CDC_ACM loaded
 #if defined(LOAD_UHS_CDC_ACM_FTDI) && !defined(UHS_CDC_ACM_FTDI_LOADED)
 #include "../UHS_CDC_ACM/UHS_CDC_ACM_FTDI.h"
 #endif // CDC_ACM_FTDI loaded
@@ -164,5 +161,8 @@ typedef struct {
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411) && !defined(UHS_CDC_ACM_XR21B1411_LOADED)
 #include "../UHS_CDC_ACM/UHS_CDC_ACM_XR21B1411.h"
 #endif // CDC_ACM_XR21B1411 loaded
+#if defined(LOAD_UHS_CDC_ACM) && !defined(UHS_CDC_ACM_LOADED)
+#include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
+#endif // CDC_ACM loaded
 
 #endif // __UHS_CDC_H__
