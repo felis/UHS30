@@ -211,7 +211,7 @@ void loop() {
                                 printf_P(PSTR("\r\nReset complete. Waiting for the first SOF..."));
                                 break;
                         case( UHS_USB_HOST_STATE_ERROR ):
-                                printf_P(PSTR("\r\nUSB state machine reached error state"));
+                                printf_P(PSTR("\r\nUSB Device detected.\r\nPerforming a bus reset... "));
                                 UHS_Usb.doSoftReset(0, 0, 0);
                                 p = UHS_Usb.addrPool.GetUsbDevicePtr(0);
                                 if(p) {
@@ -219,7 +219,7 @@ void loop() {
                                         dtp = 0;
                                 }
                         // fall thru
-                        case( UHS_USB_HOST_STATE_RUNNING ):
+                        //case( UHS_USB_HOST_STATE_RUNNING ):
                                 if(!p) {
                                         UHS_Usb.doSoftReset(0, 0, 1);
                                         p = UHS_Usb.addrPool.GetUsbDevicePtr(1);
@@ -245,20 +245,20 @@ void loop() {
                                         }
                                 } else {
                                         /**/
-                                        printf_P(PSTR("\r\nDescriptor Length:\t0x%2.2x"),buf.bLength);
+                                        printf_P(PSTR("\r\n\r\nDescriptor Length:\t0x%2.2x"),buf.bLength);
                                         printf_P(PSTR("\r\nDescriptor type:\t0x%2.2x"),buf.bDescriptorType);
-                                        printf_P(PSTR("\r\nUSB version:\t\t0x%4.4x"),buf.bcdUSB);
-                                        printf_P(PSTR("\r\nDevice class:\t\t0x%2.2x"),buf.bDeviceClass);
+                                        printf_P(PSTR("\r\nUSB version:\t0x%4.4x"),buf.bcdUSB);
+                                        printf_P(PSTR("\r\nDevice class:\t0x%2.2x"),buf.bDeviceClass);
                                         printf_P(PSTR("\r\nDevice Subclass:\t0x%2.2x"),buf.bDeviceSubClass);
                                         printf_P(PSTR("\r\nDevice Protocol:\t0x%2.2x"),buf.bDeviceProtocol);
                                         printf_P(PSTR("\r\nMax.packet size:\t0x%2.2x"),buf.bMaxPacketSize0);
-                                        printf_P(PSTR("\r\nVendor  ID:\t\t0x%4.4x"),buf.idVendor);
-                                        printf_P(PSTR("\r\nProduct ID:\t\t0x%4.4x"),buf.idProduct);
-                                        printf_P(PSTR("\r\nRevision ID:\t\t0x%4.4x"),buf.bcdDevice);
+                                        printf_P(PSTR("\r\nVendor  ID:\t0x%4.4x"),buf.idVendor);
+                                        printf_P(PSTR("\r\nProduct ID:\t0x%4.4x"),buf.idProduct);
+                                        printf_P(PSTR("\r\nRevision ID:\t0x%4.4x"),buf.bcdDevice);
                                         printf_P(PSTR("\r\nMfg.string index:\t0x%2.2x"),buf.iManufacturer);
                                         printf_P(PSTR("\r\nProd.string index:\t0x%2.2x"),buf.iProduct);
                                         printf_P(PSTR("\r\nSerial number index:\t0x%2.2x"),buf.iSerialNumber);
-                                        printf_P(PSTR("\r\nNumber of conf.:\t0x%2.2x"),buf.bNumConfigurations);
+                                        printf_P(PSTR("\r\nNumber of conf.:\t0x%2.2x\r\n\r\n"),buf.bNumConfigurations);
                                         /**/
                                         printf_P(PSTR("\r\n\nAll tests passed. Press RESET to restart test"));
                                 }
