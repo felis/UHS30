@@ -19,8 +19,6 @@ e-mail   :  support@circuitsathome.com
 #if !defined(__CDCPROLIFIC_H__)
 #define __CDCPROLIFIC_H__
 
-#include "cdcacm.h"
-
 #define PROLIFIC_REV_H                          (0x0202U)
 #define PROLIFIC_REV_X                          (0x0300U)
 #define PROLIFIC_REV_HX_CHIP_D                  (0x0400U)
