@@ -61,15 +61,8 @@ static void UHS_NI call_ISRodd(void) {
 void UHS_NI MAX3421E_HOST::regWr(uint8_t reg, uint8_t data) {
         SPI.beginTransaction(MAX3421E_SPI_Settings);
         UHS_PIN_WRITE(ss_pin, LOW);
-#if USING_SPI4TEENSY3
-        uint8_t c[2];
-        c[0] = reg | 0x02;
-        c[1] = data;
-        spi4teensy3::send(c, 2);
-#else
         SPI.transfer(reg | 0x02);
         SPI.transfer(data);
-#endif
         UHS_PIN_WRITE(ss_pin, HIGH);
         SPI.endTransaction();
 }
@@ -81,18 +74,12 @@ void UHS_NI MAX3421E_HOST::regWr(uint8_t reg, uint8_t data) {
 uint8_t* UHS_NI MAX3421E_HOST::bytesWr(uint8_t reg, uint8_t nbytes, uint8_t* data_p) {
         SPI.beginTransaction(MAX3421E_SPI_Settings);
         UHS_PIN_WRITE(ss_pin, LOW);
-#if USING_SPI4TEENSY3
-        spi4teensy3::send(reg | 0x02);
-        spi4teensy3::send(data_p, nbytes);
-        data_p += nbytes;
-#else
         SPI.transfer(reg | 0x02);
         while(nbytes) {
                 SPI.transfer(*data_p);
                 nbytes--;
                 data_p++; // advance data pointer
         }
-#endif
         UHS_PIN_WRITE(ss_pin, HIGH);
         SPI.endTransaction();
         return (data_p);
@@ -112,13 +99,8 @@ void UHS_NI MAX3421E_HOST::gpioWr(uint8_t data) {
 uint8_t UHS_NI MAX3421E_HOST::regRd(uint8_t reg) {
         SPI.beginTransaction(MAX3421E_SPI_Settings);
         UHS_PIN_WRITE(ss_pin, LOW);
-#if USING_SPI4TEENSY3
-        spi4teensy3::send(reg);
-        uint8_t rv = spi4teensy3::receive();
-#else
         SPI.transfer(reg);
         uint8_t rv = SPI.transfer(0);
-#endif
         UHS_PIN_WRITE(ss_pin, HIGH);
         SPI.endTransaction();
         return (rv);
@@ -129,17 +111,11 @@ uint8_t UHS_NI MAX3421E_HOST::regRd(uint8_t reg) {
 uint8_t* UHS_NI MAX3421E_HOST::bytesRd(uint8_t reg, uint8_t nbytes, uint8_t* data_p) {
         SPI.beginTransaction(MAX3421E_SPI_Settings);
         UHS_PIN_WRITE(ss_pin, LOW);
-#if USING_SPI4TEENSY3
-        spi4teensy3::send(reg);
-        spi4teensy3::receive(data_p, nbytes);
-        data_p += nbytes;
-#else
         SPI.transfer(reg);
         while(nbytes) {
                 *data_p++ = SPI.transfer(0);
                 nbytes--;
         }
-#endif
         UHS_PIN_WRITE(ss_pin, HIGH);
         SPI.endTransaction();
         return ( data_p);
@@ -273,14 +249,7 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         pinMode(55, OUTPUT);
         UHS_PIN_WRITE(55, HIGH);
 #endif
-#if USING_SPI4TEENSY3
-        // spi4teensy3 inits everything for us, except /SS
-        // CLK, MOSI and MISO are hard coded for now.
-        // spi4teensy3::init(0,0,0); // full speed, cpol 0, cpha 0
-        spi4teensy3::init(); // full speed, cpol 0, cpha 0
-#else
         SPI.begin();
-#endif
         pinMode(irq_pin, INPUT_PULLUP);
         //UHS_PIN_WRITE(irq_pin, HIGH);
         pinMode(ss_pin, OUTPUT);

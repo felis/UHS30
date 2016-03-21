@@ -37,17 +37,6 @@ e-mail   :  support@circuitsathome.com
 
 #endif
 
-// This most likely is broken.
-#if USING_SPI4TEENSY3
-#include <spi4teensy3.h>
-#include <sys/types.h>
-#endif
-
-#if !defined(XMEM_SOFT_CLI)
-#define XMEM_SOFT_CLI() VOID0
-#define XMEM_SOFT_SEI() VOID0
-#endif
-
 #if !defined(USB_HOST_SHIELD_USE_ISR)
 #if defined(USE_MULTIPLE_APP_API)
 #define USB_HOST_SHIELD_USE_ISR 0
@@ -346,9 +335,6 @@ public:
                 while(busevent) {
 
 #if !USB_HOST_SHIELD_USE_ISR
-#if defined(USE_MULTIPLE_APP_API)
-                        xmem::Yield();
-#endif
                         Task();
 #endif
                 }
@@ -360,10 +346,6 @@ public:
                 while(sofevent) {
 
 #if !USB_HOST_SHIELD_USE_ISR
-
-#if defined(USE_MULTIPLE_APP_API)
-                        xmem::Yield();
-#endif
                         Task();
 #endif
                 }

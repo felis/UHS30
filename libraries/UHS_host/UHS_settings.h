@@ -134,12 +134,6 @@ e-mail   :  support@circuitsathome.com
 
 #define UHS_SLEEP_MS(v) pUsb->sof_delay(v)
 
-//#if defined(TEENSYDUINO) && defined(__arm__)
-//#define USING_SPI4TEENSY3 USE_SPI4TEENSY3
-//#else
-#define USING_SPI4TEENSY3 0
-//#endif
-
 #ifndef UHS_NI
 #define UHS_NI __attribute__((noinline))
 #endif
