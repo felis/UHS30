@@ -326,7 +326,7 @@ again:
                         uint16_t inf = 0;
                         uint8_t data[ei.bMaxPacketSize0];
                         UHS_EpInfo *pep;
-                        pep = ctrlReqOpen(ei.address, UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, ei.currentconfig, USB_DESCRIPTOR_CONFIGURATION, 0x0000, ucd->wTotalLength, data);
+                        pep = ctrlReqOpen(ei.address, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, ei.currentconfig, USB_DESCRIPTOR_CONFIGURATION, 0x0000U, ucd->wTotalLength), data);
                         if(!pep) {
                                 rcode = UHS_HOST_ERROR_NULL_EPINFO;
                                 continue;
@@ -385,7 +385,7 @@ again:
                         uint16_t inf = 0;
                         uint8_t data[ei.bMaxPacketSize0];
                         UHS_EpInfo *pep;
-                        pep = ctrlReqOpen(ei.address, UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, ei.currentconfig - 1, USB_DESCRIPTOR_CONFIGURATION, 0x0000, ucd->wTotalLength, data);
+                        pep = ctrlReqOpen(ei.address, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, ei.currentconfig - 1, USB_DESCRIPTOR_CONFIGURATION, 0x0000U, ucd->wTotalLength), data);
                         if(!pep) {
                                 rcode = UHS_HOST_ERROR_NULL_EPINFO;
 
@@ -495,11 +495,11 @@ void UHS_USB_HOST_BASE::ReleaseDevice(uint8_t addr) {
  * @return status of the request, zero is success.
  */
 uint8_t UHS_USB_HOST_BASE::getDevDescr(uint8_t addr, uint16_t nbytes, uint8_t* dataptr) {
-        return ( ctrlReq(addr, UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, 0x00, USB_DESCRIPTOR_DEVICE, 0x0000, nbytes, nbytes, dataptr));
+        return ( ctrlReq(addr, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, 0x00, USB_DESCRIPTOR_DEVICE, 0x0000, nbytes), nbytes, dataptr));
 }
 
 uint8_t UHS_USB_HOST_BASE::getConfDescr(uint8_t addr, uint16_t nbytes, uint8_t conf, uint8_t* dataptr) {
-        return ( ctrlReq(addr, UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, conf, USB_DESCRIPTOR_CONFIGURATION, 0x0000, nbytes, nbytes, dataptr));
+        return ( ctrlReq(addr, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, conf, USB_DESCRIPTOR_CONFIGURATION, 0x0000, nbytes), nbytes, dataptr));
 }
 
 /**
@@ -513,7 +513,7 @@ uint8_t UHS_USB_HOST_BASE::getConfDescr(uint8_t addr, uint16_t nbytes, uint8_t c
  * @return status of the request, zero is success.
  */
 uint8_t UHS_USB_HOST_BASE::getStrDescr(uint8_t addr, uint16_t ns, uint8_t index, uint16_t langid, uint8_t* dataptr) {
-        return ( ctrlReq(addr, UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, index, USB_DESCRIPTOR_STRING, langid, ns, ns, dataptr));
+        return ( ctrlReq(addr, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, index, USB_DESCRIPTOR_STRING, langid, ns), ns, dataptr));
 }
 
 //
@@ -528,7 +528,7 @@ uint8_t UHS_USB_HOST_BASE::getStrDescr(uint8_t addr, uint16_t ns, uint8_t index,
  * @return status of the request, zero is success.
  */
 uint8_t UHS_USB_HOST_BASE::setAddr(uint8_t oldaddr, uint8_t newaddr) {
-        uint8_t rcode = ctrlReq(oldaddr, UHS_bmREQ_SET, USB_REQUEST_SET_ADDRESS, newaddr, 0x00, 0x0000, 0x0000, 0x0000, NULL);
+        uint8_t rcode = ctrlReq(oldaddr,  mkSETUP_PKT8(UHS_bmREQ_SET, USB_REQUEST_SET_ADDRESS, newaddr, 0x00, 0x0000, 0x0000), 0x0000, NULL);
         sof_delay(300); // Older spec says you should wait at least 200ms
         return rcode;
 }
@@ -545,7 +545,7 @@ uint8_t UHS_USB_HOST_BASE::setAddr(uint8_t oldaddr, uint8_t newaddr) {
  * @return status of the request, zero is success.
  */
 uint8_t UHS_USB_HOST_BASE::setConf(uint8_t addr, uint8_t conf_value) {
-        return ( ctrlReq(addr, UHS_bmREQ_SET, USB_REQUEST_SET_CONFIGURATION, conf_value, 0x00, 0x0000, 0x0000, 0x0000, NULL));
+        return ( ctrlReq(addr, mkSETUP_PKT8(UHS_bmREQ_SET, USB_REQUEST_SET_CONFIGURATION, conf_value, 0x00, 0x0000, 0x0000), 0x0000, NULL));
 }
 
 /* rcode 0 if no errors. rcode 01-0f is relayed from HRSL                       */
@@ -689,8 +689,8 @@ uint8_t UHS_USB_HOST_BASE::seekInterface(ENUMERATION_INFO *ei, uint16_t inf, USB
         if(!ei || !ucd) return UHS_HOST_ERROR_BAD_ARGUMENT;
         uint8_t data[ei->bMaxPacketSize0];
         UHS_EpInfo *pep;
-        pep = ctrlReqOpen(ei->address, UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, ei->currentconfig,
-                USB_DESCRIPTOR_CONFIGURATION, 0x0000, ucd->wTotalLength, data);
+        pep = ctrlReqOpen(ei->address, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, ei->currentconfig,
+                USB_DESCRIPTOR_CONFIGURATION, 0x0000U, ucd->wTotalLength), data);
         if(!pep) return UHS_HOST_ERROR_NULL_EPINFO;
         uint16_t left = ucd->wTotalLength;
         uint8_t cinf = 0;
@@ -816,24 +816,24 @@ uint8_t UHS_USB_HOST_BASE::eat(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, 
         return rcode;
 }
 
-uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint8_t bmReqType, uint8_t bRequest, uint8_t wValLo, uint8_t wValHi,
-        uint16_t wInd, uint16_t total, uint16_t nbytes, uint8_t* dataptr) {
+uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbytes, uint8_t* dataptr) {
         //bool direction = bmReqType & 0x80; //request direction, IN or OUT
         uint8_t rcode = 0;
 
         //        Serial.println("");
-        UHS_EpInfo *pep = ctrlReqOpen(addr, bmReqType, bRequest, wValLo, wValHi, wInd, total, dataptr);
+        UHS_EpInfo *pep = ctrlReqOpen(addr, Request, dataptr);
         if(!pep) {
                 //                Serial.println("No pep");
                 return UHS_HOST_ERROR_NULL_EPINFO;
         }
+        uint8_t rt = (uint8_t)(Request &0xFFU);
+
         //        Serial.println("Opened");
-        uint16_t left = total;
+        uint16_t left = (uint16_t)(Request >>48) /*total*/;
         if(dataptr != NULL) //data stage, if present
         {
-                if((bmReqType & 0x80) == 0x80) //IN transfer
+                if((rt & 0x80) == 0x80) //IN transfer
                 {
-
                         while(left) {
                                 // Bytes read into buffer
                                 uint16_t read = nbytes;
@@ -859,13 +859,13 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint8_t bmReqType, uint8_t bReq
         //        Serial.println("Close Phase");
         //        Serial.flush();
         // Status stage
-        rcode = ctrlReqClose(pep, bmReqType, left, nbytes, dataptr);
+        rcode = ctrlReqClose(pep, rt, left, nbytes, dataptr);
         //        Serial.println("Closed");
         return rcode;
 }
 
 uint8_t UHS_USB_HOST_BASE::EPClearHalt(uint8_t addr, uint8_t ep) {
-        return ctrlReq(addr, USB_SETUP_HOST_TO_DEVICE | USB_SETUP_TYPE_STANDARD | USB_SETUP_RECIPIENT_ENDPOINT, USB_REQUEST_CLEAR_FEATURE, USB_FEATURE_ENDPOINT_HALT, 0, ep, 0, 0, NULL);
+        return ctrlReq(addr, mkSETUP_PKT8(USB_SETUP_HOST_TO_DEVICE | USB_SETUP_TYPE_STANDARD | USB_SETUP_RECIPIENT_ENDPOINT, USB_REQUEST_CLEAR_FEATURE, USB_FEATURE_ENDPOINT_HALT, 0, ep, 0), 0, NULL);
 }
 
 uint8_t UHS_USB_HOST_BASE::TestInterface(ENUMERATION_INFO *ei) {

@@ -136,7 +136,7 @@ public:
                 return (current_state == usb_task_state);
         };
 
-        virtual UHS_EpInfo * UHS_NI ctrlReqOpen(NOTUSED(uint8_t addr), NOTUSED(uint8_t bmReqType), NOTUSED(uint8_t bRequest), NOTUSED(uint8_t wValLo), NOTUSED(uint8_t wValHi), NOTUSED(uint16_t wInd), NOTUSED(uint16_t total), NOTUSED(uint8_t* dataptr)) {
+        virtual UHS_EpInfo * UHS_NI ctrlReqOpen(NOTUSED(uint8_t addr), NOTUSED(uint64_t Request), NOTUSED(uint8_t* dataptr)) {
                 return NULL;
         };
 
@@ -231,7 +231,7 @@ public:
 
         uint8_t UHS_NI EPClearHalt(uint8_t addr, uint8_t ep);
 
-        uint8_t UHS_NI ctrlReq(uint8_t addr, uint8_t bmReqType, uint8_t bRequest, uint8_t wValLo, uint8_t wValHi, uint16_t wInd, uint16_t total, uint16_t nbytes, uint8_t* dataptr);
+        uint8_t UHS_NI ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbytes, uint8_t* dataptr);
 
         uint8_t UHS_NI getDevDescr(uint8_t addr, uint16_t nbytes, uint8_t* dataptr);
 

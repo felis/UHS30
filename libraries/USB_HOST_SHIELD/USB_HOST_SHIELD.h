@@ -296,7 +296,7 @@ public:
                 return (!condet);
         };
 
-        virtual UHS_EpInfo *ctrlReqOpen(uint8_t addr, uint8_t bmReqType, uint8_t bRequest, uint8_t wValLo, uint8_t wValHi, uint16_t wInd, uint16_t total, uint8_t* dataptr);
+        virtual UHS_EpInfo *ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t* dataptr);
 
         virtual void UHS_NI vbusPower(VBUS_t state) {
                 regWr(rPINCTL, (bmFDUPSPI | bmIRQ_SENSE) | (uint8_t)(state));

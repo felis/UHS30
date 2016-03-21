@@ -191,42 +191,37 @@ public:
 // Clear Hub Feature
 
 inline uint8_t UHS_USBHub::ClearHubFeature(uint8_t fid) {
-        return ( pUsb->ctrlReq(bAddress, UHS_HUB_bmREQ_CLEAR_HUB_FEATURE, USB_REQUEST_CLEAR_FEATURE, fid, 0, 0, 0, 0, NULL));
+        return ( pUsb->ctrlReq(bAddress, mkSETUP_PKT8(UHS_HUB_bmREQ_CLEAR_HUB_FEATURE, USB_REQUEST_CLEAR_FEATURE, fid, 0, 0, 0), 0, NULL));
 }
 // Clear Port Feature
 
 inline uint8_t UHS_USBHub::ClearPortFeature(uint8_t fid, uint8_t port, uint8_t sel) {
-        return ( pUsb->ctrlReq(bAddress, UHS_HUB_bmREQ_CLEAR_PORT_FEATURE, USB_REQUEST_CLEAR_FEATURE, fid, 0, ((0x0000 | port) | (sel << 8)), 0, 0, NULL));
+        return ( pUsb->ctrlReq(bAddress, mkSETUP_PKT8(UHS_HUB_bmREQ_CLEAR_PORT_FEATURE, USB_REQUEST_CLEAR_FEATURE, fid, 0, ((0x0000 | port) | (sel << 8)), 0), 0, NULL));
 }
 // Get Hub Descriptor
 
 inline uint8_t UHS_USBHub::GetHubDescriptor(uint8_t index, uint16_t nbytes, uint8_t *dataptr) {
-        return ( pUsb->ctrlReq(bAddress, UHS_HUB_bmREQ_GET_HUB_DESCRIPTOR, USB_REQUEST_GET_DESCRIPTOR, index, 0x29, 0, nbytes, nbytes, dataptr));
+        return ( pUsb->ctrlReq(bAddress, mkSETUP_PKT8(UHS_HUB_bmREQ_GET_HUB_DESCRIPTOR, USB_REQUEST_GET_DESCRIPTOR, index, 0x29U, 0, nbytes), nbytes, dataptr));
 }
 // Get Hub Status
 
 inline uint8_t UHS_USBHub::GetHubStatus(uint16_t nbytes, uint8_t* dataptr) {
-        return ( pUsb->ctrlReq(bAddress, UHS_HUB_bmREQ_GET_HUB_STATUS, USB_REQUEST_GET_STATUS, 0, 0, 0x0000, nbytes, nbytes, dataptr));
+        return ( pUsb->ctrlReq(bAddress, mkSETUP_PKT16(UHS_HUB_bmREQ_GET_HUB_STATUS, USB_REQUEST_GET_STATUS, 0x0000U, 0, nbytes), nbytes, dataptr));
 }
 // Get Port Status
 
 inline uint8_t UHS_USBHub::GetPortStatus(uint8_t port, uint16_t nbytes, uint8_t* dataptr) {
-        return ( pUsb->ctrlReq(bAddress, UHS_HUB_bmREQ_GET_PORT_STATUS, USB_REQUEST_GET_STATUS, 0, 0, port, nbytes, nbytes, dataptr));
+        return ( pUsb->ctrlReq(bAddress, mkSETUP_PKT16(UHS_HUB_bmREQ_GET_PORT_STATUS, USB_REQUEST_GET_STATUS, 0x0000U, port, nbytes), nbytes, dataptr));
 }
 
-// Set Hub Descriptor
-//inline uint8_t UHS_USBHub::SetHubDescriptor(uint8_t port, uint16_t nbytes, uint8_t* dataptr) {
-//        return ( pUsb->ctrlReq(bAddress, UHS_HUB_bmREQ_SET_DESCRIPTOR, USB_REQUEST_SET_DESCRIPTOR, 0, 0, port, nbytes, nbytes, dataptr));
-//}
 // Set Hub Feature
-
 inline uint8_t UHS_USBHub::SetHubFeature(uint8_t fid) {
-        return ( pUsb->ctrlReq(bAddress, UHS_HUB_bmREQ_SET_FEATURE, USB_REQUEST_SET_FEATURE, fid, 0, 0, 0, 0, NULL));
+        return ( pUsb->ctrlReq(bAddress, mkSETUP_PKT8(UHS_HUB_bmREQ_SET_FEATURE, USB_REQUEST_SET_FEATURE, fid, 0, 0, 0), 0, NULL));
 }
 // Set Port Feature
 
 inline uint8_t UHS_USBHub::SetPortFeature(uint8_t fid, uint8_t port, uint8_t sel) {
-        return ( pUsb->ctrlReq(bAddress, UHS_HUB_bmREQ_SET_PORT_FEATURE, USB_REQUEST_SET_FEATURE, fid, 0, (((0x0000 | sel) << 8) | port), 0, 0, NULL));
+        return ( pUsb->ctrlReq(bAddress, mkSETUP_PKT8(UHS_HUB_bmREQ_SET_PORT_FEATURE, USB_REQUEST_SET_FEATURE, fid, 0, (((0x0000U | sel) << 8) | port), 0), 0, NULL));
 }
 
 void UHS_NI PrintHubPortStatus(UHS_USB_HOST_BASE *usbptr, uint8_t addr, uint8_t port, bool print_changes = false);

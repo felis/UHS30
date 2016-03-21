@@ -714,16 +714,14 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_lim
  * @param dataptr pointer to data buffer
  * @return NULL pointer on fail, pointer to a valid UHS_EpInfo structure on success
  */
-UHS_EpInfo * UHS_NI UHS_KINETIS_FS_HOST::ctrlReqOpen(uint8_t addr, uint8_t bmReqType, uint8_t bRequest, uint8_t wValLo, uint8_t wValHi, uint16_t wInd, uint16_t total, uint8_t * dataptr) {
-
+UHS_EpInfo * UHS_NI UHS_KINETIS_FS_HOST::ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr) {
         //serial_print("setup phase\n");
 
         uint8_t rcode;
-        SETUP_PKT setup_pkt;
 
         UHS_EpInfo *pep = NULL;
         uint16_t nak_limit = 0;
-        HOST_DUBUG("ctrlReqOpen: addr: 0x%2.2x bmReqType: 0x%2.2x bRequest: 0x%2.2x\r\nctrlReqOpen: wValLo: 0x%2.2x  wValHi: 0x%2.2x wInd: 0x%4.4x total: 0x%4.4x dataptr: %p\r\n", addr, bmReqType, bRequest, wValLo, wValHi, wInd, total, dataptr);
+        //HOST_DUBUG("ctrlReqOpen: addr: 0x%2.2x bmReqType: 0x%2.2x bRequest: 0x%2.2x\r\nctrlReqOpen: wValLo: 0x%2.2x  wValHi: 0x%2.2x wInd: 0x%4.4x total: 0x%4.4x dataptr: %p\r\n", addr, bmReqType, bRequest, wValLo, wValHi, wInd, total, dataptr);
         rcode = SetAddress(addr, 0, &pep, nak_limit);
 
         if(!rcode) {
@@ -731,36 +729,28 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_FS_HOST::ctrlReqOpen(uint8_t addr, uint8_t bmReq
                 // const uint8_t *data = NULL;
                 uint32_t datalen = 0;
 
-                setup_pkt.ReqType_u.bmRequestType = bmReqType;
-                setup_pkt.bRequest = bRequest;
-                setup_pkt.wVal_u.wValueLo = wValLo;
-                setup_pkt.wVal_u.wValueHi = wValHi;
-                setup_pkt.wIndex = wInd;
-                setup_pkt.wLength = total;
-
-
                 datalen = 8;
                 //data = setup_command_buffer;
                 ep0_tx_data_toggle = UHS_KINETIS_DATA0; // setup always uses DATA0
-                endpoint0_transmit(&setup_pkt, datalen); // setup internal buffer
+                endpoint0_transmit(&Request, datalen); // setup internal buffer
 
                 rcode = dispatchPkt(UHS_KINETIS_TOKEN_SETUP, 0, nak_limit); //dispatch packet
 
                 if(!rcode) {
                         if(dataptr != NULL) {
                                 // data phase begins with DATA1 after setup
-                                if((bmReqType & 0x80) == 0x80) {
+                                if(((Request) /* bmReqType */ & 0x80) == 0x80) {
                                         pep->bmRcvToggle = UHS_KINETIS_DATA1; //bmRCVTOG1;
                                 } else {
                                         pep->bmSndToggle = UHS_KINETIS_DATA1; //bmSNDTOG1;
                                 }
                         }
                 } else {
-                        USBTRACE(">>>>>>>>>>>> dispatchPkt Failed <<<<<<<<<<<<<< \r\n");
-                        USBTRACE2("rcode: ", rcode);
-                        USBTRACE2(", bmReqType: ", bmReqType);
-                        USBTRACE2(", bRequest: ", bRequest);
-                        USBTRACE(">>>>>>>>>>>> dispatchPkt Failed <<<<<<<<<<<<<< \r\n");
+                        // USBTRACE(">>>>>>>>>>>> dispatchPkt Failed <<<<<<<<<<<<<< \r\n");
+                        // USBTRACE2("rcode: ", rcode);
+                        // USBTRACE2(", bmReqType: ", bmReqType);
+                        // USBTRACE2(", bRequest: ", bRequest);
+                        // USBTRACE(">>>>>>>>>>>> dispatchPkt Failed <<<<<<<<<<<<<< \r\n");
                         pep = NULL;
                 }
         }

@@ -7,6 +7,8 @@
 #define LOAD_UHS_KINETIS_FS_HOST
 // Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
+// Load Bulk storage
+#define LOAD_UHS_BULK_STORAGE
 
 
 #include <Arduino.h>

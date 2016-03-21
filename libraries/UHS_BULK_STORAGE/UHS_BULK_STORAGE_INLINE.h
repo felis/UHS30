@@ -639,7 +639,7 @@ void UHS_NI UHS_Bulk_Storage::Poll(void) {
  */
 uint8_t UHS_NI UHS_Bulk_Storage::GetMaxLUN(uint8_t *plun) {
         if(!bAddress) return UHS_BULK_ERR_DEVICE_DISCONNECTED;
-        uint8_t ret = pUsb->ctrlReq(bAddress, UHS_BULK_bmREQ_IN, UHS_BULK_REQ_GET_MAX_LUN, 0, 0, bIface, 1, 1, plun);
+        uint8_t ret = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(UHS_BULK_bmREQ_IN, UHS_BULK_REQ_GET_MAX_LUN, 0x0000U, bIface, 1), 1, plun);
 
         if(ret == UHS_HOST_ERROR_STALL) {
 
@@ -828,7 +828,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::ClearEpHalt(uint8_t index) {
 void UHS_NI UHS_Bulk_Storage::Reset(void) {
         if(!bAddress) return;
 
-        while(pUsb->ctrlReq(bAddress, UHS_BULK_bmREQ_OUT, UHS_BULK_REQ_BOMSR, 0, 0, bIface, 0, 0, NULL) == 0x01) {
+        while(pUsb->ctrlReq(bAddress, mkSETUP_PKT16(UHS_BULK_bmREQ_OUT, UHS_BULK_REQ_BOMSR, 0x0000U, bIface, 0), 0, NULL) == 0x01) {
                 if(!UHS_SLEEP_MS(6)) break;
         }
 

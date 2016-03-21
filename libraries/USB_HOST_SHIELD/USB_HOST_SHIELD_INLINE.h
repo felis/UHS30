@@ -75,13 +75,17 @@ uint8_t* UHS_NI MAX3421E_HOST::bytesWr(uint8_t reg, uint8_t nbytes, uint8_t* dat
         SPI.beginTransaction(MAX3421E_SPI_Settings);
         UHS_PIN_WRITE(ss_pin, LOW);
         SPI.transfer(reg | 0x02);
+        //printf("%2.2x :", reg);
+
         while(nbytes) {
                 SPI.transfer(*data_p);
+                //printf("%2.2x ", *data_p);
                 nbytes--;
                 data_p++; // advance data pointer
         }
         UHS_PIN_WRITE(ss_pin, HIGH);
         SPI.endTransaction();
+        //printf("\r\n");
         return (data_p);
 }
 /* GPIO write                                           */
@@ -582,31 +586,21 @@ uint8_t UHS_NI MAX3421E_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint16_t na
 // NULL is error, we don't need to know the reason.
 //
 
-UHS_EpInfo * UHS_NI MAX3421E_HOST::ctrlReqOpen(uint8_t addr, uint8_t bmReqType, uint8_t bRequest,
-        uint8_t wValLo, uint8_t wValHi, uint16_t wInd, uint16_t total, uint8_t *dataptr) {
+UHS_EpInfo * UHS_NI MAX3421E_HOST::ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr) {
         uint8_t rcode;
-        SETUP_PKT setup_pkt;
-
         UHS_EpInfo *pep = NULL;
         uint16_t nak_limit = 0;
-        MAX_HOST_DEBUG("ctrlReqOpen: addr: 0x%2.2x bmReqType: 0x%2.2x bRequest: 0x%2.2x\r\nctrlReqOpen: wValLo: 0x%2.2x  wValHi: 0x%2.2x wInd: 0x%4.4x total: 0x%4.4x dataptr: 0x%4.4p\r\n", addr, bmReqType, bRequest, wValLo, wValHi, wInd, total, dataptr);
+        // MAX_HOST_DEBUG("ctrlReqOpen: addr: 0x%2.2x bmReqType: 0x%2.2x bRequest: 0x%2.2x\r\nctrlReqOpen: wValLo: 0x%2.2x  wValHi: 0x%2.2x wInd: 0x%4.4x total: 0x%4.4x dataptr: 0x%4.4p\r\n", addr, bmReqType, bRequest, wValLo, wValHi, wInd, total, dataptr);
         rcode = SetAddress(addr, 0, &pep, nak_limit);
 
         if(!rcode) {
-                /* fill in setup packet */
-                setup_pkt.ReqType_u.bmRequestType = bmReqType;
-                setup_pkt.bRequest = bRequest;
-                setup_pkt.wVal_u.wValueLo = wValLo;
-                setup_pkt.wVal_u.wValueHi = wValHi;
-                setup_pkt.wIndex = wInd;
-                setup_pkt.wLength = total;
 
-                bytesWr(rSUDFIFO, 8, (uint8_t*)(&setup_pkt)); //transfer to setup packet FIFO
+                bytesWr(rSUDFIFO, 8, (uint8_t*)(&Request)); //transfer to setup packet FIFO
 
                 rcode = dispatchPkt(MAX3421E_tokSETUP, 0, nak_limit); //dispatch packet
                 if(!rcode) {
                         if(dataptr != NULL) {
-                                if((bmReqType & 0x80) == 0x80) {
+                                if(((Request)/* bmReqType*/ & 0x80) == 0x80) {
                                         pep->bmRcvToggle = 1; //bmRCVTOG1;
                                 } else {
                                         pep->bmSndToggle = 1; //bmSNDTOG1;

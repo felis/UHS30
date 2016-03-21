@@ -140,14 +140,14 @@ public:
 
         uint8_t XR_read_register(uint16_t reg, uint16_t *val) {
                                 pUsb->DisablePoll();
-                uint8_t rv= (pUsb->ctrlReq(bAddress, XR_READ_REQUEST_TYPE, 1, 0, 0, reg, 2, 2, (uint8_t *)val));
+                uint8_t rv= (pUsb->ctrlReq(bAddress, mkSETUP_PKT16(XR_READ_REQUEST_TYPE, 1, 0x0000U, reg, 2), 2, (uint8_t *)val));
                 pUsb->EnablePoll();
                 return rv;
         }
 
         uint8_t XR_write_register(uint16_t reg, uint16_t val) {
                                 pUsb->DisablePoll();
-                uint8_t rv= (pUsb->ctrlReq(bAddress, XR_WRITE_REQUEST_TYPE, 0, UHS_UINT8_BYTE0(val), UHS_UINT8_BYTE1(val), reg, 0, 0, NULL));
+                uint8_t rv= (pUsb->ctrlReq(bAddress, mkSETUP_PKT16(XR_WRITE_REQUEST_TYPE, 0, val, reg, 0), 0, NULL));
                 pUsb->EnablePoll();
                 return rv;
         }
