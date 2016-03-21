@@ -273,6 +273,7 @@ again:
         HOST_DUBUG("retries: %i\r\n", retries);
         ei.vid = udd->idVendor;
         ei.pid = udd->idProduct;
+        ei.bcdDevice = udd->bcdDevice;
         ei.klass = udd->bDeviceClass;
         ei.subklass = udd->bDeviceSubClass;
         ei.protocol = udd->bDeviceProtocol;

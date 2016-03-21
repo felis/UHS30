@@ -224,6 +224,7 @@ struct INTERFACE_INFO {
 struct ENUMERATION_INFO {
         uint16_t vid;
         uint16_t pid;
+        uint16_t bcdDevice;
         uint8_t klass;
         uint8_t subklass;
         uint8_t protocol;

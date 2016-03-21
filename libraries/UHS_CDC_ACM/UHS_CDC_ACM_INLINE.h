@@ -128,6 +128,9 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
         if(ei->interface.klass == UHS_USB_CLASS_CDC_DATA) {
                 // data slave
                 SbAddress = ei->address;
+                // Will do this later if stuff breaks.
+                // This would mean a separate Interface Driver, of course...
+                //bDataIface = ei->interface.bInterfaceNumber;
         } else {
                 // master
                 MbAddress = ei->address;
@@ -172,7 +175,7 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
                 } else {
                         adaptor = UHS_USB_ACM_PLAIN;
                 }
-                //bDataIface = 1;
+                ChipType = ei->bcdDevice;
                 // Both interfaces have finally been set and match
                 bAddress = SbAddress;
                 if(qPollRate < 50) qPollRate = 50; // Lets be reasonable.

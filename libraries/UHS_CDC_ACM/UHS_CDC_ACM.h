@@ -77,6 +77,8 @@ protected:
         uint8_t qPollRate; // How fast to poll maximum
         uint8_t adaptor;
 
+        uint16_t ChipType; // Type of chip
+
         volatile bool ready; //device ready indicator
         tty_features _enhanced_status; // current status
 
