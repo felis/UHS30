@@ -1,4 +1,6 @@
-/* Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+   and
+Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
 This software may be distributed and modified under the terms of the GNU
 General Public License version 2 (GPL2) as published by the Free Software
@@ -81,17 +83,6 @@ e-mail   :  support@circuitsathome.com
 #include "../UHS_CDC/UHS_CDC.h"
 #include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
 // Basic CDC_ACM loaded
-#if defined(LOAD_UHS_CDC_ACM_FTDI)
-#include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
-#endif // FTDI loaded
-#if defined(LOAD_UHS_CDC_ACM_PROLIFIC)
-#include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
-#endif // Prolific loaded
-#if defined(LOAD_UHS_CDC_ACM_XR21B1411)
-#include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
-#endif // XR21B1411 loaded
-
-//#if defined()
 #endif // CDC loaded
 
 #endif // System code loaded

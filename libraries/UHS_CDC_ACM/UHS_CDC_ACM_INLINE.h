@@ -1,4 +1,6 @@
-/* Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+   and
+Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
 This software may be distributed and modified under the terms of the GNU
 General Public License version 2 (GPL2) as published by the Free Software
@@ -48,17 +50,37 @@ bool UHS_NI UHS_CDC_ACM::OKtoEnumerate(ENUMERATION_INFO *ei) {
         ACM_HOST_DEBUG("ACM: checking interface.protocol %2.2x\r\n", ei->interface.protocol);
 
         return (
-                (!(((ei->vid == 0x2890U) && (ei->pid == 0x0201U)) || ((ei->vid == 0x04e2U) && (ei->pid == 0x1411U)))) && // NOT EXAR
-
-                (!(ei->vid == UHS_VID_FUTURE_TECHNOLOGY_DEVICES_INTERNATIONAL)) && // NOT FTDI
-
-                (!(ei->vid == UHS_VID_PROLIFIC_TECHNOLOGY && (ei->pid == UHS_CDC_PROLIFIC_PID_1 || ei->pid == UHS_CDC_PROLIFIC_PID_2))) && // NOT PROLIFIC
-
                 (
-                ((ei->interface.klass == UHS_USB_CLASS_COM_AND_CDC_CTRL) && (ei->interface.subklass == UHS_CDC_SUBCLASS_ACM) && (ei->interface.protocol == UHS_CDC_PROTOCOL_ITU_T_V_250)) ||
-                (ei->interface.klass == UHS_USB_CLASS_CDC_DATA)
-                ) // IS CDC ACM
-
+#if !defined(LOAD_UHS_CDC_ACM_XR21B1411)
+                !
+#endif
+                TEST_XR21B1411())
+#if !defined(LOAD_UHS_CDC_ACM_XR21B1411)
+                &&
+#else
+                ||
+#endif
+                (
+#if !defined(LOAD_UHS_CDC_ACM_FTDI)
+                !
+#endif
+                TEST_ACM_FTDI())
+#if !defined(LOAD_UHS_CDC_ACM_FTDI)
+                &&
+#else
+                ||
+#endif
+                (
+#if !defined(LOAD_UHS_CDC_ACM_PROLIFIC)
+                !
+#endif
+                TEST_ACM_PROLIFIC())
+#if !defined(LOAD_UHS_CDC_ACM_PROLIFIC)
+                &&
+#else
+                ||
+#endif
+                TEST_ACM_PLAIN()
                 );
 
 }
@@ -69,6 +91,7 @@ void UHS_NI UHS_CDC_ACM::DriverDefaults(void) {
         SbAddress = 0;
         MbAddress = 0;
         qPollRate = 0;
+        adaptor = UHS_USB_ACM_PLAIN;
         _enhanced_status.enhanced = false;
         _enhanced_status.autoflow_RTS = false;
         _enhanced_status.autoflow_DSR = false;

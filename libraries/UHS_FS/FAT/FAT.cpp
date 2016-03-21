@@ -1,5 +1,6 @@
-/*
- * (CopyLeft) 2013 Andrew J. Kroll
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+ *  and
+ * Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
  *
  * This Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
