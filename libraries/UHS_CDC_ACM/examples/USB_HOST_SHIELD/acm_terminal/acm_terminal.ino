@@ -17,8 +17,8 @@
 #define LOAD_UHS_CDC_ACM
 // These are coming soon!
 //#define LOAD_UHS_CDC_ACM_FTDI
-//#define LOAD_UHS_CDC_ACM_PROLIFIC
-//#define LOAD_UHS_CDC_ACM_XR21B1411
+#define LOAD_UHS_CDC_ACM_PROLIFIC
+#define LOAD_UHS_CDC_ACM_XR21B1411
 
 #include <Arduino.h>
 #ifdef true
