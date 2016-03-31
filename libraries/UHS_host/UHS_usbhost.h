@@ -210,18 +210,14 @@ public:
         inline void DisablePoll(void) {
                 noInterrupts();
                 usb_task_polling_disabled++;
-#ifdef SWI_IRQ_NUM
-                __DSB();
-#endif
+                DDSB();
                 interrupts();
         }
 
         inline void EnablePoll(void) {
                 noInterrupts();
                 usb_task_polling_disabled--;
-#ifdef SWI_IRQ_NUM
-                __DSB();
-#endif
+                DDSB();
                 interrupts();
         }
 

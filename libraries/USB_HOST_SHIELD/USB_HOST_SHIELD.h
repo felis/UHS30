@@ -36,6 +36,15 @@ e-mail   :  support@circuitsathome.com
 #endif
 
 #endif
+#if DEBUG_PRINTF_EXTRA_HUGE
+#ifdef DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD
+#define MAX_HOST_DEBUG(...) printf(__VA_ARGS__)
+#else
+#define MAX_HOST_DEBUG(...) VOID0
+#endif
+#else
+#define MAX_HOST_DEBUG(...) VOID0
+#endif
 
 #if !defined(USB_HOST_SHIELD_USE_ISR)
 #if defined(USE_MULTIPLE_APP_API)
@@ -155,14 +164,52 @@ e-mail   :  support@circuitsathome.com
 #endif
 #endif
 
+
+
+#if defined(NO_AUTO_SPEED)
+// Ugly details section...
+// MAX3421E characteristics
+// SPI Serial - Clock Input. An external SPI master supplies SCLK with frequencies up to 26MHz. The
+// logic level is referenced to the voltage on VL. Data is clocked into the SPI slave inter face on the
+// rising edge of SCLK. Data is clocked out of the SPI slave interface on the falling edge of SCLK.
+// Serial Clock (SCLK) Period 38.4ns minimum. 17ns minimum pulse width. VL >2.5V
+// SCLK Fall to MISO Propagation Delay 14.2ns
+// SCLK Fall to MOSI Propagation Delay 14.2ns
+// SCLK Fall to MOSI Drive 3.5ns
+// Theoretical deadline for reply 17.7ns
+// 26MHz 38.4615ns period <-- MAX3421E theoretical maximum
+
 #if !defined(UHS_MAX3421E_SPD)
 #if defined(ARDUINO_SAMD_ZERO)
+// Zero violates spec early, needs a long setup time, or doesn't like high latency.
 #define UHS_MAX3421E_SPD 10000000
 #elif defined(ARDUINO_ARCH_PIC32)
-#define UHS_MAX3421E_SPD 18000000
+// PIC MX 5/6/7 characteristics
+// 25MHZ 40ns period <-- PIC MX  5/6/7 theoretical maximum
+// pulse width minimum Tsclk/2ns
+// Trise/fall 10ns maximum. 5ns is typical but not guaranteed.
+// Tsetup minimum for MISO 10ns.
+// We are in violation by 7.7ns @ 25MHz due to latency alone.
+// Even reading at end of data cycle, we only have a 2.3ns window.
+// This is too narrow to to compensate for capacitence, trace lengths, and noise.
+
+// 17.7ns + 10ns = 27.7ns
+// 18MHz fits and has enough slack time to compensate for capacitence, trace lengths, and noise.
+// For high speeds the SMP bit is reccommended too, which samples at the end instead of the middle.
+// 20Mhz seems to work.
+
+#define UHS_MAX3421E_SPD 20000000
 #else
 #define UHS_MAX3421E_SPD 25000000
 #endif
+#endif
+#else
+// We start at 25MHz, and back down until hardware can take it.
+// Of course, SPI library can adjust this for us too.
+// Why not 26MHz? Because I have not found any MCU board that
+// can actually go that fast without problems.
+// Could be a shield limitation too.
+#define UHS_MAX3421E_SPD 25000000
 #endif
 
 #ifndef UHS_MAX3421E_INT
@@ -207,7 +254,8 @@ e-mail   :  support@circuitsathome.com
 //
 #define IRQ_SENSE FALLING
 #if defined(ARDUINO_ARCH_PIC32)
-#define bmPULSEWIDTH PUSLEWIDTH10_6
+//#define bmPULSEWIDTH PUSLEWIDTH10_6
+#define bmPULSEWIDTH 0
 #define bmIRQ_SENSE 0
 #else
 #define bmPULSEWIDTH PUSLEWIDTH1_3
@@ -237,7 +285,7 @@ public UHS_USB_HOST_BASE
         volatile bool sofevent;
         volatile bool counted;
         volatile bool condet;
-
+        volatile bool doingreset;
 public:
         SPISettings MAX3421E_SPI_Settings;
         uint8_t ss_pin;
@@ -248,6 +296,7 @@ public:
                 sof_countdown = 0;
                 islowspeed = false;
                 busevent = false;
+                doingreset= false;
                 sofevent = false;
                 condet = false;
                 ss_pin = UHS_MAX3421E_SS;
@@ -262,6 +311,7 @@ public:
                 sof_countdown = 0;
                 islowspeed = false;
                 busevent = false;
+                doingreset= false;
                 sofevent = false;
                 condet = false;
                 ss_pin = pss;
@@ -275,6 +325,7 @@ public:
         UHS_NI MAX3421E_HOST(uint8_t pss, uint8_t pirq, uint32_t pspd) {
                 sof_countdown = 0;
                 islowspeed = false;
+                doingreset= false;
                 busevent = false;
                 sofevent = false;
                 condet = false;
@@ -329,26 +380,45 @@ public:
         virtual uint8_t VBUS_changed(void);
 
         virtual void UHS_NI doHostReset(void) {
+#if USB_HOST_SHIELD_USE_ISR
+                        // Enable interrupts
+                noInterrupts();
+#endif
+                doingreset = true;
                 busevent = true;
                 regWr(rHIRQ, bmBUSEVENTIRQ); // see data sheet.
                 regWr(rHCTL, bmBUSRST); //issue bus reset
+#if USB_HOST_SHIELD_USE_ISR
+                DDSB();
+                // Enable interrupts
+                interrupts();
+#endif
                 while(busevent) {
-
-#if !USB_HOST_SHIELD_USE_ISR
-                        Task();
-#endif
+                DDSB();
                 }
-
+#endif
+#if USB_HOST_SHIELD_USE_ISR
+                        // Enable interrupts
+                noInterrupts();
+#endif
                 sofevent = true;
-                uint8_t tmpdata = regRd(rMODE) | bmSOFKAENAB; //start SOF generation
-                regWr(rHIRQ, bmFRAMEIRQ); // see data sheet.
-                regWr(rMODE, tmpdata);
-                while(sofevent) {
-
-#if !USB_HOST_SHIELD_USE_ISR
-                        Task();
+#if USB_HOST_SHIELD_USE_ISR
+                DDSB();
+                // Enable interrupts
+                interrupts();
 #endif
+                // Wait for SOF
+                while(sofevent) {
                 }
+#if USB_HOST_SHIELD_USE_ISR
+                        // Enable interrupts
+                noInterrupts();
+#endif
+                doingreset = false;
+#if USB_HOST_SHIELD_USE_ISR
+                DDSB();
+                // Enable interrupts
+                interrupts();
         };
 
 

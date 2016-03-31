@@ -35,6 +35,7 @@ e-mail   :  support@circuitsathome.com
 #include "UHS_usb_ch9.h"
 #include "UHS_UsbCore.h"
 #include "UHS_address.h"
+#include "../dyn_SWI/dyn_SWI.h"
 #include "UHS_usbhost.h"
 #include "UHS_printhex.h"
 #include "UHS_message.h"
@@ -43,8 +44,6 @@ e-mail   :  support@circuitsathome.com
 #if defined(LOAD_USB_HOST_SYSTEM) && !defined(USB_HOST_SYSTEM_LOADED)
 #include "UHS_util_INLINE.h"
 #include "UHS_host_INLINE.h"
-#include "../dyn_SWI/dyn_SWI.h"
-
 #include "UHS_printf_HELPER.h"
 
 #if defined(LOAD_USB_HOST_SHIELD)

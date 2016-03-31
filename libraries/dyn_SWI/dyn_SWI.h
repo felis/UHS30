@@ -34,13 +34,23 @@
 #elif defined(_SPI1_ERR_IRQ)
 #define SWI_IRQ_NUM _SPI1_ERR_IRQ
 #define SWI_VECTOR _SPI_1_VECTOR
+#elif defined(_SPI1_FAULT_VECTOR)
+#define SWI_VECTOR _SPI1_FAULT_VECTOR
+#define SWI_IRQ_NUM _SPI1_FAULT_VECTOR
+
 #else
 #error SWI_IRQ_NUM and SWI_VECTOR need a definition
 #endif
 #ifdef __cplusplus
 extern "C"
 {
-void __attribute__((interrupt(),nomips16)) softISR(void);
+        void
+#if defined(__PIC32MZXX__)
+                __attribute__((nomips16,at_vector(SWI_VECTOR),interrupt(IPL3SOFT)))
+#else
+                __attribute__((interrupt(),nomips16))
+#endif
+                softISR(void);
 }
 #endif
 #endif

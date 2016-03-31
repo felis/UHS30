@@ -397,7 +397,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
 
         USB0_ISTAT = HW_CLEAR; // ack all USB0_ISTAT flags here at the same time.
 
-        __DSB();
+        DDSB();
         if(!timer_countdown && !sof_countdown && !counted && !usb_task_polling_disabled) {
                 usb_task_polling_disabled++;
 
@@ -522,7 +522,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
                 // wait for SOF
                 noInterrupts();
                 sofevent = true;
-                __DSB();
+                DDSB();
                 interrupts();
                 while(sofevent && !condet);
         }
@@ -901,7 +901,7 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         NVIC_DISABLE_IRQ(IRQ_USBOTG);
         NVIC_SET_PRIORITY(IRQ_USBOTG, 112);
         _VectorsRam[IRQ_USBOTG + 16] = call_ISR_kinetis;
-        __DSB();
+        DDSB();
         NVIC_ENABLE_IRQ(IRQ_USBOTG);
 
         // set address to zero during enumeration

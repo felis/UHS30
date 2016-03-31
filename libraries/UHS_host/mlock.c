@@ -23,7 +23,9 @@ e-mail   :  support@circuitsathome.com
 #include <Arduino.h>
 #include <malloc.h>
 #include <sys/lock.h>
-
+#if !defined(DDSB)
+#error "No Barrier implementation"
+#endif
 /* Indicate that we are to use ISR safety. */
 #define __USE_ISR_SAFE_MALLOC__ 1
 
@@ -73,20 +75,35 @@ __LOCK_INIT_RECURSIVE(static, __malloc_lock_object);
 #ifdef __USE_ISR_SAFE_MALLOC__
 static volatile unsigned long __isr_safety = 0;
 
-//static volatile uint8_t irecover;
 
-//#ifndef interruptsStatus
-//#define interruptsStatus() __interruptsStatus()
-//static inline unsigned char __interruptsStatus(void) __attribute__((always_inline, unused));
-//
-//static inline unsigned char __interruptsStatus(void) {
-//        unsigned int primask;
-//        asm volatile ("mrs %0, primask" : "=r" (primask));
-//        if(primask) return 0;
-//        return 1;
-//}
-//#endif
+#if defined(__arm__)
+static volatile uint8_t irecover;
+#define dont_interrupt() __dont_interrupt()
+#define can_interrupt(x)  __can_interrupt(x)
 
+static inline void __can_interrupt(uint8_t status)  __attribute__((always_inline, unused));
+
+static inline  void __can_interrupt(uint8_t status) {
+        if(status) interrupts();
+}
+
+static inline unsigned char __dont_interrupt(void) __attribute__((always_inline, unused));
+
+static inline unsigned char __dont_interrupt(void) {
+        unsigned int primask, faultmask;
+        asm volatile ("mrs %0, primask" : "=r" (primask));
+        asm volatile ("mrs %0, faultmask" : "=r" (faultmask));
+        noInterrupts();
+        if(primask || faultmask) return 0;
+        return 1;
+}
+
+#elif defined(ARDUINO_ARCH_PIC32)
+static volatile uint32_t irecover;
+#define dont_interrupt() disableInterrupts()
+#define can_interrupt(x)  restoreInterrupts(x)
+#else
+#error "No ISR safety, sorry."
 #endif
 
 void
@@ -94,17 +111,23 @@ __malloc_lock(ptr)
 struct _reent *ptr;
 {
 #ifdef __USE_ISR_SAFE_MALLOC__
-//        uint8_t i = interruptsStatus();
-        noInterrupts();
+#if defined(__arm__)
+static volatile uint8_t i;
+#elif defined(ARDUINO_ARCH_PIC32)
+static volatile uint32_t i;
+#endif
+
+        i = dont_interrupt();
 #if 0
         // debugging, pin 2 LOW
         digitalWrite(2, LOW);
 #endif
 
-//        if(!__isr_safety) {
-//                irecover = i;
-//        }
+        if(!__isr_safety) {
+                irecover = i;
+        }
         __isr_safety++;
+        DDSB();
 #endif
 #ifndef __SINGLE_THREAD__
         __lock_acquire_recursive(__malloc_lock_object);
@@ -121,15 +144,14 @@ struct _reent *ptr;
 #ifdef __USE_ISR_SAFE_MALLOC__
         if(__isr_safety) {
                 __isr_safety--;
-//                if(!__isr_safety && irecover) interrupts();
         }
+        DDSB();
         if(!__isr_safety) {
 #if 0
         // debugging, pin 2 HIGH
         digitalWrite(2, HIGH);
 #endif
-
-                interrupts();
+                can_interrupt(irecover);
         }
 #endif
 }
@@ -138,4 +160,5 @@ struct _reent *ptr;
 int mlock_null(void) {
   return 0;
 }
+#endif
 #endif

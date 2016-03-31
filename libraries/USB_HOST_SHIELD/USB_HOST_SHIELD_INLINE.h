@@ -3,7 +3,7 @@
 Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
 This software may be distributed and modified under the terms of the GNU
-General Public License version 2 (GPL2) as published by the Free Software
+General Public License version 2 (GPL2) as publishe7d by the Free Software
 Foundation and appearing in the file GPL2.TXT included in the packaging of
 this file. Please note that GPL2 Section 2[b] requires that all works based
 on this software must also be made publicly available under the terms of
@@ -29,15 +29,6 @@ e-mail   :  support@circuitsathome.com
 // uncomment to get 'printf' console debugging. NOT FOR UNO!
 //#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD
 
-#if DEBUG_PRINTF_EXTRA_HUGE
-#ifdef DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD
-#define MAX_HOST_DEBUG(...) printf(__VA_ARGS__)
-#else
-#define MAX_HOST_DEBUG(...) VOID0
-#endif
-#else
-#define MAX_HOST_DEBUG(...) VOID0
-#endif
 
 #if USB_HOST_SHIELD_USE_ISR
 
@@ -159,7 +150,7 @@ uint16_t UHS_NI MAX3421E_HOST::reset(void) {
 uint8_t UHS_NI MAX3421E_HOST::VBUS_changed(void) {
         /* modify USB task state because Vbus changed or unknown */
         uint8_t speed = 1;
-        // printf("\r\n\r\n\r\n\r\nSTATE %2.2x -> ", usb_task_state);
+        //printf("\r\n\r\n\r\n\r\nSTATE %2.2x -> ", usb_task_state);
         switch(vbusState) {
                 case LSHOST: // Low speed
 
@@ -168,26 +159,34 @@ uint8_t UHS_NI MAX3421E_HOST::VBUS_changed(void) {
                 case FSHOST: // Full speed
                         // Start device initialization if we are not initializing
                         // Resets to the device cause an IRQ
-                        if((usb_task_state & UHS_USB_HOST_STATE_MASK) != UHS_USB_HOST_STATE_DETACHED) {
-                                ReleaseChildren();
-                                usb_task_state = UHS_USB_HOST_STATE_DEBOUNCE;
-                                sof_countdown = 0;
+                        // usb_task_state == UHS_USB_HOST_STATE_RESET_NOT_COMPLETE;
+                        //if((usb_task_state & UHS_USB_HOST_STATE_MASK) != UHS_USB_HOST_STATE_DETACHED) {
+                        ReleaseChildren();
+                        if(!doingreset) {
+                                if(usb_task_state == UHS_USB_HOST_STATE_RESET_NOT_COMPLETE) {
+                                        usb_task_state = UHS_USB_HOST_STATE_WAIT_BUS_READY;
+                                } else if(usb_task_state != UHS_USB_HOST_STATE_WAIT_BUS_READY) {
+                                        usb_task_state = UHS_USB_HOST_STATE_DEBOUNCE;
+                                }
                         }
+                        sof_countdown = 0;
                         break;
                 case SE1: //illegal state
                         sof_countdown = 0;
+                        doingreset = false;
                         ReleaseChildren();
                         usb_task_state = UHS_USB_HOST_STATE_ILLEGAL;
                         break;
                 case SE0: //disconnected
                 default:
                         sof_countdown = 0;
+                        doingreset = false;
                         ReleaseChildren();
                         usb_task_state = UHS_USB_HOST_STATE_IDLE;
                         break;
         }
 
-        // printf("0x%2.2x\r\n\r\n\r\n\r\n", usb_task_state);
+        //printf("0x%2.2x\r\n\r\n\r\n\r\n", usb_task_state);
         return speed;
 };
 
@@ -197,38 +196,47 @@ uint8_t UHS_NI MAX3421E_HOST::VBUS_changed(void) {
  */
 void UHS_NI MAX3421E_HOST::busprobe(void) {
         uint8_t bus_sample;
-
+        uint8_t tmpdata;
         bus_sample = regRd(rHRSL); //Get J,K status
         bus_sample &= (bmJSTATUS | bmKSTATUS); //zero the rest of the byte
         switch(bus_sample) { //start full-speed or low-speed host
                 case(bmJSTATUS):
                         // Serial.println("J");
                         if((regRd(rMODE) & bmLOWSPEED) == 0) {
-                                regWr(rMODE, MODE_FS_HOST); //start full-speed host
+                                regWr(rMODE, MODE_FS_HOST); // start full-speed host
                                 vbusState = FSHOST;
                         } else {
-                                regWr(rMODE, MODE_LS_HOST); //start low-speed host
+                                regWr(rMODE, MODE_LS_HOST); // start low-speed host
                                 vbusState = LSHOST;
                         }
+                        tmpdata = regRd(rMODE) | bmSOFKAENAB; // start SOF generation
+                        regWr(rHIRQ, bmFRAMEIRQ); // see data sheet.
+                        regWr(rMODE, tmpdata);
                         break;
                 case(bmKSTATUS):
                         // Serial.println("K");
                         if((regRd(rMODE) & bmLOWSPEED) == 0) {
-                                regWr(rMODE, MODE_LS_HOST); //start low-speed host
+                                regWr(rMODE, MODE_LS_HOST); // start low-speed host
                                 vbusState = LSHOST;
                         } else {
-                                regWr(rMODE, MODE_FS_HOST); //start full-speed host
+                                regWr(rMODE, MODE_FS_HOST); // start full-speed host
                                 vbusState = FSHOST;
                         }
+                        tmpdata = regRd(rMODE) | bmSOFKAENAB; // start SOF generation
+                        regWr(rHIRQ, bmFRAMEIRQ); // see data sheet.
+                        regWr(rMODE, tmpdata);
                         break;
                 case(bmSE1): //illegal state
                         // Serial.println("I");
+                        regWr(rMODE, bmDPPULLDN | bmDMPULLDN | bmHOST);
                         vbusState = SE1;
+                        // sofevent = false;
                         break;
                 case(bmSE0): //disconnected state
                         // Serial.println("D");
                         regWr(rMODE, bmDPPULLDN | bmDMPULLDN | bmHOST);
                         vbusState = SE0;
+                        // sofevent = false;
                         break;
         }//end switch( bus_sample )
 }
@@ -274,11 +282,49 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
 #else
         SPI.usingInterrupt(255);
 #endif
+#if !defined(NO_AUTO_SPEED)
+        // test to get to reset acceptance.
+        uint32_t spd = UHS_MAX3421E_SPD;
+again:
+        MAX3421E_SPI_Settings = SPISettings(spd, MSBFIRST, SPI_MODE0);
         /* MAX3421E - full-duplex SPI, interrupt kind, vbus off */
         regWr(rPINCTL, (bmFDUPSPI | bmIRQ_SENSE | GPX_VBDET));
+        if(reset() == 0) {
+                MAX_HOST_DEBUG("Fail SPI speed %lu\r\n", spd);
+                if(spd > 1999999) {
+                        spd -= 1000000;
+                        goto again;
+                }
+                return (-1);
+        } else {
+                // reset passes, does 64k?
+                uint8_t sample_wr = 0;
+                uint8_t sample_rd = 0;
+                uint8_t gpinpol_copy = regRd(rGPINPOL);
+                for(uint16_t j = 0; j < 65535; j++) {
+                        regWr(rGPINPOL, sample_wr);
+                        sample_rd = regRd(rGPINPOL);
+                        if(sample_rd != sample_wr) {
+                                MAX_HOST_DEBUG("Fail SPI speed %lu\r\n", spd);
+                                if(spd > 1999999) {
+                                        spd -= 1000000;
+                                        goto again;
+                                }
+                                return (-1);
+                        }
+                        sample_wr++;
+                }
+                regWr(rGPINPOL, gpinpol_copy);
+        }
+
+        MAX_HOST_DEBUG("Pass SPI speed %lu\r\n", spd);
+#endif
+        /* MAX3421E - full-duplex SPI, interrupt kind, vbus off */
         if(reset() == 0) { //OSCOKIRQ hasn't asserted in time
                 return ( -1);
         }
+        regWr(rPINCTL, (bmFDUPSPI | bmIRQ_SENSE | GPX_VBDET));
+
 
         // Delay a minimum of 1 second to ensure any capacitors are drained.
         // 1 second is required to make sure we do not smoke a Microdrive!
@@ -421,7 +467,7 @@ uint8_t UHS_NI MAX3421E_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, ui
                 pktsize = regRd(rRCVBC); //number of received bytes
                 MAX_HOST_DEBUG("Got %i bytes \r\n", pktsize);
 
-                if(pktsize > nbytes) {  //certain devices send more than asked
+                if(pktsize > nbytes) { //certain devices send more than asked
                         //MAX_HOST_DEBUG(">>>>>>>> Warning: wanted %i bytes but got %i.\r\n", nbytes, pktsize);
                         pktsize = nbytes;
                 }
@@ -685,6 +731,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
         //        Serial.print(" ");
         //        Serial.println(usb_task_state, HEX);
 
+        DDSB();
         if(condet) {
                 islowspeed = (VBUS_changed() == 0);
 #if USB_HOST_SHIELD_USE_ISR
@@ -698,26 +745,33 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
         switch(usb_task_state) {
                 case UHS_USB_HOST_STATE_INITIALIZE:
                         // should never happen...
+                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_INITIALIZE\r\n");
                         busprobe();
                         islowspeed = (VBUS_changed() == 0);
                         break;
                 case UHS_USB_HOST_STATE_DEBOUNCE:
-#if 1
+                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_DEBOUNCE\r\n");
                         // This seems to not be needed. The host controller has debounce built in.
                         sof_countdown = UHS_HOST_DEBOUNCE_DELAY_MS;
                         usb_task_state = UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE;
                         break;
                 case UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE:
-                        usb_task_state = UHS_USB_HOST_STATE_RESET_DEVICE;
+                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE\r\n");
+                        if(!sof_countdown) usb_task_state = UHS_USB_HOST_STATE_RESET_DEVICE;
                         break;
-#endif
                 case UHS_USB_HOST_STATE_RESET_DEVICE:
+                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_RESET_DEVICE\r\n");
                         busevent = true;
                         usb_task_state = UHS_USB_HOST_STATE_RESET_NOT_COMPLETE;
                         regWr(rHIRQ, bmBUSEVENTIRQ); // see data sheet.
                         regWr(rHCTL, bmBUSRST); // issue bus reset
                         break;
+                case UHS_USB_HOST_STATE_RESET_NOT_COMPLETE:
+                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_RESET_NOT_COMPLETE\r\n");
+                        if(!busevent) usb_task_state = UHS_USB_HOST_STATE_WAIT_BUS_READY;
+                        break;
                 case UHS_USB_HOST_STATE_WAIT_BUS_READY:
+                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_WAIT_BUS_READY\r\n");
                         usb_task_state = UHS_USB_HOST_STATE_CONFIGURING;
                         break; // don't fall through
 
@@ -727,8 +781,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
                         usb_error = x;
                         if(usb_task_state == UHS_USB_HOST_STATE_CHECK) {
                                 if(x) {
-                                        //                               Serial.print("Error 0x");
-                                        //                               Serial.println(x, HEX);
+                                        MAX_HOST_DEBUG("Error 0x%2.2x", x);
                                         if(x == hrJERR) {
                                                 usb_task_state = UHS_USB_HOST_STATE_IDLE;
                                         } else if(x != UHS_HOST_ERROR_DEVICE_INIT_INCOMPLETE) {
@@ -758,6 +811,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
                         // Do nothing
                         break;
         } // switch( usb_task_state )
+        DDSB();
 #if USB_HOST_SHIELD_USE_ISR
         if(condet) {
                 islowspeed = (VBUS_changed() == 0);
@@ -772,6 +826,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
         UHS_PIN_WRITE(USB_HOST_SHIELD_TIMING_PIN, LOW);
 #endif
         usb_task_polling_disabled--;
+        DDSB();
 }
 
 
@@ -789,59 +844,80 @@ void UHS_NI MAX3421E_HOST::Task(void) {
 void UHS_NI MAX3421E_HOST::ISRTask(void)
 #endif
 {
-        uint8_t tmpdata;
+        DDSB();
 
         counted = false;
         if(!UHS_PIN_READ(irq_pin)) {
                 uint8_t HIRQALL = regRd(rHIRQ); //determine interrupt source
                 uint8_t HIRQ = HIRQALL & IRQ_CHECK_MASK;
                 uint8_t HIRQ_sendback = 0x00;
+
+                if((HIRQ & bmCONDETIRQ) || (HIRQ & bmBUSEVENTIRQ)) {
+                        MAX_HOST_DEBUG("\r\nBEFORE CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n",
+                                (HIRQ & bmCONDETIRQ) ? "T" : "F",
+                                (HIRQ & bmBUSEVENTIRQ) ? "T" : "F",
+                                doingreset ? "T" : "F",
+                                usb_task_state
+                                );
+                }
+                // ALWAYS happens BEFORE or WITH CONDETIRQ
+                if(HIRQ & bmBUSEVENTIRQ) {
+                        HIRQ_sendback |= bmBUSEVENTIRQ;
+                        //if((busevent) && (usb_task_state == UHS_USB_HOST_STATE_RESET_NOT_COMPLETE)) {
+                        //        usb_task_state = UHS_USB_HOST_STATE_WAIT_SOF;
+                        //        sofevent = true;
+                        //        tmpdata = regRd(rMODE) | bmSOFKAENAB; //start SOF generation
+                        //        regWr(rMODE, tmpdata);
+                        //}
+                        if(!doingreset) condet = true;
+                        busprobe();
+                        busevent = false;
+                }
+
+                if(HIRQ & bmCONDETIRQ) {
+                        HIRQ_sendback |= bmCONDETIRQ;
+                        if(!doingreset) condet = true;
+                        busprobe();
+                }
+
+
+                if((HIRQ & bmCONDETIRQ) || (HIRQ & bmBUSEVENTIRQ)) {
+                        MAX_HOST_DEBUG("\r\nAFTER CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n",
+                                (HIRQ & bmCONDETIRQ) ? "T" : "F",
+                                (HIRQ & bmBUSEVENTIRQ) ? "T" : "F",
+                                doingreset ? "T" : "F",
+                                usb_task_state
+                                );
+                }
+
+
                 if(HIRQ & bmFRAMEIRQ) {
                         HIRQ_sendback |= bmFRAMEIRQ;
                         if(sof_countdown) {
                                 sof_countdown--;
                                 counted = true;
                         }
-                        if(sofevent && usb_task_state == UHS_USB_HOST_STATE_WAIT_SOF) {
-                                sof_countdown = 20;
-                                usb_task_state = UHS_USB_HOST_STATE_WAIT_BUS_READY;
-                        }
+                        //if(sofevent && usb_task_state == UHS_USB_HOST_STATE_WAIT_SOF) {
+                        //        sof_countdown = 20;
+                        //        usb_task_state = UHS_USB_HOST_STATE_WAIT_BUS_READY;
+                        //}
                         sofevent = false;
                 }
-                if(HIRQ & bmCONDETIRQ) {
-                        //                        Serial.print("CONDET ");
-                        //                        Serial.println(usb_task_state, HEX);
-                        HIRQ_sendback |= bmCONDETIRQ;
-                        if(!busevent) {
-                                condet = true;
-                        }
-                        busprobe();
-                }
-                if(HIRQ & bmBUSEVENTIRQ) {
-                        //                        Serial.print("BUSEVT ");
-                        //                        Serial.println(usb_task_state, HEX);
-                        HIRQ_sendback |= bmBUSEVENTIRQ;
-                        if(busevent && usb_task_state == UHS_USB_HOST_STATE_RESET_NOT_COMPLETE) {
-                                usb_task_state = UHS_USB_HOST_STATE_WAIT_SOF;
-                                sofevent = true;
-                                tmpdata = regRd(rMODE) | bmSOFKAENAB; //start SOF generation
-                                regWr(rMODE, tmpdata);
-                        }
-                        busevent = false;
-                }
+
+                DDSB();
                 regWr(rHIRQ, HIRQ_sendback);
 
                 if(!sof_countdown && !counted && !usb_task_polling_disabled) {
                         usb_task_polling_disabled++;
 #ifdef USB_HOST_SHIELD_TIMING_PIN
-        // My counter/timer can't work on an inverted gate signal
-        // so we gate using a high pulse -- AJK
-        UHS_PIN_WRITE(USB_HOST_SHIELD_TIMING_PIN, HIGH);
+                        // My counter/timer can't work on an inverted gate signal
+                        // so we gate using a high pulse -- AJK
+                        UHS_PIN_WRITE(USB_HOST_SHIELD_TIMING_PIN, HIGH);
 #endif
 
 #if defined(SWI_IRQ_NUM)
-                        //                                Serial.println("--------------- Doing SWI ----------------");
-                        //                                Serial.flush();
+                        // Serial.println("--------------- Doing SWI ----------------");
+                        // Serial.flush();
                         exec_SWI(this);
 #else
 #if USB_HOST_SHIELD_USE_ISR
@@ -854,7 +930,9 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
         }
 }
 
-
+#if 0
+DDSB();
+#endif
 #else
 #error "Never include USB_HOST_SHIELD_INLINE.h, include UHS_host.h instead"
 #endif

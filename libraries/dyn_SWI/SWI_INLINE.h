@@ -34,7 +34,9 @@ __attribute__((always_inline)) static inline void __DSB(void) {
 }
 #endif // defined(__USE_CMSIS_VECTORS__)
 #else // defined(__arm__)
-#define __DSB() (void(0))
+__attribute__((always_inline)) static inline void __DSB(void) {
+        __asm__ volatile ("sync" : : : "memory");
+}
 #endif // defined(__arm__)
 
 /**
@@ -45,7 +47,13 @@ static p32_regset *ifs = ((p32_regset *) & IFS0) + (SWI_IRQ_NUM / 32); //interru
 static p32_regset *iec = ((p32_regset *) & IEC0) + (SWI_IRQ_NUM / 32); //interrupt enable control reg set
 static uint32_t swibit = 1 << (SWI_IRQ_NUM % 32);
 
-void __attribute__((interrupt(), nomips16)) softISR(void) {
+void
+#if defined(__PIC32MZXX__)
+        __attribute__((nomips16,at_vector(SWI_VECTOR),interrupt(IPL3SOFT)))
+#else
+        __attribute__((interrupt(),nomips16))
+#endif
+        softISR(void) {
 #else
 
 void softISR(void) {
@@ -59,7 +67,7 @@ void softISR(void) {
         // Make a working copy, while clearing the queue.
         noInterrupts();
 #if defined(ARDUINO_ARCH_PIC32)
-        ifs->clr = swibit;
+        //ifs->clr = swibit;
 #endif
         for(int i = 0; i < SWI_MAXIMUM_ALLOWED; i++) {
                 dyn_SWI_EXEC[i] = dyn_SWI_LIST[i];
@@ -75,24 +83,35 @@ void softISR(void) {
                         digitalWrite(__DYN_SWI_DEBUG_LED__, HIGH);
 #endif
                         dyn_SWI_EXEC[i]->dyn_SWISR();
-                        //dyn_SWI* klass = dyn_SWI_EXEC[i];
-                        //klass->dyn_SWISR();
 #if defined(__DYN_SWI_DEBUG_LED__)
-                        //                        digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
+                        digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
 #endif
                 }
         }
 #if defined(ARDUINO_ARCH_PIC32)
         noInterrupts();
-        ifs->clr = swibit;
+        if(!dyn_SWI_EXEC[0]) ifs->clr = swibit;
         interrupts();
 #endif
 }
 
-
+#define DDSB() __DSB()
 #endif
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+#if defined(__arm__)
 #ifndef interruptsStatus
 #define interruptsStatus() __interruptsStatus()
 static inline unsigned char __interruptsStatus(void) __attribute__((always_inline, unused));
@@ -104,9 +123,6 @@ static inline unsigned char __interruptsStatus(void) {
         return 1;
 }
 #endif
-
-
-#if defined(__arm__)
 
 /**
  * Initialize the Dynamic (class) Software Interrupt
@@ -121,13 +137,13 @@ static void Init_dyn_SWI(void) {
                 /* relocate vector table */
                 noInterrupts();
                 SCB->VTOR = reinterpret_cast<uint32_t>(&_VectorsRam);
-                __DSB();
+                DDSB();
                 interrupts();
 #endif
                 for(int i = 0; i < SWI_MAXIMUM_ALLOWED; i++) dyn_SWI_LIST[i] = NULL;
                 noInterrupts();
                 _VectorsRam[SWI_IRQ_NUM + 16] = reinterpret_cast<void (*)()>(softISR);
-                __DSB();
+                DDSB();
                 interrupts();
                 NVIC_SET_PRIORITY(SWI_IRQ_NUM, 255);
                 NVIC_ENABLE_IRQ(SWI_IRQ_NUM);
@@ -154,7 +170,7 @@ int exec_SWI(const dyn_SWI* klass) {
                         rc = 1 + i; // Success!
                         dyn_SWI_LIST[i] = (dyn_SWI*)klass;
                         if(!NVIC_GET_PENDING(SWI_IRQ_NUM)) NVIC_SET_PENDING(SWI_IRQ_NUM);
-                        __DSB();
+                        DDSB();
                         break;
                 }
         }
@@ -206,6 +222,9 @@ int exec_SWI(const dyn_SWI* klass) {
 }
 
 #endif /* defined(__arm__) */
+#if !defined(DDSB)
+#define DDSB() (void(0))
+#endif
 #endif	/* SWI_INLINE_H */
 #else
 #error "Never include SWI_INLINE.h directly, include dyn_SWI.h instead"
