@@ -49,7 +49,7 @@ static uint32_t swibit = 1 << (SWI_IRQ_NUM % 32);
 
 void
 #if defined(__PIC32MZXX__)
-        __attribute__((nomips16,at_vector(SWI_VECTOR),interrupt(IPL3SOFT)))
+        __attribute__((nomips16,at_vector(SWI_VECTOR),interrupt(SWI_IPL)))
 #else
         __attribute__((interrupt(),nomips16))
 #endif
@@ -97,18 +97,6 @@ void softISR(void) {
 
 #define DDSB() __DSB()
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #if defined(__arm__)
@@ -222,9 +210,6 @@ int exec_SWI(const dyn_SWI* klass) {
 }
 
 #endif /* defined(__arm__) */
-#if !defined(DDSB)
-#define DDSB() (void(0))
-#endif
 #endif	/* SWI_INLINE_H */
 #else
 #error "Never include SWI_INLINE.h directly, include dyn_SWI.h instead"

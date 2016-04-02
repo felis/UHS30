@@ -10,7 +10,6 @@
 
 
 #if defined(__arm__) || defined(ARDUINO_ARCH_PIC32)
-#include <Arduino.h>
 #if defined(ARDUINO_ARCH_PIC32)
 #include <p32xxxx.h>
 #endif
@@ -28,16 +27,13 @@
 
 #if defined(ARDUINO_ARCH_PIC32)
 #ifndef SWI_IRQ_NUM
-#if defined(_PMP_ERROR_IRQ)
+#if defined(_DSPI0_IPL_ISR)
+#define SWI_IPL _DSPI0_IPL_ISR
+#define SWI_VECTOR _DSPI0_ERR_IRQ
+#define SWI_IRQ_NUM _DSPI0_ERR_IRQ
+#elif defined(_PMP_ERROR_IRQ)
 #define SWI_IRQ_NUM _PMP_ERROR_IRQ
 #define SWI_VECTOR _PMP_VECTOR
-#elif defined(_SPI1_ERR_IRQ)
-#define SWI_IRQ_NUM _SPI1_ERR_IRQ
-#define SWI_VECTOR _SPI_1_VECTOR
-#elif defined(_SPI1_FAULT_VECTOR)
-#define SWI_VECTOR _SPI1_FAULT_VECTOR
-#define SWI_IRQ_NUM _SPI1_FAULT_VECTOR
-
 #else
 #error SWI_IRQ_NUM and SWI_VECTOR need a definition
 #endif
@@ -46,7 +42,7 @@ extern "C"
 {
         void
 #if defined(__PIC32MZXX__)
-                __attribute__((nomips16,at_vector(SWI_VECTOR),interrupt(IPL3SOFT)))
+                __attribute__((nomips16,at_vector(SWI_VECTOR),interrupt(SWI_IPL)))
 #else
                 __attribute__((interrupt(),nomips16))
 #endif
@@ -149,5 +145,8 @@ extern int exec_SWI(const dyn_SWI* klass);
 // if no SWI for CPU (e.g. AVR) make a void stub.
 #ifndef SWI_NO_STUB
 #define Init_dyn_SWI() (void(0))
+#if !defined(DDSB)
+#define DDSB() (void(0))
+#endif
 #endif
 #endif	/* DYN_SWI_H */

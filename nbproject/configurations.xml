@@ -3,29 +3,6 @@
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="0">
       <df name="libraries">
-        <df name="UHS_BULK_STORAGE">
-          <df name="examples">
-            <df name="UHS_KINETIS_FS_HOST">
-              <df name="TEST_BULK_K">
-                <in>TEST_BULK_K.ino</in>
-              </df>
-            </df>
-            <df name="USB_HOST_SHIELD">
-              <df name="TEST_BULK">
-                <in>TEST_BULK.ino</in>
-              </df>
-            </df>
-          </df>
-        </df>
-        <df name="UHS_CDC_ACM">
-          <df name="examples">
-            <df name="USB_HOST_SHIELD">
-              <df name="acm_terminal">
-                <in>acm_terminal.ino</in>
-              </df>
-            </df>
-          </df>
-        </df>
         <df name="UHS_FS">
           <df name="examples">
             <df name="UHS_KINETIS_FS_HOST">
@@ -52,32 +29,55 @@
           </df>
         </df>
         <df name="UHS_host">
+          <df name="UHS_BULK_STORAGE">
+            <df name="examples">
+              <df name="UHS_KINETIS_FS_HOST">
+                <df name="TEST_BULK_K">
+                  <in>TEST_BULK_K.ino</in>
+                </df>
+              </df>
+              <df name="USB_HOST_SHIELD">
+                <df name="TEST_BULK">
+                  <in>TEST_BULK.ino</in>
+                </df>
+              </df>
+            </df>
+          </df>
+          <df name="UHS_CDC_ACM">
+            <df name="examples">
+              <df name="USB_HOST_SHIELD">
+                <df name="acm_terminal">
+                  <in>acm_terminal.ino</in>
+                </df>
+              </df>
+            </df>
+          </df>
+          <df name="UHS_KINETIS_FS_HOST">
+            <df name="examples">
+              <df name="KINETIS_DEV_DESC">
+                <in>KINETIS_DEV_DESC.ino</in>
+              </df>
+              <df name="KINETIS_TEST">
+                <in>KINETIS_TEST.ino</in>
+              </df>
+              <df name="TEST_KINETIS_BULK">
+                <in>TEST_KINETIS_BULK.ino</in>
+              </df>
+            </df>
+          </df>
+          <df name="USB_HOST_SHIELD">
+            <df name="examples">
+              <df name="board_qc">
+                <in>board_qc.ino</in>
+              </df>
+              <df name="TWO_HOSTS_BULK">
+                <in>TWO_HOSTS_BULK.ino</in>
+              </df>
+            </df>
+          </df>
           <in>UHS_printf_HELPER.h</in>
           <in>malloc.c</in>
           <in>mlock.c</in>
-        </df>
-        <df name="UHS_KINETIS_FS_HOST">
-          <df name="examples">
-            <df name="KINETIS_DEV_DESC">
-              <in>KINETIS_DEV_DESC.ino</in>
-            </df>
-            <df name="KINETIS_TEST">
-              <in>KINETIS_TEST.ino</in>
-            </df>
-            <df name="TEST_KINETIS_BULK">
-              <in>TEST_KINETIS_BULK.ino</in>
-            </df>
-          </df>
-        </df>
-        <df name="USB_HOST_SHIELD">
-          <df name="examples">
-            <df name="board_qc">
-              <in>board_qc.ino</in>
-            </df>
-            <df name="TWO_HOSTS_BULK">
-              <in>TWO_HOSTS_BULK.ino</in>
-            </df>
-          </df>
         </df>
       </df>
     </df>
@@ -160,21 +160,6 @@
           </ccTool>
         </makeTool>
       </makefileType>
-      <item path="libraries/UHS_BULK_STORAGE/examples/UHS_KINETIS_FS_HOST/TEST_BULK_K/TEST_BULK_K.ino"
-            ex="false"
-            tool="1"
-            flavor2="4">
-      </item>
-      <item path="libraries/UHS_BULK_STORAGE/examples/USB_HOST_SHIELD/TEST_BULK/TEST_BULK.ino"
-            ex="false"
-            tool="1"
-            flavor2="4">
-      </item>
-      <item path="libraries/UHS_CDC_ACM/examples/USB_HOST_SHIELD/acm_terminal/acm_terminal.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
       <item path="libraries/UHS_FS/FAT/FAT.cpp" ex="false" tool="1" flavor2="4">
       </item>
       <item path="libraries/UHS_FS/FAT/FatFS/src/ff.c"
@@ -197,17 +182,32 @@
             tool="1"
             flavor2="4">
       </item>
-      <item path="libraries/UHS_KINETIS_FS_HOST/examples/KINETIS_DEV_DESC/KINETIS_DEV_DESC.ino"
+      <item path="libraries/UHS_host/UHS_BULK_STORAGE/examples/UHS_KINETIS_FS_HOST/TEST_BULK_K/TEST_BULK_K.ino"
             ex="false"
             tool="1"
             flavor2="4">
       </item>
-      <item path="libraries/UHS_KINETIS_FS_HOST/examples/KINETIS_TEST/KINETIS_TEST.ino"
+      <item path="libraries/UHS_host/UHS_BULK_STORAGE/examples/USB_HOST_SHIELD/TEST_BULK/TEST_BULK.ino"
             ex="false"
             tool="1"
             flavor2="4">
       </item>
-      <item path="libraries/UHS_KINETIS_FS_HOST/examples/TEST_KINETIS_BULK/TEST_KINETIS_BULK.ino"
+      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/USB_HOST_SHIELD/acm_terminal/acm_terminal.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/KINETIS_DEV_DESC/KINETIS_DEV_DESC.ino"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/KINETIS_TEST/KINETIS_TEST.ino"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/TEST_KINETIS_BULK/TEST_KINETIS_BULK.ino"
             ex="false"
             tool="1"
             flavor2="4">
@@ -217,19 +217,19 @@
             tool="3"
             flavor2="0">
       </item>
+      <item path="libraries/UHS_host/USB_HOST_SHIELD/examples/TWO_HOSTS_BULK/TWO_HOSTS_BULK.ino"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="libraries/UHS_host/USB_HOST_SHIELD/examples/board_qc/board_qc.ino"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
       <item path="libraries/UHS_host/malloc.c" ex="false" tool="0" flavor2="2">
       </item>
       <item path="libraries/UHS_host/mlock.c" ex="false" tool="0" flavor2="2">
-      </item>
-      <item path="libraries/USB_HOST_SHIELD/examples/TWO_HOSTS_BULK/TWO_HOSTS_BULK.ino"
-            ex="false"
-            tool="1"
-            flavor2="4">
-      </item>
-      <item path="libraries/USB_HOST_SHIELD/examples/board_qc/board_qc.ino"
-            ex="false"
-            tool="1"
-            flavor2="4">
       </item>
     </conf>
   </confs>

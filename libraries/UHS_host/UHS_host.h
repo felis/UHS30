@@ -30,12 +30,12 @@ e-mail   :  support@circuitsathome.com
 #include <SPI.h>
 // None of these should ever be directly included by a driver, or a user's sketch.
 #include "UHS_macros.h"
+#include "../dyn_SWI/dyn_SWI.h"
 #include "UHS_USB_IDs.h"
 #include "UHS_settings.h"
 #include "UHS_usb_ch9.h"
 #include "UHS_UsbCore.h"
 #include "UHS_address.h"
-#include "../dyn_SWI/dyn_SWI.h"
 #include "UHS_usbhost.h"
 #include "UHS_printhex.h"
 #include "UHS_message.h"
@@ -47,21 +47,21 @@ e-mail   :  support@circuitsathome.com
 #include "UHS_printf_HELPER.h"
 
 #if defined(LOAD_USB_HOST_SHIELD)
-#include "../USB_HOST_SHIELD/USB_HOST_SHIELD.h"
+#include "USB_HOST_SHIELD/USB_HOST_SHIELD.h"
 #endif
 
 #if defined(LOAD_UHS_KINETIS_FS_HOST) && !defined(UHS_KINETIS_FS_HOST_LOADED)
-#include "../UHS_KINETIS_FS_HOST/UHS_KINETIS_FS_HOST.h"
+#include "UHS_KINETIS_FS_HOST/UHS_KINETIS_FS_HOST.h"
 #endif
 
 // Load USB drivers and multiplexers
 
 #if defined(LOAD_UHS_HUB)
-#include "../UHS_HUB/UHS_HUB.h"
+#include "UHS_HUB/UHS_HUB.h"
 #endif // HUB loaded
 
 #if defined(LOAD_UHS_BULK_STORAGE)
-#include "../UHS_BULK_STORAGE/UHS_BULK_STORAGE.h"
+#include "UHS_BULK_STORAGE/UHS_BULK_STORAGE.h"
 #endif
 
 #if defined(LOAD_GENERIC_STORAGE)
@@ -69,17 +69,17 @@ e-mail   :  support@circuitsathome.com
 #endif
 // Add BT and optionally HID if directed to do so
 #if defined(LOAD_UHS_BT)
-#include "../UHS_BT/UHS_BT.h"
+#include "UHS_BT/UHS_BT.h"
 #endif // BT and optionally HID loaded
 
 // Add HID
 #if defined(LOAD_UHS_HID)
-#include "../UHS_HID/UHS_HID.h"
+#include "UHS_HID/UHS_HID.h"
 #endif // HID loaded
 
 // Add CDC multiplexers (currently only ACM)
 #if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
-#include "../UHS_CDC/UHS_CDC.h"
+#include "UHS_CDC/UHS_CDC.h"
 #endif // CDC loaded
 
 #endif // System code loaded

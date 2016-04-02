@@ -24,8 +24,21 @@ e-mail   :  support@circuitsathome.com
 #include <malloc.h>
 #include <sys/lock.h>
 #if !defined(DDSB)
+#if defined(__arm__)
+__attribute__((always_inline)) static inline void A__DSB(void) {
+        __asm__ volatile ("dsb");
+}
+#endif // defined(__USE_CMSIS_VECTORS__)
+#elif defined(__mips__)
+__attribute__((always_inline)) static inline void A__DSB(void) {
+        __asm__ volatile ("sync" : : : "memory");
+}
+#else
 #error "No Barrier implementation"
-#endif
+#endif // defined(__arm__)
+
+#define DDSB() A__DSB()
+
 /* Indicate that we are to use ISR safety. */
 #define __USE_ISR_SAFE_MALLOC__ 1
 
