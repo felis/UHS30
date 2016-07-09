@@ -30,7 +30,7 @@ e-mail   :  support@circuitsathome.com
 #error "Your SPI library installation is too old."
 #else
 #if !defined(SPI_ATOMIC_VERSION)
-#warning "Your SPI library installation lacks 'SPI_ATOMIC_VERSION'. Please complaint to the maintainer."
+#warning "Your SPI library installation lacks 'SPI_ATOMIC_VERSION'. Please complain to the maintainer."
 #elif SPI_ATOMIC_VERSION < 1
 #error "Your SPI library installation is too old."
 #endif

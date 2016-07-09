@@ -26,7 +26,7 @@ e-mail   :  support@circuitsathome.com
 #ifndef XXFCNTL_H
 #define	XXFCNTL_H
 
-#if !defined(AVR)
+#if !defined(AVR) && !defined (__AVR)
 #include_next <fcntl.h>
 #endif
 
