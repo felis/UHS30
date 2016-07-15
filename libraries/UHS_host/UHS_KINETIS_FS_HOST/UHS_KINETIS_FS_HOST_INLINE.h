@@ -847,6 +847,9 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         // assume 48 MHz clock already running
         // SIM - enable clock
         SIM_SCGC4 |= SIM_SCGC4_USBOTG;
+#ifdef HAS_KINETIS_MPU
+	MPU_RGDAAC0 |= 0x03000000;
+#endif
 
         // reset USB module
         USB0_USBTRC0 = USB_USBTRC_USBRESET;
