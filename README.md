@@ -8,7 +8,7 @@ __This set of libraries is EXTERMELY ALPHA!__
 * This library set provides interrupt safe heap for AVR, ARM, and PIC32 based boards.<BR>
 * Circuitsathome USB Host Shield support (of course!)
 * Freescale Kinetis native full-speed host support!
-    * NOTE! To use the Teensy 3.0/3.1/LC in host mode, select "No USB" from the tools menu for USB Type.
+    * NOTE! To use the Teensy 3.0/3.1/3.2/3.4/3.5 and LC in host mode, select "No USB" from the tools menu for USB Type.
 
 ## AVR Arduino hardware instructions
 On AVR based Arduino boards and clones, you must do one of the following:
@@ -28,9 +28,11 @@ No special modifications are required!
 ARM boards have interrupt capabilities on nearly every pin.
 
 ## PIC32
-UNO32 only supported at this moment. uC32 will be tested soon.
+UNO32, uC32, WF32, Wi-Fire
 
-Digilent messed up on the ICSP connector. You need to modify your shield. Pull the 2x3 header plastic cover, and break off pin recepticle contacts for pins 2 and 5. Run a patch wire from +5V to pin 2. Run a patch wire from RESET to pin 5. Put plastic cover back on. Don't worry, the board will still work on all other development boards. Detailed photos are in the images directory. Alternatly, modify the Digilent board. More recent boards have an option jumper which you could use to do this fix as well, however you still need to patch 5v onto pin 2.
+Please note that the UNO32 really lacks enough flash to be very useful. Some demos will be too big to fit into flash.
+
+Digilent messed up on the ICSP connector. You need to modify your shield. Pull the 2x3 header plastic cover, and break off pin recepticle contacts for pins 2 and 5. Run a patch wire from +5V to pin 2. Run a patch wire from RESET to pin 5. Put plastic cover back on. Don't worry, the board will still work on all other development boards. Detailed photos are in the images directory. Alternatly, modify the Digilent board. More recent boards have an option jumper which you could use to do this fix as well, however you still need to patch 5v onto pin 2. 
 
 Then you must do one of the following:
 
