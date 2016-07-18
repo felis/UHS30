@@ -25,54 +25,54 @@ e-mail   :  support@circuitsathome.com
 #endif
 
 // define some stuff
-#define UHS_KINETIS_bmKSTATUS     0x00  // full speed
-#define UHS_KINETIS_bmJSTATUS     0x80  // low speed
-#define UHS_KINETIS_bmSE0         0xC0  // SE0 - disconnect state
-#define UHS_KINETIS_bmSE1         0x40  // SE1 - illegal state
+#define UHS_KINETIS_FS_bmKSTATUS     0x00  // full speed
+#define UHS_KINETIS_FS_bmJSTATUS     0x80  // low speed
+#define UHS_KINETIS_FS_bmSE0         0xC0  // SE0 - disconnect state
+#define UHS_KINETIS_FS_bmSE1         0x40  // SE1 - illegal state
 
-#define UHS_KINETIS_SE0     0
-#define UHS_KINETIS_SE1     1
-#define UHS_KINETIS_FSHOST  2
-#define UHS_KINETIS_LSHOST  3
+#define UHS_KINETIS_FS_SE0     0
+#define UHS_KINETIS_FS_SE1     1
+#define UHS_KINETIS_FS_FSHOST  2
+#define UHS_KINETIS_FS_LSHOST  3
 
-#define UHS_KINETIS_bmHUBPRE    0x04
+#define UHS_KINETIS_FS_bmHUBPRE    0x04
 
-#define UHS_KINETIS_TOKEN_SETUP         (0xD0)
-#define UHS_KINETIS_TOKEN_DATA_IN       (0x90)
-#define UHS_KINETIS_TOKEN_DATA_OUT      (0x10)
+#define UHS_KINETIS_FS_TOKEN_SETUP         (0xD0)
+#define UHS_KINETIS_FS_TOKEN_DATA_IN       (0x90)
+#define UHS_KINETIS_FS_TOKEN_DATA_OUT      (0x10)
 #define USB_ADDR_LSEN  (0x80) // low speed enable bit
 
 // can be from 8 to 64
-#define UHS_KINETIS_EP0_SIZE    (64)
+#define UHS_KINETIS_FS_EP0_SIZE    (64)
 
 
-#define UHS_KINETIS_BDT_OWN     0x80
-#define UHS_KINETIS_BDT_DATA1   0x40
-#define UHS_KINETIS_BDT_DATA0   0x00
-#define UHS_KINETIS_BDT_DTS     0x08
-#define UHS_KINETIS_BDT_STALL   0x04
-#define UHS_KINETIS_BDT_PID(n)  (((n) >> 2) & 15)
+#define UHS_KINETIS_FS_BDT_OWN     0x80
+#define UHS_KINETIS_FS_BDT_DATA1   0x40
+#define UHS_KINETIS_FS_BDT_DATA0   0x00
+#define UHS_KINETIS_FS_BDT_DTS     0x08
+#define UHS_KINETIS_FS_BDT_STALL   0x04
+#define UHS_KINETIS_FS_BDT_PID(n)  (((n) >> 2) & 15)
 
-#define UHS_KINETIS_BDT_DESC(count, data)       (UHS_KINETIS_BDT_OWN | UHS_KINETIS_BDT_DTS \
-				        | ((data) ? UHS_KINETIS_BDT_DATA1 : UHS_KINETIS_BDT_DATA0) \
+#define UHS_KINETIS_FS_BDT_DESC(count, data)       (UHS_KINETIS_FS_BDT_OWN | UHS_KINETIS_FS_BDT_DTS \
+				        | ((data) ? UHS_KINETIS_FS_BDT_DATA1 : UHS_KINETIS_FS_BDT_DATA0) \
 				        | ((count) << 16))
 
-#define UHS_KINETIS_TX   1
-#define UHS_KINETIS_RX   0
-#define UHS_KINETIS_ODD  1
-#define UHS_KINETIS_EVEN 0
-#define UHS_KINETIS_DATA0 0
-#define UHS_KINETIS_DATA1 1
-#define UHS_KINETIS_index(endpoint, tx, odd) (((endpoint) << 2) | ((tx) << 1) | (odd))
-#define UHS_KINETIS_stat2bufferdescriptor(stat) (table + ((stat) >> 2))
+#define UHS_KINETIS_FS_TX   1
+#define UHS_KINETIS_FS_RX   0
+#define UHS_KINETIS_FS_ODD  1
+#define UHS_KINETIS_FS_EVEN 0
+#define UHS_KINETIS_FS_DATA0 0
+#define UHS_KINETIS_FS_DATA1 1
+#define UHS_KINETIS_FS_index(endpoint, tx, odd) (((endpoint) << 2) | ((tx) << 1) | (odd))
+#define UHS_KINETIS_FS_stat2bufferdescriptor(stat) (table + ((stat) >> 2))
 
-#define UHS_KINETIS_PID_DATA0       0x3
-#define UHS_KINETIS_PID_DATA1       0xB
-#define UHS_KINETIS_PID_ACK         0x2
-#define UHS_KINETIS_PID_STALL       0xE
-#define UHS_KINETIS_PID_NAK         0xA
-#define UHS_KINETIS_PID_BUS_TIMEOUT 0x0
-#define UHS_KINETIS_PID_DATA_ERROR  0xF
+#define UHS_KINETIS_FS_PID_DATA0       0x3
+#define UHS_KINETIS_FS_PID_DATA1       0xB
+#define UHS_KINETIS_FS_PID_ACK         0x2
+#define UHS_KINETIS_FS_PID_STALL       0xE
+#define UHS_KINETIS_FS_PID_NAK         0xA
+#define UHS_KINETIS_FS_PID_BUS_TIMEOUT 0x0
+#define UHS_KINETIS_FS_PID_DATA_ERROR  0xF
 
 // Buffer Descriptor Table
 // desc contains information about the transfer
@@ -91,7 +91,6 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         volatile uint16_t timer_countdown;
 
         // TO-DO: pack into a struct/union and use one byte
-        volatile bool islowspeed;
         volatile bool insidetask;
         volatile bool busevent;
         volatile bool sofevent;
@@ -133,21 +132,21 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
 
         // two buffers for tx and rx so we can do ping-pong buffering
         // Not used right now, but they will be used in the future
-        uint8_t ep0_rx0_buf[UHS_KINETIS_EP0_SIZE] __attribute__ ((aligned (4)));
-        uint8_t ep0_rx1_buf[UHS_KINETIS_EP0_SIZE] __attribute__ ((aligned (4)));
+        uint8_t ep0_rx0_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
+        uint8_t ep0_rx1_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
         const uint8_t *ep0_tx_ptr;
         uint16_t ep0_tx_len;
         uint8_t ep0_tx_bdt_bank;
         uint8_t ep0_tx_data_toggle;
 
-        uint8_t ep0_tx0_buf[UHS_KINETIS_EP0_SIZE] __attribute__ ((aligned (4)));
-        uint8_t ep0_tx1_buf[UHS_KINETIS_EP0_SIZE] __attribute__ ((aligned (4)));
+        uint8_t ep0_tx0_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
+        uint8_t ep0_tx1_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
         const uint8_t *ep0_rx_ptr;
         uint16_t ep0_rx_len;
         uint8_t ep0_rx_bdt_bank;
         uint8_t ep0_rx_data_toggle;
 
-        uint8_t data_in_buf[UHS_KINETIS_EP0_SIZE] __attribute__ ((aligned (4)));  // to receive data in as host
+        uint8_t data_in_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to receive data in as host
 
         uint8_t setup_command_buffer[8]; // for setup commands
 
@@ -155,7 +154,6 @@ public:
         UHS_NI UHS_KINETIS_FS_HOST (void) {
                 sof_countdown = 0;
                 timer_countdown = 0;
-                islowspeed = false;
                 insidetask = false;
                 busevent = false;
                 sofevent = false;
@@ -181,7 +179,7 @@ public:
 
         // helper functions too
         void busprobe(void);
-        virtual uint8_t VBUS_changed(void);
+        virtual void VBUS_changed(void);
 
         // Note, this is not counting SOFs :-)
         virtual bool UHS_NI sof_delay(uint16_t x) {
@@ -207,7 +205,7 @@ public:
 
         bool UHS_NI IsHub(uint8_t klass) {
                 if(klass == UHS_USB_CLASS_HUB) {
-                        hub_present = UHS_KINETIS_bmHUBPRE;
+                        hub_present = UHS_KINETIS_FS_bmHUBPRE;
                         return true;
                 }
                 return false;
@@ -229,10 +227,6 @@ public:
                 USB0_CTL |= USB_CTL_RESET;
                 sof_delay(20); // delay at least 20 ms
                 USB0_CTL &= ~USB_CTL_RESET;
-
-                // Wait for the reset to complete
-                //while(busevent) {
-                //}
 
                 sofevent = true;
                 // start SOF generation

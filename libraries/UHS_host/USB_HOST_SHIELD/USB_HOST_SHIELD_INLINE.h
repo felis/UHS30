@@ -147,7 +147,7 @@ uint16_t UHS_NI MAX3421E_HOST::reset(void) {
         return (i);
 }
 
-uint8_t UHS_NI MAX3421E_HOST::VBUS_changed(void) {
+void UHS_NI MAX3421E_HOST::VBUS_changed(void) {
         /* modify USB task state because Vbus changed or unknown */
         uint8_t speed = 1;
         //printf("\r\n\r\n\r\n\r\nSTATE %2.2x -> ", usb_task_state);
@@ -185,9 +185,9 @@ uint8_t UHS_NI MAX3421E_HOST::VBUS_changed(void) {
                         usb_task_state = UHS_USB_HOST_STATE_IDLE;
                         break;
         }
-
+        usb_host_speed = speed;
         //printf("0x%2.2x\r\n\r\n\r\n\r\n", usb_task_state);
-        return speed;
+        return;
 };
 
 /**
@@ -345,7 +345,7 @@ again:
         while(!(regRd(rHCTL) & bmSAMPLEBUS)); //wait for sample operation to finish
 
         busprobe(); //check if anything is connected
-        islowspeed = (VBUS_changed() == 0);
+        VBUS_changed();
 
         // GPX pin on. This is done here so that a change is detected if we have a switch connected.
         /* MAX3421E - full-duplex SPI, interrupt kind, vbus on */
@@ -412,10 +412,10 @@ uint8_t UHS_NI MAX3421E_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **
         //Serial.print("\r\nMode: ");
         //Serial.println( mode, HEX);
         //Serial.print("\r\nLS: ");
-        //Serial.println(p->lowspeed, HEX);
+        //Serial.println(p->speed, HEX);
 
         // Set bmLOWSPEED and bmHUBPRE in case of low-speed device, reset them otherwise
-        regWr(rMODE, (p->lowspeed) ? mode | bmLOWSPEED | hub_present : mode & ~(bmHUBPRE | bmLOWSPEED));
+        regWr(rMODE, (p->speed) ? mode & ~(bmHUBPRE | bmLOWSPEED) : mode | bmLOWSPEED | hub_present);
 
         return 0;
 }
@@ -733,7 +733,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
 
         DDSB();
         if(condet) {
-                islowspeed = (VBUS_changed() == 0);
+                VBUS_changed();
 #if USB_HOST_SHIELD_USE_ISR
                 noInterrupts();
 #endif
@@ -747,7 +747,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
                         // should never happen...
                         MAX_HOST_DEBUG("UHS_USB_HOST_STATE_INITIALIZE\r\n");
                         busprobe();
-                        islowspeed = (VBUS_changed() == 0);
+                        VBUS_changed();
                         break;
                 case UHS_USB_HOST_STATE_DEBOUNCE:
                         MAX_HOST_DEBUG("UHS_USB_HOST_STATE_DEBOUNCE\r\n");
@@ -777,7 +777,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
 
                 case UHS_USB_HOST_STATE_CONFIGURING:
                         usb_task_state = UHS_USB_HOST_STATE_CHECK;
-                        x = Configuring(0, 0, islowspeed);
+                        x = Configuring(0, 0, usb_host_speed);
                         usb_error = x;
                         if(usb_task_state == UHS_USB_HOST_STATE_CHECK) {
                                 if(x) {
@@ -814,7 +814,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
         DDSB();
 #if USB_HOST_SHIELD_USE_ISR
         if(condet) {
-                islowspeed = (VBUS_changed() == 0);
+                VBUS_changed();
                 noInterrupts();
                 condet = false;
                 interrupts();

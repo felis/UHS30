@@ -51,77 +51,72 @@ void UHS_NI UHS_KINETIS_FS_HOST::busprobe(void) {
         // 0x40 disconnected
         // 0x00 full speed
         switch(bus_sample) { //start full-speed or low-speed host
-                case(UHS_KINETIS_bmJSTATUS): // full speed
+                case(UHS_KINETIS_FS_bmJSTATUS): // full speed
                         USBTRACE("full speed\r\n");
                         USB0_INTEN &= ~USB_INTEN_ATTACHEN;
                         USB0_ADDR = 0;
                         USB0_ENDPT0 &= ~USB_ENDPT_HOSTWOHUB; // no hub present, communicate directly with device
                         USB0_SOFTHLD = 0x4A; // set to 0x4A for 64 byte transfers, 0x12 for 8-byte, 0x1A=16-bytes
 
-                        islowspeed = false;
+                        usb_host_speed = 1;
                         USB0_CTL |= USB_CTL_USBENSOFEN; // start SOF generation
-                        vbusState = UHS_KINETIS_FSHOST;
+                        vbusState = UHS_KINETIS_FS_FSHOST;
                         break;
-                case(UHS_KINETIS_bmKSTATUS): // low speed
+                case(UHS_KINETIS_FS_bmKSTATUS): // low speed
                         USBTRACE("low speed\r\n");
                         USB0_INTEN &= ~USB_INTEN_ATTACHEN;
                         USB0_ADDR = USB_ADDR_LSEN; // low speed enable, address 0
                         USB0_ENDPT0 |= USB_ENDPT_HOSTWOHUB; // no hub present, communicate directly with device
                         USB0_SOFTHLD = 0x4A; // set to 0x4A for 64 byte transfers, 0x12 for 8-byte, 0x1A=16-bytes
 
-                        islowspeed = true;
+                        usb_host_speed = 0;
                         USB0_CTL |= USB_CTL_USBENSOFEN; // start SOF generation
-                        vbusState = UHS_KINETIS_LSHOST;
+                        vbusState = UHS_KINETIS_FS_LSHOST;
                         break;
-                case(UHS_KINETIS_bmSE0): //disconnected state
+                case(UHS_KINETIS_FS_bmSE0): //disconnected state
                         USBTRACE("disconnected\r\n");
                         // Set D+ and D- low
                         USB0_ADDR = 0;
                         USB0_OTGCTL = USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW; // enable D+ and D- pulldowns
                         USB0_CTL &= ~USB_CTL_USBENSOFEN;
                         USB0_INTEN |= USB_INTEN_ATTACHEN;
-                        vbusState = UHS_KINETIS_SE0;
+                        vbusState = UHS_KINETIS_FS_SE0;
                         break;
-                case(UHS_KINETIS_bmSE1): // second disconnected state
+                case(UHS_KINETIS_FS_bmSE1): // second disconnected state
                         USBTRACE("disconnected2\r\n");
                         USB0_ADDR = 0;
                         USB0_OTGCTL = USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW; // enable D+ and D- pulldowns
                         USB0_CTL &= ~USB_CTL_USBENSOFEN;
                         USB0_INTEN |= USB_INTEN_ATTACHEN;
-                        vbusState = UHS_KINETIS_SE1;
+                        vbusState = UHS_KINETIS_FS_SE1;
                         break;
         }//end switch( bus_sample )
 }
 
-//  NOT USED
-
-uint8_t UHS_NI UHS_KINETIS_FS_HOST::VBUS_changed(void) {
+void UHS_NI UHS_KINETIS_FS_HOST::VBUS_changed(void) {
         /* modify USB task state because Vbus changed or unknown */
         uint8_t speed = 1;
         // printf("\r\n\r\n\r\n\r\nSTATE %2.2x -> ", usb_task_state);
         switch(vbusState) {
-                case UHS_KINETIS_LSHOST: // Low speed
+                case UHS_KINETIS_FS_LSHOST: // Low speed
 
                         speed = 0;
                         //intentional fallthrough
-                case UHS_KINETIS_FSHOST: // Full speed
+                case UHS_KINETIS_FS_FSHOST: // Full speed
                         // Start device initialization if we are not initializing
                         // Resets to the device cause an IRQ
-                        // if((usb_task_state & UHS_USB_HOST_STATE_MASK) != UHS_USB_HOST_STATE_DETACHED) {
                         ReleaseChildren();
                         timer_countdown = 0;
                         sof_countdown = 0;
                         usb_task_state = UHS_USB_HOST_STATE_DEBOUNCE;
-                        //}
                         break;
-                case UHS_KINETIS_SE1: //illegal state
+                case UHS_KINETIS_FS_SE1: //illegal state
                         ReleaseChildren();
                         timer_countdown = 0;
                         sof_countdown = 0;
                         usb_task_state = UHS_USB_HOST_STATE_ILLEGAL;
-                        // USB0_INTEN |= USB_INTEN_ATTACHEN;
                         break;
-                case UHS_KINETIS_SE0: //disconnected
+                case UHS_KINETIS_FS_SE0: //disconnected
                 default:
                         ReleaseChildren();
                         timer_countdown = 0;
@@ -131,7 +126,8 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::VBUS_changed(void) {
                         break;
         }
         // printf("0x%2.2x\r\n\r\n\r\n\r\n", usb_task_state);
-        return speed;
+        usb_host_speed = speed;
+        return;
 };
 
 /**
@@ -140,7 +136,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::VBUS_changed(void) {
 void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
         uint8_t x;
         if(condet) {
-                islowspeed = (VBUS_changed() == 0);
+                VBUS_changed();
                 noInterrupts();
                 condet = false;
                 interrupts();
@@ -151,12 +147,8 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
         switch(usb_task_state) {
                 case UHS_USB_HOST_STATE_INITIALIZE: // initial state
                         //printf("ISRbottom, UHS_USB_HOST_STATE_INITIALIZE\r\n");
-
                         // if an attach happens we will detect it in the isr
                         // update usb_task_state and check speed (so we replace busprobe and VBUS_changed funcs)
-
-                        //busprobe();
-                        //islowspeed = (VBUS_changed() == 0);
                         break;
                 case UHS_USB_HOST_STATE_DEBOUNCE:
                         //printf("ISRbottom, UHS_USB_HOST_STATE_DEBOUNCE\r\n");
@@ -193,7 +185,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
                 case UHS_USB_HOST_STATE_CONFIGURING:
                         HOST_DUBUG("ISRbottom, UHS_USB_HOST_STATE_CONFIGURING\r\n");
                         usb_task_state = UHS_USB_HOST_STATE_CHECK;
-                        x = Configuring(0, 0, islowspeed);
+                        x = Configuring(0, 0, usb_host_speed);
                         if(usb_task_state == UHS_USB_HOST_STATE_CHECK) {
                                 if(x) {
                                         if(x == hrJERR) {
@@ -228,7 +220,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
                         break;
         } // switch( usb_task_state )
         if(condet) {
-                islowspeed = (VBUS_changed() == 0);
+                VBUS_changed();
                 noInterrupts();
                 condet = false;
                 interrupts();
@@ -299,10 +291,10 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
 
         if((status & USB_ISTAT_TOKDNE)) { // Token done
                 stat = USB0_STAT;
-                bdt_t *p_newToken = UHS_KINETIS_stat2bufferdescriptor(stat);
+                bdt_t *p_newToken = UHS_KINETIS_FS_stat2bufferdescriptor(stat);
                 b_newToken.desc = p_newToken->desc;
                 b_newToken.addr = p_newToken->addr;
-                uint32_t pid = UHS_KINETIS_BDT_PID(b_newToken.desc);
+                uint32_t pid = UHS_KINETIS_FS_BDT_PID(b_newToken.desc);
                 isrPid = pid;
                 // update to signal non-isr code what happened
                 switch(pid & 0x0f) {
@@ -446,17 +438,17 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpI
         USBTRACE("\r\n");
 
         // address and low speed enable
-        USB0_ADDR = addr | ((p->lowspeed) ? USB_ADDR_LSEN : 0);
+        USB0_ADDR = addr | ((p->speed) ? 0 : USB_ADDR_LSEN);
 
         //Serial.print("\r\nMode: ");
         //Serial.println( mode, HEX);
         //Serial.print("\r\nLS: ");
-        //Serial.println(p->lowspeed, HEX);
+        //Serial.println(p->speed, HEX);
 
         // Disable automatic retries for 1 NAK, Set hub for low-speed device
         USB0_ENDPT0 = USB_ENDPT_EPRXEN | USB_ENDPT_EPTXEN | USB_ENDPT_EPHSHK |
                 ((nak_limit != 1U) ? 0 : USB_ENDPT_RETRYDIS) |
-                ((p->lowspeed) ? USB_ENDPT_HOSTWOHUB : 0);
+                ((p->speed) ? 0 : USB_ENDPT_HOSTWOHUB);
 
         // set USB0_SOFTHLD depending on the maxPktSize
         // NOTE: This should actually be set per-packet, however this works.
@@ -608,7 +600,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::OutTransfer(UHS_EpInfo *pep, uint16_t nak_li
 
                 bytes_tosend = (bytes_left >= maxpktsize) ? maxpktsize : bytes_left;
                 endpoint0_transmit(p_buffer, bytes_tosend); // setup internal buffer
-                rcode = dispatchPkt(UHS_KINETIS_TOKEN_DATA_OUT, ep, nak_limit); //dispatch packet to ep
+                rcode = dispatchPkt(UHS_KINETIS_FS_TOKEN_DATA_OUT, ep, nak_limit); //dispatch packet to ep
                 bytes_left -= bytes_tosend;
                 p_buffer += bytes_tosend;
         }//while( bytes_left...
@@ -654,7 +646,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_lim
                 }
                 HOST_DUBUG("datalen: %lu \r\n", datalen);
                 endpoint0_receive(data_in_buf, datalen); // setup internal buffer
-                rcode = dispatchPkt(UHS_KINETIS_TOKEN_DATA_IN, ep, nak_limit); //dispatch packet
+                rcode = dispatchPkt(UHS_KINETIS_FS_TOKEN_DATA_IN, ep, nak_limit); //dispatch packet
 
                 pktsize = b_newToken.desc >> 16; // how many bytes we actually got
 
@@ -731,18 +723,18 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_FS_HOST::ctrlReqOpen(uint8_t addr, uint64_t Requ
 
                 datalen = 8;
                 //data = setup_command_buffer;
-                ep0_tx_data_toggle = UHS_KINETIS_DATA0; // setup always uses DATA0
+                ep0_tx_data_toggle = UHS_KINETIS_FS_DATA0; // setup always uses DATA0
                 endpoint0_transmit(&Request, datalen); // setup internal buffer
 
-                rcode = dispatchPkt(UHS_KINETIS_TOKEN_SETUP, 0, nak_limit); //dispatch packet
+                rcode = dispatchPkt(UHS_KINETIS_FS_TOKEN_SETUP, 0, nak_limit); //dispatch packet
 
                 if(!rcode) {
                         if(dataptr != NULL) {
                                 // data phase begins with DATA1 after setup
                                 if(((Request) /* bmReqType */ & 0x80) == 0x80) {
-                                        pep->bmRcvToggle = UHS_KINETIS_DATA1; //bmRCVTOG1;
+                                        pep->bmRcvToggle = UHS_KINETIS_FS_DATA1; //bmRCVTOG1;
                                 } else {
-                                        pep->bmSndToggle = UHS_KINETIS_DATA1; //bmSNDTOG1;
+                                        pep->bmSndToggle = UHS_KINETIS_FS_DATA1; //bmSNDTOG1;
                                 }
                         }
                 } else {
@@ -819,13 +811,13 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqT
         if(!rcode) {
                 //               Serial.println("Dispatching");
                 if(((bmReqType & 0x80) == 0x80)) {
-                        ep0_tx_data_toggle = UHS_KINETIS_DATA1; // make sure we use DATA1 for status phase
+                        ep0_tx_data_toggle = UHS_KINETIS_FS_DATA1; // make sure we use DATA1 for status phase
                         endpoint0_transmit(NULL, 0); // setup internal buffer, 0 bytes
-                        rcode = dispatchPkt(UHS_KINETIS_TOKEN_DATA_OUT, 0, 0);
+                        rcode = dispatchPkt(UHS_KINETIS_FS_TOKEN_DATA_OUT, 0, 0);
                 } else {
-                        ep0_rx_data_toggle = UHS_KINETIS_DATA1; // make sure we use DATA1 for status phase
+                        ep0_rx_data_toggle = UHS_KINETIS_FS_DATA1; // make sure we use DATA1 for status phase
                         endpoint0_receive(NULL, 0); // setup internal buffer, 0 bytes
-                        rcode = dispatchPkt(UHS_KINETIS_TOKEN_DATA_IN, 0, 0);
+                        rcode = dispatchPkt(UHS_KINETIS_FS_TOKEN_DATA_IN, 0, 0);
                 }
                 //        } else {
                 //                Serial.println("Bypassed Dispatch");
@@ -864,19 +856,19 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         USB0_CTL = USB_CTL_ODDRST;
         ep0_tx_bdt_bank = 0;
         ep0_rx_bdt_bank = 0;
-        ep0_tx_data_toggle = UHS_KINETIS_BDT_DATA0;
-        ep0_rx_data_toggle = UHS_KINETIS_BDT_DATA0;
+        ep0_tx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
+        ep0_rx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
 
         // setup buffers
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, UHS_KINETIS_EVEN)].desc = UHS_KINETIS_BDT_DESC(UHS_KINETIS_EP0_SIZE, 0);
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, UHS_KINETIS_EVEN)].addr = ep0_rx0_buf;
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, UHS_KINETIS_ODD)].desc = UHS_KINETIS_BDT_DESC(UHS_KINETIS_EP0_SIZE, 0);
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, UHS_KINETIS_ODD)].addr = ep0_rx1_buf;
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_EVEN)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_EVEN)].addr = ep0_rx0_buf;
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_ODD)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_ODD)].addr = ep0_rx1_buf;
 
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, UHS_KINETIS_EVEN)].desc = UHS_KINETIS_BDT_DESC(UHS_KINETIS_EP0_SIZE, 0);
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, UHS_KINETIS_EVEN)].addr = ep0_tx0_buf;
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, UHS_KINETIS_ODD)].desc = UHS_KINETIS_BDT_DESC(UHS_KINETIS_EP0_SIZE, 0);
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, UHS_KINETIS_ODD)].addr = ep0_tx1_buf;
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_EVEN)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_EVEN)].addr = ep0_tx0_buf;
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_ODD)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_ODD)].addr = ep0_tx1_buf;
 
         // clear interrupts
         USB0_ERRSTAT = 0xFF;
@@ -932,8 +924,8 @@ void UHS_NI UHS_KINETIS_FS_HOST::endpoint0_transmit(const void *data, uint32_t l
         last_address = (void *)data;
         last_tx = true;
 
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, ep0_tx_bdt_bank)].addr = (void *)data;
-        table[UHS_KINETIS_index(0, UHS_KINETIS_TX, ep0_tx_bdt_bank)].desc = UHS_KINETIS_BDT_DESC(len, ep0_tx_data_toggle);
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, ep0_tx_bdt_bank)].addr = (void *)data;
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, ep0_tx_bdt_bank)].desc = UHS_KINETIS_FS_BDT_DESC(len, ep0_tx_data_toggle);
         ep0_tx_data_toggle ^= 1;
         ep0_tx_bdt_bank ^= 1;
 }
@@ -948,8 +940,8 @@ void UHS_NI UHS_KINETIS_FS_HOST::endpoint0_receive(const void *data, uint32_t le
         last_address = (void *)data;
         last_tx = false;
 
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, ep0_rx_bdt_bank)].addr = (void *)data;
-        table[UHS_KINETIS_index(0, UHS_KINETIS_RX, ep0_rx_bdt_bank)].desc = UHS_KINETIS_BDT_DESC(len, ep0_rx_data_toggle);
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, ep0_rx_bdt_bank)].addr = (void *)data;
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, ep0_rx_bdt_bank)].desc = UHS_KINETIS_FS_BDT_DESC(len, ep0_rx_data_toggle);
         ep0_rx_data_toggle ^= 1;
         ep0_rx_bdt_bank ^= 1;
 }

@@ -377,7 +377,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
         //        Serial.print("Bulk Start USB Host Address Pool @ 0x");
         //        Serial.println((uint32_t)pUsb->GetAddressPool(), HEX);
 
-        BS_HOST_DEBUG("BS Start, lowspeed: %i\r\n", pUsb->GetAddressPool()->GetUsbDevicePtr(bAddress)->lowspeed ? 1 : 0);
+        BS_HOST_DEBUG("BS Start, speed: %i\r\n", pUsb->GetAddressPool()->GetUsbDevicePtr(bAddress)->usb_host_speed);
         USBTRACE("BS Start\r\n");
         rcode = pUsb->setEpInfoEntry(bAddress, 3, epInfo);
         //        Serial.println(rcode,HEX);

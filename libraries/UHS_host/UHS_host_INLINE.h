@@ -196,12 +196,12 @@ uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t add
  *
  * @param parent index to Parent
  * @param port what port on the parent
- * @param lowspeed the speed of the device is low speed
+ * @param speed the speed of the device
  * @return
  */
-uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, bool lowspeed) {
+uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t speed) {
         //uint8_t bAddress = 0;
-        HOST_DUBUG("\r\n\r\n\r\nConfiguring: parent = %i, port = %i, lowspeed = %i\r\n", parent, port, lowspeed ? 1 : 0);
+        HOST_DUBUG("\r\n\r\n\r\nConfiguring: parent = %i, port = %i, speed = %i\r\n", parent, port, speed);
         uint8_t rcode = 0;
         uint8_t retries = 0;
         uint8_t numinf = 0;
@@ -239,8 +239,8 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, bool lowspe
                 return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
         }
 
-        p->lowspeed = lowspeed;
-        p->epinfo[0].maxPktSize = 8; // lowspeed ? 8 : 16; if we get more than 8, this is fine.
+        p->speed = speed;
+        p->epinfo[0].maxPktSize = 8; // speed ? 8 : 16; if we get more than 8, this is fine.
         HOST_DUBUG("\r\n\r\nConfiguring...\r\n");
 again:
         rcode = getDevDescr(0, biggest, (uint8_t*)buf);
@@ -293,7 +293,7 @@ again:
                 return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
         }
 
-        p->lowspeed = lowspeed;
+        p->speed = speed;
 
         rcode = doSoftReset(parent, port, ei.address);
 
@@ -999,7 +999,7 @@ uint8_t UHS_NI UHS_VSI::SetInterface(ENUMERATION_INFO *ei) {
  *  o Use an unknown device from a sketch, kind of like usblib does.
  *    This will aid in making more drivers in a faster way.
  */
-uint8_t UHS_USB_HOST_BASE::DefaultAddressing(uint8_t parent, uint8_t port, bool lowspeed) {
+uint8_t UHS_USB_HOST_BASE::DefaultAddressing(uint8_t parent, uint8_t port, uint8_t speed) {
         uint8_t rcode;
         UHS_Device *p0 = NULL, *p = NULL;
 
@@ -1012,7 +1012,7 @@ uint8_t UHS_USB_HOST_BASE::DefaultAddressing(uint8_t parent, uint8_t port, bool 
         if(!p0->epinfo)
                 return UHS_HOST_ERROR_NULL_EPINFO;
 
-        p0->lowspeed = (lowspeed) ? true : false;
+        p0->speed = speed;
 
         // Allocate new address according to device class
         uint8_t bAddress = addrPool.AllocAddress(parent, false, port);
@@ -1025,7 +1025,7 @@ uint8_t UHS_USB_HOST_BASE::DefaultAddressing(uint8_t parent, uint8_t port, bool 
         if(!p)
                 return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
 
-        p->lowspeed = lowspeed;
+        p->speed = speed;
 
         // Assign new address to the device
         rcode = setAddr(0, bAddress);

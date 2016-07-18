@@ -239,11 +239,9 @@ public:
 
         uint8_t UHS_NI getStrDescr(uint8_t addr, uint16_t nbytes, uint8_t index, uint16_t langid, uint8_t* dataptr);
 
-        // uint8_t UHS_NI DefaultAddressing(uint8_t parent, uint8_t port, bool lowspeed);
-
         void UHS_NI ReleaseDevice(uint8_t addr);
 
-        uint8_t UHS_NI Configuring(uint8_t parent, uint8_t port, bool lowspeed);
+        uint8_t UHS_NI Configuring(uint8_t parent, uint8_t port, uint8_t speed);
 
         void UHS_NI DeviceDefaults(uint8_t maxep, UHS_USBInterface *device);
 

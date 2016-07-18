@@ -79,7 +79,7 @@ struct UHS_Device {
         UHS_DeviceAddress address;
         uint8_t bIface;
         uint8_t epcount; // number of endpoints
-        bool lowspeed; // indicates if a device is the low speed one
+        uint8_t speed; // indicates device speed
 } __attribute__((packed));
 
 typedef void (*UsbDeviceHandleFunc)(UHS_Device *pdev);
@@ -97,7 +97,7 @@ class AddressPool {
         void UHS_NI InitEntry(uint8_t index) {
                 thePool[index].address.devAddress = 0;
                 thePool[index].epcount = 1;
-                thePool[index].lowspeed = 0;
+                thePool[index].speed = 0;
                 thePool[index].epinfo = &dev0ep;
         };
 
@@ -270,7 +270,7 @@ public:
                 void InitEntry(uint8_t index) {
                         thePool[index].address.devAddress = 0;
                         thePool[index].epcount = 1;
-                        thePool[index].lowspeed = 0;
+                        thePool[index].speed = 0;
                         thePool[index].epinfo = &dev0ep;
                 };
 

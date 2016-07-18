@@ -278,7 +278,6 @@ public UHS_USB_HOST_BASE
         // TO-DO: move these into the parent class.
         volatile uint8_t vbusState;
         volatile uint16_t sof_countdown;
-        volatile bool islowspeed; // This should be a number to indicate speed.
 
         // TO-DO: pack into a struct/union and use one byte
         volatile bool busevent;
@@ -294,7 +293,6 @@ public:
 
         UHS_NI MAX3421E_HOST(void) {
                 sof_countdown = 0;
-                islowspeed = false;
                 busevent = false;
                 doingreset= false;
                 sofevent = false;
@@ -309,7 +307,6 @@ public:
 
         UHS_NI MAX3421E_HOST(uint8_t pss, uint8_t pirq) {
                 sof_countdown = 0;
-                islowspeed = false;
                 busevent = false;
                 doingreset= false;
                 sofevent = false;
@@ -324,7 +321,6 @@ public:
 
         UHS_NI MAX3421E_HOST(uint8_t pss, uint8_t pirq, uint32_t pspd) {
                 sof_countdown = 0;
-                islowspeed = false;
                 doingreset= false;
                 busevent = false;
                 sofevent = false;
@@ -377,7 +373,7 @@ public:
                 return false;
         };
 
-        virtual uint8_t VBUS_changed(void);
+        virtual void VBUS_changed(void);
 
         virtual void UHS_NI doHostReset(void) {
 #if USB_HOST_SHIELD_USE_ISR
