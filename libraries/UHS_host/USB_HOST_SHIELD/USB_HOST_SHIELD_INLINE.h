@@ -825,7 +825,8 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
         // so we gate using a high pulse -- AJK
         UHS_PIN_WRITE(USB_HOST_SHIELD_TIMING_PIN, LOW);
 #endif
-        usb_task_polling_disabled--;
+        //usb_task_polling_disabled--;
+        EnablePoll();
         DDSB();
 }
 
@@ -863,12 +864,6 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
                 // ALWAYS happens BEFORE or WITH CONDETIRQ
                 if(HIRQ & bmBUSEVENTIRQ) {
                         HIRQ_sendback |= bmBUSEVENTIRQ;
-                        //if((busevent) && (usb_task_state == UHS_USB_HOST_STATE_RESET_NOT_COMPLETE)) {
-                        //        usb_task_state = UHS_USB_HOST_STATE_WAIT_SOF;
-                        //        sofevent = true;
-                        //        tmpdata = regRd(rMODE) | bmSOFKAENAB; //start SOF generation
-                        //        regWr(rMODE, tmpdata);
-                        //}
                         if(!doingreset) condet = true;
                         busprobe();
                         busevent = false;
@@ -881,14 +876,14 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
                 }
 
 
-                if((HIRQ & bmCONDETIRQ) || (HIRQ & bmBUSEVENTIRQ)) {
-                        MAX_HOST_DEBUG("\r\nAFTER CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n",
-                                (HIRQ & bmCONDETIRQ) ? "T" : "F",
-                                (HIRQ & bmBUSEVENTIRQ) ? "T" : "F",
-                                doingreset ? "T" : "F",
-                                usb_task_state
-                                );
-                }
+                //if((HIRQ & bmCONDETIRQ) || (HIRQ & bmBUSEVENTIRQ)) {
+                //        MAX_HOST_DEBUG("\r\nAFTER CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n",
+                //                (HIRQ & bmCONDETIRQ) ? "T" : "F",
+                //                (HIRQ & bmBUSEVENTIRQ) ? "T" : "F",
+                //                doingreset ? "T" : "F",
+                //                usb_task_state
+                //                );
+                //}
 
 
                 if(HIRQ & bmFRAMEIRQ) {
@@ -904,11 +899,15 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
                         sofevent = false;
                 }
 
+                //MAX_HOST_DEBUG("\r\n%s%s%s\r\n",
+                //        sof_countdown ? "T" : "F",
+                //        counted ? "T" : "F",
+                //        usb_task_polling_disabled? "T" : "F");
                 DDSB();
                 regWr(rHIRQ, HIRQ_sendback);
-
                 if(!sof_countdown && !counted && !usb_task_polling_disabled) {
-                        usb_task_polling_disabled++;
+                        DisablePoll();
+                        //usb_task_polling_disabled++;
 #ifdef USB_HOST_SHIELD_TIMING_PIN
                         // My counter/timer can't work on an inverted gate signal
                         // so we gate using a high pulse -- AJK

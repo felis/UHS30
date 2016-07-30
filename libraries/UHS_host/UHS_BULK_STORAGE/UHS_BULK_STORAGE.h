@@ -70,7 +70,7 @@ e-mail   :  support@circuitsathome.com
 #define             UHS_BULK_ERR_NO_MEDIA 0x28U
 #define              UHS_BULK_ERR_BAD_LBA 0x29U
 #define        UHS_BULK_ERR_MEDIA_CHANGED 0x2AU
-#define  UHS_BULK_ERR_DEVICE_DISCONNECTED 0x11U
+#define  UHS_BULK_ERR_DEVICE_DISCONNECTED hrDISCONNECTED
 #define    UHS_BULK_ERR_UNABLE_TO_RECOVER 0x12U // Reset recovery error
 #define          UHS_BULK_ERR_INVALID_LUN 0x13U
 #define          UHS_BULK_ERR_WRITE_STALL 0x14U

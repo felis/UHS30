@@ -188,7 +188,7 @@ e-mail   :  support@circuitsathome.com
 #define                                          hrJERR 0x0DU // J-state instead of response, Usually indicates wrong speed
 #define                                       hrTIMEOUT 0x0EU // Device timed out, and did not respond in time
 #define                                        hrBABBLE 0x0FU // Line noise/unexpected data
-
+#define                                  hrDISCONNECTED 0xEEU // Device was disconnected.
 // SEI interaction defaults
 #define                        UHS_HOST_TRANSFER_MAX_MS 10000   // (originally 5000) USB transfer timeout in milliseconds, per section 9.2.6.1 of USB 2.0 spec
 #define                 UHS_HOST_TRANSFER_RETRY_MAXIMUM 3       // 3 retry limit for a transfer

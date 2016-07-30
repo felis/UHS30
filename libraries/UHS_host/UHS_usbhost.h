@@ -303,6 +303,7 @@ public:
          * your driver if it requires extra class variable cleanup.
          */
         virtual void DriverDefaults(void) {
+                printf("Default driver defaults.");
                 pUsb->DeviceDefaults(bNumEP, this);
         };
 

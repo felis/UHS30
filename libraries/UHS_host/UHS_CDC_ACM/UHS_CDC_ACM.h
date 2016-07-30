@@ -153,15 +153,19 @@ public:
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411)
 
         uint8_t XR_read_register(uint16_t reg, uint16_t *val) {
+                if(!bAddress) return hrDISCONNECTED;
                 pUsb->DisablePoll();
                 uint8_t rv = (pUsb->ctrlReq(bAddress, mkSETUP_PKT16(XR_READ_REQUEST_TYPE, 1, 0x0000U, reg, 2), 2, (uint8_t *)val));
+                if(rv) Release();
                 pUsb->EnablePoll();
                 return rv;
         }
 
         uint8_t XR_write_register(uint16_t reg, uint16_t val) {
+                if(!bAddress) return hrDISCONNECTED;
                 pUsb->DisablePoll();
                 uint8_t rv = (pUsb->ctrlReq(bAddress, mkSETUP_PKT16(XR_WRITE_REQUEST_TYPE, 0, val, reg, 0), 0, NULL));
+                if(rv) Release();
                 pUsb->EnablePoll();
                 return rv;
         }
@@ -171,6 +175,8 @@ public:
         // FTDI bloat...
 
         uint8_t UHS_FTDI_SetBaudRate(uint32_t baud) {
+                if(!bAddress) return hrDISCONNECTED;
+                pUsb->DisablePoll();
                 uint16_t baud_value, baud_index = 0;
                 uint32_t divisor3;
                 divisor3 = 48000000 / 2 / baud; // divisor shifted 3 bits to the left
@@ -207,33 +213,49 @@ public:
                 //printf("FTDI baud_index: %x\r\n", baud_index);
                 uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_VENDOR_OUT, FTDI_SIO_SET_BAUD_RATE, baud_value, baud_index, 0), 0, NULL);
                 //printf("FTDI_SetBaudRate rv %x\r\n", rv);
+                if(rv) Release();
+                pUsb->EnablePoll();
                 return rv;
         };
 
         uint8_t UHS_FTDI_SetFlowControl(uint8_t protocol, uint8_t xon, uint8_t xoff) {
+                if(!bAddress) return hrDISCONNECTED;
+                pUsb->DisablePoll();
                 uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_SET_FLOW_CTRL, xon, xoff, protocol << 8, 0), 0, NULL);
                 //printf("FTDI_SetFlowControl rv %x\r\n", rv);
+                if(rv) Release();
+                pUsb->EnablePoll();
                 return rv;
         };
 
         uint8_t UHS_FTDI_SetControlLineState(uint8_t signal) {
                 // Normally RTS is bit 0), and DTR bit 1...
                 // Of course, FTDI flipped these.
+                if(!bAddress) return hrDISCONNECTED;
+                pUsb->DisablePoll();
                 uint16_t s = ((signal & 1) << 1) | ((signal & 2) >> 1);
                 uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_MODEM_CTRL, s, 0, 0, 0), 0, NULL);
                 //printf("FTDI_SetControlLineState rv %x\r\n", rv);
+                if(rv) Release();
+                pUsb->EnablePoll();
                 return rv;
         };
 
         uint8_t UHS_FTDI_SetData(uint16_t databm) {
+                if(!bAddress) return hrDISCONNECTED;
+                pUsb->DisablePoll();
                 uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_SET_DATA, databm & 0xff, databm >> 8, 0, 0), 0, NULL);
                 //printf("FTDI_SetData rv %x\r\n", rv);
+                if(rv) Release();
+                pUsb->EnablePoll();
                 return rv;
         };
 
         // More FTDI hoops we have to jump through...
 
         uint8_t UHS_FTDI_SetLineCoding(const UHS_CDC_LINE_CODING *dataptr) {
+                if(!bAddress) return hrDISCONNECTED;
+                pUsb->DisablePoll();
                 uint8_t rv;
                 rv = UHS_FTDI_SetBaudRate(dataptr->dwDTERate);
                 //printf("FTDI_SetLineCoding (baud rate) rv %x\r\n", rv);
@@ -242,6 +264,8 @@ public:
                         rv = UHS_FTDI_SetData(s);
                 }
                 //printf("FTDI_SetLineCoding rv %x\r\n", rv);
+                if(rv) Release();
+                pUsb->EnablePoll();
                 return rv;
         };
 
@@ -271,6 +295,7 @@ public:
         };
 
         virtual void autoflowRTS(NOTUSED(bool s)) {
+                pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411)
                 if(adaptor == UHS_USB_ACM_XR21B1411) {
                         uint16_t val;
@@ -301,11 +326,14 @@ public:
                                         }
                                 }
                         }
+                        if(rval) Release();
                 }
 #endif
+                pUsb->EnablePoll();
         };
 
         virtual void autoflowDSR(NOTUSED(bool s)) {
+                pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411)
                 if(adaptor == UHS_USB_ACM_XR21B1411) {
                         uint16_t val;
@@ -340,18 +368,23 @@ public:
                                         }
                                 }
                         }
+                        if(rval) Release();
                 }
 #endif
+                pUsb->EnablePoll();
         };
 
         virtual void autoflowXON(NOTUSED(bool s)) {
+                pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_FTDI)
                 if(adaptor == UHS_USB_ACM_FTDI) {
+                        uint8_t rval;
                         if(s) {
-                                UHS_FTDI_SetFlowControl(FTDI_SIO_XON_XOFF_HS, 0x11U, 0x13U);
+                                rval = UHS_FTDI_SetFlowControl(FTDI_SIO_XON_XOFF_HS, 0x11U, 0x13U);
                         } else {
-                                UHS_FTDI_SetFlowControl(FTDI_SIO_DISABLE_FLOW_CTRL, 0x11U, 0x13U);
+                                rval = UHS_FTDI_SetFlowControl(FTDI_SIO_DISABLE_FLOW_CTRL, 0x11U, 0x13U);
                         }
+                        if(rval) Release();
                 }
 #endif
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411)
@@ -385,11 +418,14 @@ public:
                                         }
                                 }
                         }
+                        if(rval) Release();
                 }
 #endif
+                pUsb->EnablePoll();
         };
 
         virtual void half_duplex(NOTUSED(bool s)) {
+                pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411)
                 if(adaptor == UHS_USB_ACM_XR21B1411) {
                         uint16_t val;
@@ -414,15 +450,19 @@ public:
                                         }
                                 }
                         }
+                        if(rval) Release();
                 }
 #endif
+                pUsb->EnablePoll();
         };
 
         virtual void wide(NOTUSED(bool s)) {
+                pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411)
                 if(adaptor == UHS_USB_ACM_XR21B1411) {
                 }
 #endif
+                pUsb->EnablePoll();
         };
 
         // UsbConfigXtracter implementation

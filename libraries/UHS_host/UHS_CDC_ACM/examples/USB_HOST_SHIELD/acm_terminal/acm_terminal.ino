@@ -41,8 +41,14 @@ public:
 
         MY_ACM(UHS_USB_HOST_BASE *p) : UHS_CDC_ACM(p) {
         };
+        void OnRelease(void);
         uint8_t OnStart(void);
 };
+
+void MY_ACM::OnRelease(void) {
+        // Tell the user that the device has disconnected
+        if(bAddress) printf("\r\n\r\nDisconnected.\r\n\r\n");
+}
 
 uint8_t MY_ACM::OnStart(void) {
         uint8_t rcode;
@@ -50,7 +56,7 @@ uint8_t MY_ACM::OnStart(void) {
         rcode = SetControlLineState(3);
 
         if(rcode) {
-                ErrorMessage<uint8_t>(PSTR("SetControlLineState"), rcode);
+                printf_P(PSTR("SetControlLineState %x\r\n"), rcode);
                 return rcode;
         }
 
@@ -62,10 +68,13 @@ uint8_t MY_ACM::OnStart(void) {
 
         rcode = SetLineCoding(&lc);
 
-        if(rcode)
-                ErrorMessage<uint8_t>(PSTR("SetLineCoding"), rcode);
-
-        return rcode;
+        if(rcode) {
+                printf_P(PSTR("SetLineCoding %x\r\n"), rcode);
+                return rcode;
+        }
+        // Tell the user that the device has connected
+        printf("\r\n\r\nConnected.\r\n\r\n");
+        return 0;
 }
 
 MY_ACM Acm(&MAX3421E_Usb);
@@ -74,10 +83,9 @@ void setup() {
         while(!USB_HOST_SERIAL);
         USB_HOST_SERIAL.begin(115200);
 
-        E_Notify(PSTR("\r\n\r\nStarting CDC-ACM test program...\r\n"), 0);
+        printf_P(PSTR("\r\n\r\nStarting CDC-ACM test program...\r\n"));
         while(MAX3421E_Usb.Init(1000) != 0);
-        E_Notify(PSTR("\r\n\r\ngo!\r\n"), 0);
-
+        printf_P(PSTR("\r\n\r\nWaiting for Connection...\r\n"));
 }
 
 void loop() {
@@ -85,29 +93,36 @@ void loop() {
         if(Acm.isReady()) {
                 uint8_t rcode;
 
-                /* reading the keyboard */
+                /* read the keyboard */
                 if(USB_HOST_SERIAL.available()) {
                         uint8_t data = USB_HOST_SERIAL.read();
-                        /* sending to the phone */
+                        /* send to client */
                         rcode = Acm.Write(1, &data);
-                        if(rcode)
-                                ErrorMessage<uint8_t>(PSTR("SndData"), rcode);
-                }//if(Serial.available()...
+                        if(rcode) {
+                                printf_P(PSTR("\r\nError %i on write\r\n"), rcode);
+                                return;
+                        }
+                }
 
 
-                /* reading the phone */
-                /* buffer size must be greater or equal to max.packet size */
-                /* it it set to 64 (largest possible max.packet size) here, can be tuned down
-                for particular endpoint */
+                /* read from client
+                 * buffer size must be greater or equal to max.packet size
+                 * it is set to the largest possible maximum packet size here.
+                 * It must not be set less than 3.
+                 */
                 uint8_t buf[64];
                 uint16_t rcvd = 64;
                 rcode = Acm.Read(&rcvd, buf);
-                if(rcode && rcode != hrNAK)
-                        ErrorMessage<uint8_t>(PSTR("Ret"), rcode);
+                if(rcode && rcode != hrNAK) {
+                        printf_P(PSTR("\r\nError %i on read\r\n"), rcode);
+                        return;
+                }
 
-                if(rcvd) { //more than zero bytes received
+                if(rcvd) {
+                        // More than zero bytes received, display the text.
                         for(uint16_t i = 0; i < rcvd; i++) {
-                                USB_HOST_SERIAL.print((char)buf[i]); //printing on the screen
+                                putc((char)buf[i], stdout);
+                                //printf_P(PSTR("%c"),(char)buf[i]);
                         }
                 }
         }
