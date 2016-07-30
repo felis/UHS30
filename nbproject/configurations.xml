@@ -121,12 +121,12 @@
               <pElem>../libraries/UHS_FS</pElem>
               <pElem>libraries/UHS_CDC</pElem>
               <pElem>libraries/UHS_CDC_ACM</pElem>
-              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire</pElem>
-              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/utility</pElem>
-              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI/src</pElem>
             </incDir>
             <preprocessorList>
-              <Elem>ARDUINO=10606</Elem>
+              <Elem>ARDUINO=10609</Elem>
               <Elem>ARDUINO_ARCH_AVR</Elem>
               <Elem>ARDUINO_AVR_MEGA2560</Elem>
               <Elem>F_CPU=16000000L</Elem>
@@ -146,12 +146,12 @@
               <pElem>../libraries/UHS_FS</pElem>
               <pElem>libraries/UHS_CDC</pElem>
               <pElem>libraries/UHS_CDC_ACM</pElem>
-              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire</pElem>
-              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/utility</pElem>
-              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI/src</pElem>
             </incDir>
             <preprocessorList>
-              <Elem>ARDUINO=10606</Elem>
+              <Elem>ARDUINO=10609</Elem>
               <Elem>ARDUINO_ARCH_AVR</Elem>
               <Elem>ARDUINO_AVR_MEGA2560</Elem>
               <Elem>F_CPU=16000000L</Elem>

@@ -14,12 +14,14 @@
 
 // These all get combined under UHS_CDC_ACM multiplexer.
 // Each should only add a trivial amount of code.
+// XR21B1411 can run in a pure CDC-ACM mode, as can PROLIFIC.
+// FTDI has a large code and data footprint. Avoid this chip if you can.
 #define LOAD_UHS_CDC_ACM
 #define LOAD_UHS_CDC_ACM_XR21B1411
 // This needs testing.
 #define LOAD_UHS_CDC_ACM_PROLIFIC
-// This is coming soon!
-//#define LOAD_UHS_CDC_ACM_FTDI
+// This needs testing.
+#define LOAD_UHS_CDC_ACM_FTDI
 
 #include <Arduino.h>
 #ifdef true

@@ -18,16 +18,20 @@ e-mail   :  support@circuitsathome.com
  */
 
 
+
 /*
  * This file is here to prevent redundancy.
  */
 
 #if !defined(__UHS_CDC_H__)
 #define __UHS_CDC_H__
+
 #include <UHS_host.h>
 
-#define bmREQ_CDCOUT                    USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE
-#define bmREQ_CDCIN                     USB_SETUP_DEVICE_TO_HOST|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE
+#define                        bmREQ_CDCOUT USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE
+#define                         bmREQ_CDCIN USB_SETUP_DEVICE_TO_HOST|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE
+#define                    bmREQ_VENDOR_OUT USB_SETUP_TYPE_VENDOR | USB_SETUP_HOST_TO_DEVICE
+#define                     bmREQ_VENDOR_IN USB_SETUP_TYPE_VENDOR | USB_SETUP_DEVICE_TO_HOST
 
 // CDC Subclass Constants
 #define               UHS_CDC_SUBCLASS_DLCM 0x01    // Direct Line Control Model
@@ -147,20 +151,20 @@ typedef struct {
                         bool autoflow_RTS : 1; // Has autoflow on RTS/CTS
                         bool autoflow_DSR : 1; // Has autoflow on DTR/DSR
                         bool autoflow_XON : 1; // Has autoflow  XON/XOFF
-                        bool half_duplex : 1;  // Has half-duplex capability.
+                        bool  half_duplex : 1; // Has half-duplex capability.
                 } __attribute__((packed));
         };
 } UHS_CDC_tty_features;
 
-#if defined(LOAD_UHS_CDC_ACM_FTDI) && !defined(UHS_CDC_ACM_FTDI_LOADED)
-#include "../UHS_CDC_ACM/UHS_CDC_ACM_FTDI.h"
-#endif // CDC_ACM_FTDI loaded
 #if defined(LOAD_UHS_CDC_ACM_PROLIFIC) && !defined(UHS_CDC_ACM_PROLIFIC_LOADED)
 #include "../UHS_CDC_ACM/UHS_CDC_ACM_PROLIFIC.h"
 #endif // CDC_ACM_PROLIFIC loaded
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411) && !defined(UHS_CDC_ACM_XR21B1411_LOADED)
 #include "../UHS_CDC_ACM/UHS_CDC_ACM_XR21B1411.h"
 #endif // CDC_ACM_XR21B1411 loaded
+#if defined(LOAD_UHS_CDC_ACM_FTDI) && !defined(UHS_CDC_ACM_FTDI_LOADED)
+#include "../UHS_CDC_ACM/UHS_CDC_ACM_FTDI.h"
+#endif // CDC_ACM_FTDI loaded
 #if defined(LOAD_UHS_CDC_ACM) && !defined(UHS_CDC_ACM_LOADED)
 #include "../UHS_CDC_ACM/UHS_CDC_ACM.h"
 #endif // CDC_ACM loaded

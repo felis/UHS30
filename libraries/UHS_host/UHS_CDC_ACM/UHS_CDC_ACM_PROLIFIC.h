@@ -16,9 +16,8 @@ Circuits At Home, LTD
 Web      :  http://www.circuitsathome.com
 e-mail   :  support@circuitsathome.com
  */
-#if !defined(__CDCPROLIFIC_H__)
-#define __CDCPROLIFIC_H__
-
+#if !defined(UHS_CDC_ACM_PROLIFIC_LOADED)
+#define         UHS_CDC_ACM_PROLIFIC_LOADED
 #define                      PROLIFIC_REV_H (0x0202U)
 #define                      PROLIFIC_REV_X (0x0300U)
 #define              PROLIFIC_REV_HX_CHIP_D (0x0400U)
@@ -107,4 +106,4 @@ enum PROLIFIC_pl2303_type {
         PROLIFIC_rev_H
 };
 
-#endif // __CDCPROLIFIC_H__
+#endif

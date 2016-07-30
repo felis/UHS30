@@ -138,9 +138,10 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
         }
         ACM_HOST_DEBUG("ACM: SLAVE %i\r\n", SbAddress);
         ACM_HOST_DEBUG("ACM: MASTER %i\r\n", MbAddress);
+
         // Fill in the endpoint info structure
         for(uint8_t ep = 0; ep < ei->interface.numep; ep++) {
-                if((ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_BULK) && (ei->interface.klass == UHS_USB_CLASS_CDC_DATA)){
+                if((ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_BULK) && (ei->interface.klass == UHS_USB_CLASS_CDC_DATA)) {
                         index = ((ei->interface.epInfo[ep].bEndpointAddress & USB_TRANSFER_DIRECTION_IN) == USB_TRANSFER_DIRECTION_IN) ? epDataInIndex : epDataOutIndex;
                         epInfo[index].epAddr = (ei->interface.epInfo[ep].bEndpointAddress & 0x0F);
                         epInfo[index].maxPktSize = (uint8_t)(ei->interface.epInfo[ep].wMaxPacketSize);
@@ -160,33 +161,50 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
                         bNumEP++;
                         if(ei->interface.epInfo[ep].bInterval > qPollRate) qPollRate = ei->interface.epInfo[ep].bInterval;
                 }
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+                else if((ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_BULK) && TEST_ACM_FTDI()) {
+                        index = ((ei->interface.epInfo[ep].bEndpointAddress & USB_TRANSFER_DIRECTION_IN) == USB_TRANSFER_DIRECTION_IN) ? epDataInIndex : epDataOutIndex;
+                        epInfo[index].epAddr = (ei->interface.epInfo[ep].bEndpointAddress & 0x0F);
+                        epInfo[index].maxPktSize = (uint8_t)(ei->interface.epInfo[ep].wMaxPacketSize);
+                        epInfo[index].epAttribs = 0;
+                        epInfo[index].bmNakPower = (index == epDataInIndex) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
+                        epInfo[index].bmSndToggle = 0;
+                        epInfo[index].bmRcvToggle = 0;
+                        bNumEP++;
+                }
+#endif
         }
-
-
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+        if(TEST_ACM_FTDI() && !SbAddress) {
+                ACM_HOST_DEBUG("ACM: FTDI chipset, emulating CDC-ACM.\r\n");
+                SbAddress = MbAddress;
+                st_modem = 0;
+                st_line = 0;
+        }
+#endif
 
         if(SbAddress && (SbAddress == MbAddress)) {
                 ACM_HOST_DEBUG("ACM: SLAVE and MASTER match!\r\n");
                 if(TEST_XR21B1411()) {
                         adaptor = UHS_USB_ACM_XR21B1411;
-                } else if(TEST_ACM_FTDI()) {
-                        adaptor = UHS_USB_ACM_FTDI;
                 } else if(TEST_ACM_PROLIFIC()) {
                         adaptor = UHS_USB_ACM_PROLIFIC;
+                } else if(TEST_ACM_FTDI()) {
+                        adaptor = UHS_USB_ACM_FTDI;
                 } else {
                         adaptor = UHS_USB_ACM_PLAIN;
                 }
-                ChipType = ei->bcdDevice;
-                // Both interfaces have finally been set and match
                 bAddress = SbAddress;
+                ChipType = ei->bcdDevice;
                 if(qPollRate < 50) qPollRate = 50; // Lets be reasonable.
                 epInfo[0].epAddr = 0;
                 epInfo[0].maxPktSize = ei->bMaxPacketSize0;
                 epInfo[0].bmNakPower = USB_NAK_MAX_POWER;
                 bIface = ei->interface.bInterfaceNumber;
+                // Both interfaces have finally been set and match
         } else {
                 ACM_HOST_DEBUG("ACM: No match on SLAVE and MASTER\r\n");
         }
-
         return 0;
 };
 
@@ -201,22 +219,24 @@ uint8_t UHS_NI UHS_CDC_ACM::Start(void) {
         rcode = pUsb->setEpInfoEntry(bAddress, bNumEP, epInfo);
         if(!rcode) {
                 ACM_HOST_DEBUG("ACM: EpInfoEntry OK\r\n");
-                rcode = OnStart();
                 if(!rcode) {
-                        ACM_HOST_DEBUG("ACM: OnStart OK\r\n");
                         half_duplex(false);
                         autoflowRTS(false);
                         autoflowDSR(false);
                         autoflowXON(false);
                         wide(false);
-                        qNextPollTime = millis() + qPollRate;
-                        bPollEnable = true;
-                        ready = true;
+                        rcode = OnStart();
+                        if(!rcode) {
+                                ACM_HOST_DEBUG("ACM: OnStart OK\r\n");
+                                qNextPollTime = millis() + qPollRate;
+                                bPollEnable = true;
+                                ready = true;
+                        } else {
+                                ACM_HOST_DEBUG("ACM: OnStart FAIL\r\n");
+                        }
                 } else {
-                        ACM_HOST_DEBUG("ACM: OnStart FAIL\r\n");
+                        ACM_HOST_DEBUG("ACM: EpInfoEntry FAIL\r\n");
                 }
-        } else {
-                ACM_HOST_DEBUG("ACM: EpInfoEntry FAIL\r\n");
         }
         return rcode;
 }
@@ -249,65 +269,134 @@ void UHS_NI UHS_CDC_ACM::PrintEndpointDescriptor(const USB_ENDPOINT_DESCRIPTOR *
         Notify(PSTR("\r\n"), 0x80);
 }
 
-uint8_t UHS_NI UHS_CDC_ACM::Read(uint16_t *bytes_rcvd, uint8_t *dataptr) {
+uint8_t UHS_NI UHS_CDC_ACM::Read(uint16_t *bytes_rcvd, uint8_t * dataptr) {
         pUsb->DisablePoll();
         uint8_t rv = pUsb->inTransfer(bAddress, epInfo[epDataInIndex].epAddr, bytes_rcvd, dataptr);
         pUsb->EnablePoll();
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+        if(adaptor == UHS_USB_ACM_FTDI) {
+                // FTDI stuffs status in the first 2 bytes.
+                if(!rv) {
+                        if(*bytes_rcvd >1) {
+                                // save modem and line status
+                                st_modem = dataptr[0];
+                                st_line = dataptr[1];
+                                *bytes_rcvd -=2;
+                                if(*bytes_rcvd) memmove(dataptr, (dataptr+2), *bytes_rcvd);
+                        }
+                }
+        }
+#endif
         return rv;
 }
 
-uint8_t UHS_NI UHS_CDC_ACM::Write(uint16_t nbytes, uint8_t *dataptr) {
+uint8_t UHS_NI UHS_CDC_ACM::Write(uint16_t nbytes, uint8_t * dataptr) {
         pUsb->DisablePoll();
         uint8_t rv = pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, nbytes, dataptr);
         pUsb->EnablePoll();
         return rv;
 }
 
-uint8_t UHS_NI UHS_CDC_ACM::SetCommFeature(uint16_t fid, uint8_t nbytes, uint8_t *dataptr) {
+uint8_t UHS_NI UHS_CDC_ACM::SetCommFeature(uint16_t fid, uint8_t nbytes, uint8_t * dataptr) {
+        uint8_t rv = 0;
         pUsb->DisablePoll();
-        uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SET_COMM_FEATURE, fid, bControlIface, nbytes), nbytes, dataptr);
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+        if(adaptor == UHS_USB_ACM_FTDI) {
+        } else
+
+#endif
+        {
+                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SET_COMM_FEATURE, fid, bControlIface, nbytes), nbytes, dataptr);
+        }
         pUsb->EnablePoll();
         return rv;
 }
 
-uint8_t UHS_NI UHS_CDC_ACM::GetCommFeature(uint16_t fid, uint8_t nbytes, uint8_t *dataptr) {
+uint8_t UHS_NI UHS_CDC_ACM::GetCommFeature(uint16_t fid, uint8_t nbytes, uint8_t * dataptr) {
+        uint8_t rv = 0;
         pUsb->DisablePoll();
-        uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCIN, UHS_CDC_GET_COMM_FEATURE, fid, bControlIface, nbytes), nbytes, dataptr);
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+        if(adaptor == UHS_USB_ACM_FTDI) {
+        } else
+
+#endif
+        {
+                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCIN, UHS_CDC_GET_COMM_FEATURE, fid, bControlIface, nbytes), nbytes, dataptr);
+        }
         pUsb->EnablePoll();
         return rv;
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::ClearCommFeature(uint16_t fid) {
+        uint8_t rv = 0;
         pUsb->DisablePoll();
-        uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_CLEAR_COMM_FEATURE, fid, bControlIface, 0), 0, NULL);
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+        if(adaptor == UHS_USB_ACM_FTDI) {
+        } else
+#endif
+        {
+                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_CLEAR_COMM_FEATURE, fid, bControlIface, 0), 0, NULL);
+        }
         pUsb->EnablePoll();
         return rv;
 }
 
-uint8_t UHS_NI UHS_CDC_ACM::SetLineCoding(const UHS_CDC_LINE_CODING *dataptr) {
+uint8_t UHS_NI UHS_CDC_ACM::SetLineCoding(const UHS_CDC_LINE_CODING * dataptr) {
+        uint8_t rv;
         pUsb->DisablePoll();
-        uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SET_LINE_CODING, 0x0000U, bControlIface, sizeof (UHS_CDC_LINE_CODING)), sizeof (UHS_CDC_LINE_CODING), (uint8_t*)dataptr);
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+        if(adaptor == UHS_USB_ACM_FTDI) {
+                rv = UHS_FTDI_SetLineCoding(dataptr);
+        } else
+#endif
+        {
+                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SET_LINE_CODING, 0x0000U, bControlIface, sizeof (UHS_CDC_LINE_CODING)), sizeof (UHS_CDC_LINE_CODING), (uint8_t*)dataptr);
+        }
         pUsb->EnablePoll();
         return rv;
 }
 
-uint8_t UHS_NI UHS_CDC_ACM::GetLineCoding(UHS_CDC_LINE_CODING *dataptr) {
+uint8_t UHS_NI UHS_CDC_ACM::GetLineCoding(UHS_CDC_LINE_CODING * dataptr) {
+        uint8_t rv = 0;
         pUsb->DisablePoll();
-        uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCIN, UHS_CDC_GET_LINE_CODING, 0x0000U, bControlIface, sizeof (UHS_CDC_LINE_CODING)), sizeof (UHS_CDC_LINE_CODING), (uint8_t*)dataptr);
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+        if(adaptor == UHS_USB_ACM_FTDI) {
+                // not implemented on chip?
+        } else
+#endif
+        {
+                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCIN, UHS_CDC_GET_LINE_CODING, 0x0000U, bControlIface, sizeof (UHS_CDC_LINE_CODING)), sizeof (UHS_CDC_LINE_CODING), (uint8_t*)dataptr);
+        }
         pUsb->EnablePoll();
         return rv;
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::SetControlLineState(uint8_t state) {
+        uint8_t rv;
         pUsb->DisablePoll();
-        uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_CDCOUT, UHS_CDC_SET_CONTROL_LINE_STATE, state, 0, bControlIface, 0), 0, NULL);
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+        if(adaptor == UHS_USB_ACM_FTDI) {
+                rv = UHS_FTDI_SetControlLineState(state);
+        } else
+#endif
+        {
+                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_CDCOUT, UHS_CDC_SET_CONTROL_LINE_STATE, state, 0, bControlIface, 0), 0, NULL);
+        }
         pUsb->EnablePoll();
         return rv;
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::SendBreak(uint16_t duration) {
+        uint8_t rv = 0;
         pUsb->DisablePoll();
-        uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SEND_BREAK, duration, bControlIface, 0), 0, NULL);
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+        if(adaptor == UHS_USB_ACM_FTDI) {
+                // not implemented on chip?
+        } else
+#endif
+        {
+                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SEND_BREAK, duration, bControlIface, 0), 0, NULL);
+        }
         pUsb->EnablePoll();
         return rv;
 }

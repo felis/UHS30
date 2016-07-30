@@ -37,13 +37,6 @@ e-mail   :  support@circuitsathome.com
 #define UHS_USB_ACM_PROLIFIC 3
 #define TEST_ACM_PROLIFIC() (ei->vid == UHS_VID_PROLIFIC_TECHNOLOGY && (ei->pid == UHS_CDC_PROLIFIC_PID_1 || ei->pid == UHS_CDC_PROLIFIC_PID_2))
 
-#if defined(LOAD_UHS_CDC_ACM_XR21B1411)
-#endif
-#if defined(LOAD_UHS_CDC_ACM_FTDI)
-#endif
-#if defined(LOAD_UHS_CDC_ACM_PROLIFIC)
-#endif
-
 /**
  * This structure is used to report the extended capabilities of the connected device.
  * It is also used to report the current status.
@@ -71,13 +64,10 @@ class UHS_CDC_ACM : public UHS_USBInterface {
 protected:
         uint8_t MbAddress; // master
         uint8_t SbAddress; // slave
-        //uint8_t bConfNum; // configuration number
         uint8_t bControlIface; // Control interface value
-        //uint8_t bDataIface; // Data interface value
         uint8_t qPollRate; // How fast to poll maximum
-        uint8_t adaptor;
-
-        uint16_t ChipType; // Type of chip
+        uint8_t adaptor; // simplified adaptor type
+        uint16_t ChipType; // Type of chip in the adaptor
 
         volatile bool ready; //device ready indicator
         tty_features _enhanced_status; // current status
@@ -108,12 +98,36 @@ public:
         uint8_t Start(void);
         bool OKtoEnumerate(ENUMERATION_INFO *ei);
         uint8_t SetInterface(ENUMERATION_INFO *ei);
-
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+        /*
+         * Modem Status
+         *
+         * Offset       Description
+         * B0   Reserved - must be 1
+         * B1   Reserved - must be 0
+         * B2   Reserved - must be 0
+         * B3   Reserved - must be 0
+         * B4   Clear to Send (CTS)
+         * B5   Data Set Ready (DSR)
+         * B6   Ring Indicator (RI)
+         * B7   Receive Line Signal Detect (RLSD)
+         */
+        uint8_t st_modem;
+        /* Line Status
+         *
+         * Offset       Description
+         * B0   Data Ready (DR)
+         * B1   Overrun Error (OE)
+         * B2   Parity Error (PE)
+         * B3   Framing Error (FE)
+         * B4   Break Interrupt (BI)
+         * B5   Transmitter Holding Register (THRE)
+         * B6   Transmitter Empty (TEMT)
+         * B7   Error in RCVR FIFO
+         */
+        uint8_t st_line;
+#endif
         void DriverDefaults(void);
-
-        //bool available(void) {
-        //
-        //};
 
         uint8_t GetAddress(void) {
                 return bAddress;
@@ -139,18 +153,98 @@ public:
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411)
 
         uint8_t XR_read_register(uint16_t reg, uint16_t *val) {
-                                pUsb->DisablePoll();
-                uint8_t rv= (pUsb->ctrlReq(bAddress, mkSETUP_PKT16(XR_READ_REQUEST_TYPE, 1, 0x0000U, reg, 2), 2, (uint8_t *)val));
+                pUsb->DisablePoll();
+                uint8_t rv = (pUsb->ctrlReq(bAddress, mkSETUP_PKT16(XR_READ_REQUEST_TYPE, 1, 0x0000U, reg, 2), 2, (uint8_t *)val));
                 pUsb->EnablePoll();
                 return rv;
         }
 
         uint8_t XR_write_register(uint16_t reg, uint16_t val) {
-                                pUsb->DisablePoll();
-                uint8_t rv= (pUsb->ctrlReq(bAddress, mkSETUP_PKT16(XR_WRITE_REQUEST_TYPE, 0, val, reg, 0), 0, NULL));
+                pUsb->DisablePoll();
+                uint8_t rv = (pUsb->ctrlReq(bAddress, mkSETUP_PKT16(XR_WRITE_REQUEST_TYPE, 0, val, reg, 0), 0, NULL));
                 pUsb->EnablePoll();
                 return rv;
         }
+#endif
+
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+        // FTDI bloat...
+
+        uint8_t UHS_FTDI_SetBaudRate(uint32_t baud) {
+                uint16_t baud_value, baud_index = 0;
+                uint32_t divisor3;
+                divisor3 = 48000000 / 2 / baud; // divisor shifted 3 bits to the left
+
+                if(ChipType == FT232AM) {
+                        if((divisor3 & 0x7) == 7)
+                                divisor3++; // round x.7/8 up to x+1
+
+                        baud_value = divisor3 >> 3;
+                        divisor3 &= 0x7;
+
+                        if(divisor3 == 1) baud_value |= 0xc000;
+                        else // 0.125
+                                if(divisor3 >= 4) baud_value |= 0x4000;
+                        else // 0.5
+                                if(divisor3 != 0) baud_value |= 0x8000; // 0.25
+                        if(baud_value == 1) baud_value = 0; /* special case for maximum baud rate */
+                } else {
+                        static const unsigned char divfrac [8] = {0, 3, 2, 0, 1, 1, 2, 3};
+                        static const unsigned char divindex[8] = {0, 0, 0, 1, 0, 1, 1, 1};
+
+                        baud_value = divisor3 >> 3;
+                        baud_value |= divfrac [divisor3 & 0x7] << 14;
+                        baud_index = divindex[divisor3 & 0x7];
+
+                        /* Deal with special cases for highest baud rates. */
+                        if(baud_value == 1) baud_value = 0;
+                        else // 1.0
+                                if(baud_value == 0x4001) baud_value = 1; // 1.5
+                }
+                USBTRACE2("baud_value:", baud_value);
+                USBTRACE2("baud_index:", baud_index);
+                //printf("FTDI baud_value: %x\r\n", baud_value);
+                //printf("FTDI baud_index: %x\r\n", baud_index);
+                uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_VENDOR_OUT, FTDI_SIO_SET_BAUD_RATE, baud_value, baud_index, 0), 0, NULL);
+                //printf("FTDI_SetBaudRate rv %x\r\n", rv);
+                return rv;
+        };
+
+        uint8_t UHS_FTDI_SetFlowControl(uint8_t protocol, uint8_t xon, uint8_t xoff) {
+                uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_SET_FLOW_CTRL, xon, xoff, protocol << 8, 0), 0, NULL);
+                //printf("FTDI_SetFlowControl rv %x\r\n", rv);
+                return rv;
+        };
+
+        uint8_t UHS_FTDI_SetControlLineState(uint8_t signal) {
+                // Normally RTS is bit 0), and DTR bit 1...
+                // Of course, FTDI flipped these.
+                uint16_t s = ((signal & 1) << 1) | ((signal & 2) >> 1);
+                uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_MODEM_CTRL, s, 0, 0, 0), 0, NULL);
+                //printf("FTDI_SetControlLineState rv %x\r\n", rv);
+                return rv;
+        };
+
+        uint8_t UHS_FTDI_SetData(uint16_t databm) {
+                uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_SET_DATA, databm & 0xff, databm >> 8, 0, 0), 0, NULL);
+                //printf("FTDI_SetData rv %x\r\n", rv);
+                return rv;
+        };
+
+        // More FTDI hoops we have to jump through...
+
+        uint8_t UHS_FTDI_SetLineCoding(const UHS_CDC_LINE_CODING *dataptr) {
+                uint8_t rv;
+                rv = UHS_FTDI_SetBaudRate(dataptr->dwDTERate);
+                //printf("FTDI_SetLineCoding (baud rate) rv %x\r\n", rv);
+                if(!rv) {
+                        uint16_t s = ((dataptr->bCharFormat) << 11) | ((dataptr->bParityType) << 8) | dataptr->bDataBits;
+                        rv = UHS_FTDI_SetData(s);
+                }
+                //printf("FTDI_SetLineCoding rv %x\r\n", rv);
+                return rv;
+        };
+
 #endif
 
         virtual tty_features enhanced_features(void) {
@@ -251,6 +345,15 @@ public:
         };
 
         virtual void autoflowXON(NOTUSED(bool s)) {
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
+                if(adaptor == UHS_USB_ACM_FTDI) {
+                        if(s) {
+                                UHS_FTDI_SetFlowControl(FTDI_SIO_XON_XOFF_HS, 0x11U, 0x13U);
+                        } else {
+                                UHS_FTDI_SetFlowControl(FTDI_SIO_DISABLE_FLOW_CTRL, 0x11U, 0x13U);
+                        }
+                }
+#endif
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411)
                 if(adaptor == UHS_USB_ACM_XR21B1411) {
                         // NOTE: hardware defaults to the normal XON/XOFF

@@ -16,8 +16,8 @@ Circuits At Home, LTD
 Web      :  http://www.circuitsathome.com
 e-mail   :  support@circuitsathome.com
  */
-#if !defined(__CDC_XR21B1411_H__)
-#define __CDC_XR21B1411_H__
+#if !defined(UHS_CDC_ACM_XR21B1411_LOADED)
+#define UHS_CDC_ACM_XR21B1411_LOADED
 
 #define                    XR_REG_CUSTOM_DRIVER (0x020DU) // DRIVER SELECT
 #define             XR_REG_CUSTOM_DRIVER_ACTIVE (0x0001U) // 0: CDC 1: CUSTOM
