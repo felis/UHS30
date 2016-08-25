@@ -19,10 +19,15 @@ e-mail   :  support@circuitsathome.com
 #if !defined(UHS_CDC_ACM_FTDI_LOADED)
 #define UHS_CDC_ACM_FTDI_LOADED
 
-#define FT232AM                         (0x0200U)
-#define FT232BM                         (0x0400U)
-#define FT2232                          (0x0500U)
-#define FT232R                          (0x0600U)
+#define FT232AM                          (0x0200U)
+#define FT232BM                          (0x0400U)
+#define FT2232C                          (0x0500U)
+#define FT232R                           (0x0600U)
+#define FT2232H                          (0x0700U)
+#define FT4232H                          (0x0800U)
+#define FT232H                           (0x0900U)
+#define FT230X                           (0x1000U)
+
 
 // Commands
 #define FTDI_SIO_RESET                  (0x00U) /* Reset the port */
@@ -33,6 +38,8 @@ e-mail   :  support@circuitsathome.com
 #define FTDI_SIO_GET_MODEM_STATUS       (0x05U) /* Retrieve current value of modem status register */
 #define FTDI_SIO_SET_EVENT_CHAR         (0x06U) /* Set the event character */
 #define FTDI_SIO_SET_ERROR_CHAR         (0x07U) /* Set the error character */
+#define FTDI_SIO_SET_LATENCY_TIMER      (0x09U) /* Set the latency timer */
+#define FTDI_SIO_GET_LATENCY_TIMER      (0x0AU) /* Get the latency timer */
 
 #define FTDI_SIO_RESET_SIO              (0x00U)
 #define FTDI_SIO_RESET_PURGE_RX         (0x01U)

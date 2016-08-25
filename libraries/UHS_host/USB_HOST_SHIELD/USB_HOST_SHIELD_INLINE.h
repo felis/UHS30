@@ -777,7 +777,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
 
                 case UHS_USB_HOST_STATE_CONFIGURING:
                         usb_task_state = UHS_USB_HOST_STATE_CHECK;
-                        x = Configuring(0, 0, usb_host_speed);
+                        x = Configuring(0, 1, usb_host_speed);
                         usb_error = x;
                         if(usb_task_state == UHS_USB_HOST_STATE_CHECK) {
                                 if(x) {

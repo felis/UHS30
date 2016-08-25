@@ -185,17 +185,21 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
 
         if(SbAddress && (SbAddress == MbAddress)) {
                 ACM_HOST_DEBUG("ACM: SLAVE and MASTER match!\r\n");
+                ChipType = ei->bcdDevice;
                 if(TEST_XR21B1411()) {
                         adaptor = UHS_USB_ACM_XR21B1411;
                 } else if(TEST_ACM_PROLIFIC()) {
                         adaptor = UHS_USB_ACM_PROLIFIC;
                 } else if(TEST_ACM_FTDI()) {
                         adaptor = UHS_USB_ACM_FTDI;
+                        if(ChipType == FT232AM) {
+                                // Read quirk. Are there others?
+                                epInfo[epDataInIndex].bmRcvToggle=1;
+                        }
                 } else {
                         adaptor = UHS_USB_ACM_PLAIN;
                 }
                 bAddress = SbAddress;
-                ChipType = ei->bcdDevice;
                 if(qPollRate < 50) qPollRate = 50; // Lets be reasonable.
                 epInfo[0].epAddr = 0;
                 epInfo[0].maxPktSize = ei->bMaxPacketSize0;

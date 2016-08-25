@@ -101,11 +101,20 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         volatile uint32_t last_mark; // LAST time in MICROSECONDS that a packet was completely sent
         volatile uint8_t frame_counter;
 
-        // the bdt table is the way we talk to the USB SIE
-        // we need two entries per endpoint direction, so we can do ping-pong buffering
-        // ep0 has two directions, so in total we need 4 entries.
-        __attribute__ ((section(".usbdescriptortable"), used))
-        static bdt_t table[4];
+        //
+        // The bdt table is the way we talk to the USB SIE
+        //
+        // Two entries per endpoint direction allows ping-pong buffering.
+        // EP0 has two directions, so in total we need 4 entries.
+        // NOTE: We do not actually do this. My code is so fast, we do not need them. 8-)
+        // As a side-benefit, we save a little bit of room. \o/
+        //
+        // Unfortunately required to be in a special named section.
+        // This effectively would disallow > 1 port, but there are no devices like this.
+        // Basically I use it as a name-space qualifier by declaring it here.
+        // That helps to avoid name collisions in other code as it is a member.
+        //
+        __attribute__ ((section(".usbdescriptortable_hosts"), used)) static bdt_t table[2];
 
         // mark that a token was done and store its pid while inside the isr
         volatile bool newToken;
@@ -250,6 +259,11 @@ public:
         };
 
 };
+
+// This is required so that linkage works.
+// For some odd reason GCC is not smart enough to pull this into existence.
+// Perhaps this is a bug?
+bdt_t UHS_KINETIS_FS_HOST::table[];
 
 
 #include "UHS_KINETIS_FS_HOST_INLINE.h"

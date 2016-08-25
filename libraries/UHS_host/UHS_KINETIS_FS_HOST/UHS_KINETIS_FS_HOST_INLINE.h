@@ -20,12 +20,10 @@ e-mail   :  support@circuitsathome.com
 #if defined(UHS_KINETIS_FS_HOST_H) && !defined(UHS_KINETIS_FS_HOST_LOADED)
 #define UHS_KINETIS_FS_HOST_LOADED
 
-static UHS_KINETIS_FS_HOST *ISR_kinetis;
-
-bdt_t UHS_KINETIS_FS_HOST::table[];
+static UHS_KINETIS_FS_HOST *_UHS_KINETIS_THIS_;
 
 static void UHS_NI call_ISR_kinetis(void) {
-        ISR_kinetis->ISRTask();
+        _UHS_KINETIS_THIS_->ISRTask();
 }
 
 /**
@@ -185,7 +183,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
                 case UHS_USB_HOST_STATE_CONFIGURING:
                         HOST_DUBUG("ISRbottom, UHS_USB_HOST_STATE_CONFIGURING\r\n");
                         usb_task_state = UHS_USB_HOST_STATE_CHECK;
-                        x = Configuring(0, 0, usb_host_speed);
+                        x = Configuring(0, 1, usb_host_speed);
                         if(usb_task_state == UHS_USB_HOST_STATE_CHECK) {
                                 if(x) {
                                         if(x == hrJERR) {
@@ -827,14 +825,14 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqT
 
 /**
  * Initialize USB hardware, turn on VBUS
- *USB_ISTAT_SOFTOK
+ *
  * @param mseconds Delay energizing VBUS after mseconds, A value of INT16_MIN means no delay.
  * @return 0 on success, -1 on error
  */
 int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         Init_dyn_SWI();
-        UHS_printf_HELPER_init();
-        ISR_kinetis = this;
+        //UHS_printf_HELPER_init();
+        _UHS_KINETIS_THIS_ = this;
 
         // assume 48 MHz clock already running
         // SIM - enable clock
@@ -862,13 +860,15 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         // setup buffers
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_EVEN)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_EVEN)].addr = ep0_rx0_buf;
-        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_ODD)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
-        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_ODD)].addr = ep0_rx1_buf;
 
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_EVEN)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_EVEN)].addr = ep0_tx0_buf;
-        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_ODD)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
-        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_ODD)].addr = ep0_tx1_buf;
+
+        // This would allow ping-pong buffers, but my code is so fast, we do not need them. 8-)
+        //table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_ODD)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
+        //table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_ODD)].addr = ep0_rx1_buf;
+        //table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_ODD)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
+        //table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_ODD)].addr = ep0_tx1_buf;
 
         // clear interrupts
         USB0_ERRSTAT = 0xFF;

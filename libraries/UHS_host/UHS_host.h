@@ -54,6 +54,10 @@ e-mail   :  support@circuitsathome.com
 #include "UHS_KINETIS_FS_HOST/UHS_KINETIS_FS_HOST.h"
 #endif
 
+#if defined(LOAD_UHS_KINETIS_EHCI) && !defined(UHS_KINETIS_EHCI_LOADED)
+#include "UHS_KINETIS_EHCI/UHS_KINETIS_EHCI.h"
+#endif
+
 // Load USB drivers and multiplexers
 
 #if defined(LOAD_UHS_HUB)

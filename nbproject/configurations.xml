@@ -52,6 +52,15 @@
               </df>
             </df>
           </df>
+          <df name="UHS_KINETIS_EHCI">
+            <df name="examples">
+              <df name="KINETIS_EHCI_TEST">
+                <in>KINETIS_EHCI_TEST.ino</in>
+              </df>
+            </df>
+            <in>UHS_KINETIS_EHCI.h</in>
+            <in>UHS_KINETIS_EHCI_INLINE.h</in>
+          </df>
           <df name="UHS_KINETIS_FS_HOST">
             <df name="examples">
               <df name="KINETIS_DEV_DESC">
@@ -94,7 +103,7 @@
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
-    <conf name="Default" type="0">
+    <conf name="AVR" type="0">
       <toolsSet>
         <compilerSet>default</compilerSet>
         <dependencyChecking>false</dependencyChecking>
@@ -197,6 +206,21 @@
             tool="1"
             flavor2="0">
       </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_EHCI/UHS_KINETIS_EHCI.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_EHCI/UHS_KINETIS_EHCI_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_EHCI/examples/KINETIS_EHCI_TEST/KINETIS_EHCI_TEST.ino"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
       <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/KINETIS_DEV_DESC/KINETIS_DEV_DESC.ino"
             ex="false"
             tool="1"
@@ -226,6 +250,96 @@
             ex="false"
             tool="1"
             flavor2="4">
+      </item>
+      <item path="libraries/UHS_host/malloc.c" ex="false" tool="0" flavor2="2">
+      </item>
+      <item path="libraries/UHS_host/mlock.c" ex="false" tool="0" flavor2="2">
+      </item>
+    </conf>
+    <conf name="teensy3.6" type="0">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>false</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <codeAssistance>
+      </codeAssistance>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommand>${MAKE} -f Makefile</buildCommand>
+          <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
+          <executablePath></executablePath>
+          <cTool>
+            <incDir>
+              <pElem>libraries/dyn_SWI</pElem>
+              <pElem>libraries/RTClib</pElem>
+              <pElem>libraries/UHS_host</pElem>
+              <pElem>libraries/UHS_FS</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/cores/teensy3</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/libraries/Wire</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/libraries/SPI</pElem>
+              <pElem>libraries/UHS_host/UHS_KINETIS_EHCI</pElem>
+            </incDir>
+            <preprocessorList>
+              <Elem>ARDUINO=10609</Elem>
+              <Elem>F_CPU=180000000</Elem>
+              <Elem>LAYOUT_US_ENGLISH</Elem>
+              <Elem>TEENSYDUINO=130</Elem>
+              <Elem>USB_SERIAL</Elem>
+              <Elem>__MK66FX1M0__</Elem>
+              <Elem>__arm__</Elem>
+            </preprocessorList>
+          </cTool>
+          <ccTool>
+            <incDir>
+              <pElem>libraries/dyn_SWI</pElem>
+              <pElem>libraries/RTClib</pElem>
+              <pElem>libraries/UHS_host</pElem>
+              <pElem>libraries/UHS_FS</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/cores/teensy3</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/libraries/Wire</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/libraries/SPI</pElem>
+              <pElem>libraries/UHS_host/UHS_KINETIS_EHCI</pElem>
+            </incDir>
+            <preprocessorList>
+              <Elem>ARDUINO=10609</Elem>
+              <Elem>F_CPU=180000000</Elem>
+              <Elem>LAYOUT_US_ENGLISH</Elem>
+              <Elem>TEENSYDUINO=130</Elem>
+              <Elem>USB_SERIAL</Elem>
+              <Elem>__MK66FX1M0__</Elem>
+              <Elem>__arm__</Elem>
+            </preprocessorList>
+          </ccTool>
+        </makeTool>
+      </makefileType>
+      <item path="libraries/UHS_FS/FAT/FAT.cpp" ex="false" tool="1" flavor2="4">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/ff.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="libraries/UHS_FS/PCpartition/PCPartition.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/USB_HOST_SHIELD/acm_terminal/acm_terminal.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_EHCI/examples/KINETIS_EHCI_TEST/KINETIS_EHCI_TEST.ino"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="libraries/UHS_host/UHS_printf_HELPER.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
       </item>
       <item path="libraries/UHS_host/malloc.c" ex="false" tool="0" flavor2="2">
       </item>

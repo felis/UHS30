@@ -14,7 +14,11 @@
             </sourceRootList>
             <confList>
                 <confElem>
-                    <name>Default</name>
+                    <name>AVR</name>
+                    <type>0</type>
+                </confElem>
+                <confElem>
+                    <name>teensy3.6</name>
                     <type>0</type>
                 </confElem>
             </confList>

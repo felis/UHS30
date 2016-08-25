@@ -188,7 +188,7 @@ public:
 
         // Allocates new address
 
-        uint8_t UHS_NI AllocAddress(uint8_t parent, bool is_hub = false, uint8_t port = 0) {
+        uint8_t UHS_NI AllocAddress(uint8_t parent, bool is_hub = false, uint8_t port = 1) {
                 /* if (parent != 0 && port == 0)
                         USB_HOST_SERIAL.println("PRT:0"); */
                 UHS_DeviceAddress _parent;
@@ -206,35 +206,33 @@ public:
                 if(!index) // if empty entry is not found
                         return 0;
 
+#define OLD_JUNK_ADDRESS 0
+#if OLD_JUNK_ADDRESS
                 if(_parent.devAddress == 0) {
                         if(is_hub) {
-                                thePool[index].address.devAddress = 0x41;
                                 hubCounter++;
+                                thePool[index].address.devAddress = 0x41;
                         } else
                                 thePool[index].address.devAddress = 1;
 
                         return thePool[index].address.devAddress;
                 }
-
+#endif
                 UHS_DeviceAddress addr;
-                addr.devAddress = 0; // Ensure all bits are zero
+                addr.devAddress = port;
                 addr.bmParent = _parent.bmAddress;
                 if(is_hub) {
+                        hubCounter++;
                         addr.bmHub = 1;
-                        addr.bmAddress = ++hubCounter;
+                      addr.bmAddress = hubCounter;
+#if OLD_JUNK_ADDRESS
                 } else {
                         addr.bmHub = 0;
                         addr.bmAddress = port;
+#endif
                 }
                 thePool[index].address = addr;
-                /*
-                                USB_HOST_SERIAL.print("Addr:");
-                                USB_HOST_SERIAL.print(addr.bmHub, HEX);
-                                USB_HOST_SERIAL.print(".");
-                                USB_HOST_SERIAL.print(addr.bmParent, HEX);
-                                USB_HOST_SERIAL.print(".");
-                                USB_HOST_SERIAL.println(addr.bmAddress, HEX);
-                 */
+                printf("Address: %x (%x.%x.%x)\r\n", addr.devAddress, addr.bmHub, addr.bmParent, addr.bmAddress);
                 return thePool[index].address.devAddress;
         };
 
