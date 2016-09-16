@@ -2,8 +2,11 @@
 #define LOAD_USB_HOST_SYSTEM
 // Load USB Host Shield
 #define LOAD_USB_HOST_SHIELD
+// Use USB hub
+#define LOAD_UHS_HUB
 
-#define LOAD_UHS_HID
+// Patch printf so we can use it.
+#define LOAD_UHS_PRINTF_HELPER
 
 #include <Arduino.h>
 #ifdef true
@@ -13,9 +16,6 @@
 #undef false
 #endif
 
-#include <stdio.h>
-#include <Wire.h>
-#include <SPI.h>
 #include <UHS_host.h>
 
 

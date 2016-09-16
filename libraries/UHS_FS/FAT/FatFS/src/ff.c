@@ -108,6 +108,15 @@ extern "C" {
 
 ---------------------------------------------------------------------------*/
 
+/*
+ * Work around GCC optimizer bug https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58545
+ */
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ == 9) && (__GNUC_PATCHLEVEL__ == 2)) || ((__GNUC__ == 4) && (__GNUC_MINOR__ == 8) && (__GNUC_PATCHLEVEL__ == 1)) || ((__GNUC__ == 4) && (__GNUC_MINOR__ == 7) && (__GNUC_PATCHLEVEL__ == 2))
+#define FIX_OPTIMZERBUG __attribute__((optimize("0")))
+#else
+#define FIX_OPTIMZERBUG
+#endif
+
 #if _FATFS != 82786	/* Revision ID */
 #error Wrong include file (ff.h).
 #endif
@@ -2756,12 +2765,6 @@ FRESULT f_sync_fs(FATFS *fs) {
         return sync_fs(fs);
 }
 
-/* Work around GCC 4.8.1/4.7.2 optimizer bug https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58545 */
-#if ((__GNUC__ == 4) && (__GNUC_MINOR__ == 8) && (__GNUC_PATCHLEVEL__ == 1)) || ((__GNUC__ == 4) && (__GNUC_MINOR__ == 7) && (__GNUC_PATCHLEVEL__ == 2))
-#define FIX_OPTIMZERBUG __attribute__((optimize("0")))
-#else
-#define FIX_OPTIMZERBUG
-#endif
 
 /**
  * Write to File

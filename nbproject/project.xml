@@ -18,7 +18,7 @@
                     <type>0</type>
                 </confElem>
                 <confElem>
-                    <name>teensy3.6</name>
+                    <name>Teensy-3.6</name>
                     <type>0</type>
                 </confElem>
             </confList>

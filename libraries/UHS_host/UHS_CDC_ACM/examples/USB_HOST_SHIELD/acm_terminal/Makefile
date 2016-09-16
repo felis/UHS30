@@ -1,9 +1,16 @@
+#BOARD=arduino:samd:arduino_zero_edbg
+#BOARD=arduino:sam:arduino_due_x_dbg
+#BOARD=esp8266:esp8266:huzzah:CpuFrequency=80,UploadTool=esptool,UploadSpeed=115200,FlashSize=4M3M
+#BOARD=chipkit-core:pic32:chipkit_uc32
 #BOARD=teensy:avr:teensy30:usb=serial,speed=96opt,keys=en-us
-BOARD=teensy:avr:teensy31:usb=serial,speed=96opt,keys=en-us
+#BOARD=teensy:avr:teensy31:usb=serial,speed=96opt,keys=en-us
 #BOARD=teensy:avr:teensy33:usb=serial,speed=96opt,keys=en-us
 #BOARD=teensy:avr:teensy34:usb=serial,speed=96opt,keys=en-us
 #BOARD=teensy:avr:teensy35:usb=serial,speed=96opt,keys=en-us
 #BOARD=teensy:avr:teensy36:usb=serial,speed=96opt,keys=en-us
+#BOARD=teensy:avr:teensypp2:usb=serial,speed=16,keys=en-us
+BOARD=arduino:avr:mega:cpu=atmega2560
+
 
 PORT = /dev/ttyACM0
 

@@ -2,13 +2,13 @@ FIND ?=find
 DIRNAME ?=dirname
 
 TOTEST ?=$(shell $(FIND) ./libraries -name Makefile -exec $(DIRNAME) \{\} \;)
-
+$(info $(TOTEST))
 all: build
 
 squeeky: $(TOTEST)
 	@for i in $? ; do (cd $$i && make squeeky ) ; done
 	@echo FULL cleanup done
-	
+
 clean: $(TOTEST)
 	@for i in $? ; do (cd $$i && make clean ) ; done
 	@echo Cleanup done

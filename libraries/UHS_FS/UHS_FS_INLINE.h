@@ -23,7 +23,6 @@ e-mail   :  support@circuitsathome.com
 #define AJK_NI __attribute__((noinline))
 #endif
 
-
 extern "C" {
         uint8_t fs_err;
 
@@ -709,12 +708,12 @@ extern "C" {
          */
         int AJK_NI fs_write(uint8_t fd, const void *data, uint16_t amount) {
                 uint8_t rc;
+                UINT bc;
                 int count = 0;
                 fd--;
 
                 rc = FR_INVALID_PARAMETER;
                 if((fd < PFAT_VOLUMES) && (fhandles[fd]->fs != NULL)) {
-                        UINT bc;
                         rc = f_write(fhandles[fd], data, amount, &bc);
                         count = bc;
                         if(rc) {
@@ -886,7 +885,7 @@ extern "C" {
                 uint64_t rv = 0llu;
                 if(vol != PFAT_VOLUMES) {
                         FATFS *fs;
-                        uint32_t tv;
+                        uint32_t tv = 0;
                         const char *name = _fs_util_FATpath("", vol);
                         rc = f_getfree((TCHAR *)name, &tv, &fs);
                         free((void *)name);
