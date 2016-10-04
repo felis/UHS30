@@ -15,6 +15,13 @@
 #if !defined(SWI_IRQ_NUM)
 #error include dyn_swi.h first
 #endif
+
+// 1 = LED debug
+#ifndef LED_STATUS
+#define LED_STATUS 1
+#endif
+
+
 #include <wiring.h>
 #ifndef UHS_KEHCI_MAX_FRAMES
 #define UHS_KEHCI_MAX_FRAMES (1024)
@@ -144,6 +151,11 @@ class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
         volatile uint32_t last_mark; // LAST time in MICROSECONDS that a packet was completely sent
         volatile uint8_t frame_counter;
 
+#if LED_STATUS
+        volatile bool CL1;
+        volatile bool CL2;
+#endif
+
 
 public:
 
@@ -156,6 +168,10 @@ public:
                 hub_present = 0;
                 last_mark = 0;
                 frame_counter = 0;
+#if LED_STATUS
+                CL1 = false;
+                CL2 = true;
+#endif
         };
         void UHS_NI poopOutStatus();
         void ISRTask(void);

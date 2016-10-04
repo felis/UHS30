@@ -11,6 +11,7 @@
 
 #define UHS_KINETIS_EHCI_LOADED
 
+
 static UHS_KINETIS_EHCI *_UHS_KINETIS_EHCI_THIS_;
 
 static void UHS_NI call_ISR_kinetis_EHCI(void) {
@@ -100,7 +101,6 @@ void UHS_NI UHS_KINETIS_EHCI::poopOutStatus() {
  *              Drivers that have NAK processing know to retry.
  */
 
-#define LED_STATUS 1
 
 void UHS_NI UHS_KINETIS_EHCI::Task(void) {
 }
@@ -110,16 +110,6 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
         uint32_t Ustat = USBHS_USBSTS; // USB status
         uint32_t Pstat = USBHS_PORTSC1; // Port status
         uint32_t Ostat = USBHS_OTGSC; // OTG status
-#if LED_STATUS
-        // shit out status on LEDs
-        // Indicate speed on 0,1
-        digitalWriteFast(0, (Pstat & 0x04000000U) ? 1 : 0);
-        digitalWriteFast(1, (Pstat & 0x08000000U) ? 1 : 0);
-
-        // connected on pin 3
-        digitalWriteFast(3, (Pstat & USBHS_PORTSC_CCS) ? 1 : 0);
-#endif
-
 
         if(Ostat & USBHS_OTGSC_MSS) {
                 if(timer_countdown) {
@@ -133,7 +123,10 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
         if(Ustat & USBHS_USBSTS_PCI) {
                 // port change
 #if LED_STATUS
-                digitalWriteFast(32, HIGH);
+                digitalWriteFast(31, CL1);
+                digitalWriteFast(32, CL2);
+                CL1 = !CL1;
+                CL2 = !CL2;
 #endif
                 USBHS_USBSTS = USBHS_USBSTS_PCI;
         }
@@ -151,6 +144,15 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
                 if(Ustat & USBHS_USBSTS_UI) USBHS_USBSTS |= USBHS_USBSTS_UI;
         }
 
+#if LED_STATUS
+        // shit out status on LEDs
+        // Indicate speed on 2,3
+        digitalWriteFast(2, (Pstat & 0x04000000U) ? 1 : 0);
+        digitalWriteFast(3, (Pstat & 0x08000000U) ? 1 : 0);
+
+        // connected on pin 4
+        digitalWriteFast(4, (Pstat & USBHS_PORTSC_CCS) ? 1 : 0);
+#endif
         // USBHS_OTGSC &= Ostat;
         //USBHS_PORTSC1 &= Pstat & USBHS_PORTSC_CSC;
         // USBHS_USBSTS &= Ustat;
@@ -164,14 +166,21 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
  * @return 0 on success, -1 on error
  */
 int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
-        //        uint32_t s;
 #if LED_STATUS
-        pinMode(0, OUTPUT);
-        pinMode(1, OUTPUT);
+        // These are updated in the ISR and used to see if the code is working correctly.
+
+        // Speed
+        pinMode(2, OUTPUT);
         pinMode(3, OUTPUT);
 
-        pinMode(32, OUTPUT);
+        // Connected
+        pinMode(4, OUTPUT);
 
+        // Port change detect, Initial state is both off
+        pinMode(31, OUTPUT);
+        pinMode(32, OUTPUT);
+        CL1 = false;
+        CL2 = true;
 
 #endif
         Init_dyn_SWI();

@@ -48,6 +48,7 @@ void setup() {
 }
 
 void loop() {
+        // "I'm Alive" signal for Oscilloscope/logic probe.
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 
         current_state = KINETIS_EHCI_Usb.getUsbTaskState();
