@@ -1,3 +1,10 @@
+// Note: to use Serial 1 for debugging
+// Attach FTDI or similar to pins 0 and 1
+// N/8/1 @ 115200
+// and uncomment the next line.
+//#define USB_HOST_SERIAL Serial1
+// Send an 's' to print out the INTEN and CTL registers.
+// Send a 'p' to print out status of the interface.
 
 // inline library loading
 // Patch printf so we can use it.
@@ -28,7 +35,8 @@ uint8_t d;
 
 void setup() {
         USB_HOST_SERIAL.begin(115200);
-        delay(10000);
+        USB_HOST_SERIAL.println("Waiting 5 seconds...");
+        delay(5000); //wait 5 seconds
         USB_HOST_SERIAL.println("Start.");
         while(KINETIS_EHCI_Usb.Init(1000) != 0);
         KINETIS_EHCI_Usb.vbusPower(vbus_on);
@@ -48,15 +56,14 @@ void loop() {
                 printf("USB HOST state %2.2x\r\n", current_state);
         }
 
-        if (Serial1.available() > 0) {
+        if (USB_HOST_SERIAL.available() > 0) {
 
-                d = Serial1.read();
+                d = USB_HOST_SERIAL.read();
                 if(d=='s') {
-                        printf("USB0_INTEN: ");
-                        USB_HOST_SERIAL.println(USB0_INTEN, HEX);
-                        printf("USB0_CTL: ");
-                        USB_HOST_SERIAL.println(USB0_CTL, HEX);
-                } else if(d=='p') { //
+                        printf("USB0_INTEN: 0x%x ", USB0_INTEN);
+                        printf("USB0_CTL: 0x%x\r\n", USB0_CTL);
+                } else if(d=='p') {
+                        KINETIS_EHCI_Usb.poopOutStatus();
                 }
         }
 
