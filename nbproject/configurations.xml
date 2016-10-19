@@ -138,6 +138,11 @@
           </df>
           <df name="UHS_CDC_ACM">
             <df name="examples">
+              <df name="UHS_KINETIS_FS_HOST">
+                <df name="acm_terminal">
+                  <in>acm_terminal.ino</in>
+                </df>
+              </df>
               <df name="USB_HOST_SHIELD">
                 <df name="acm_terminal">
                   <in>acm_terminal.ino</in>
@@ -334,6 +339,11 @@
             ex="false"
             tool="1"
             flavor2="4">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/UHS_KINETIS_FS_HOST/acm_terminal/acm_terminal.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_CDC_ACM/examples/USB_HOST_SHIELD/acm_terminal/acm_terminal.ino"
             ex="false"
@@ -697,6 +707,11 @@
       <item path="libraries/UHS_host/UHS_CDC_ACM/UHS_CDC_ACM_XR21B1411.h"
             ex="false"
             tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/UHS_KINETIS_FS_HOST/acm_terminal/acm_terminal.ino"
+            ex="false"
+            tool="1"
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_CDC_ACM/examples/USB_HOST_SHIELD/acm_terminal/acm_terminal.ino"

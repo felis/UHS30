@@ -18,9 +18,9 @@
 
 #include <UHS_host.h>
 
-MAX3421E_HOST MAX3421E_Usb;
-UHS_USBHub hub_MAX3421E(&MAX3421E_Usb);
-UHS_Bulk_Storage Storage_MAX3421E(&MAX3421E_Usb);
+MAX3421E_HOST KINETIS_Usb;
+UHS_USBHub hub_MAX3421E(&KINETIS_Usb);
+UHS_Bulk_Storage Storage_MAX3421E(&KINETIS_Usb);
 uint8_t usbstate;
 uint8_t laststate;
 boolean tested;
@@ -57,7 +57,7 @@ void setup() {
         while(!USB_HOST_SERIAL);
         USB_HOST_SERIAL.begin(115200);
 
-        while(MAX3421E_Usb.Init(1000) !=0);
+        while(KINETIS_Usb.Init(1000) !=0);
         E_Notify(PSTR("\r\n\r\ngo!\r\n"), 0);
         laststate = 0xff;
         tested = false;
@@ -68,9 +68,9 @@ void setup() {
 void loop() {
 #if !USB_HOST_SHIELD_USE_ISR
         // This is broken
-        MAX3421E_Usb.Task();
+        KINETIS_Usb.Task();
 #endif
-        usbstate = MAX3421E_Usb.getUsbTaskState();
+        usbstate = KINETIS_Usb.getUsbTaskState();
         if(usbstate != laststate) {
                 USB_HOST_SERIAL.print("\r\nFSM state: 0x");
                 if(usbstate < 0x10) USB_HOST_SERIAL.print("0");
@@ -82,7 +82,7 @@ void loop() {
                                 break;
                         case UHS_USB_HOST_STATE_ERROR:
                                 E_Notify(PSTR("\r\nUSB state machine reached error state 0x"),0);
-                                USB_HOST_SERIAL.print(MAX3421E_Usb.usb_error, HEX);
+                                USB_HOST_SERIAL.print(KINETIS_Usb.usb_error, HEX);
                         break;
                         case UHS_USB_HOST_STATE_RUNNING:
                                 if(hub_MAX3421E.bPollEnable) {

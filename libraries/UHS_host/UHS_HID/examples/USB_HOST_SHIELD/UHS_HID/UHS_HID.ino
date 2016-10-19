@@ -19,12 +19,12 @@
 #include <UHS_host.h>
 
 
-MAX3421E_HOST MAX3421E_Usb;
-UHS_USBHub hub_MAX3421E(&MAX3421E_Usb);
+MAX3421E_HOST KINETIS_Usb;
+UHS_USBHub hub_MAX3421E(&KINETIS_Usb);
 
 void setup() {
         USB_HOST_SERIAL.begin(115200);
-        while(MAX3421E_Usb.Init(1000) != 0);
+        while(KINETIS_Usb.Init(1000) != 0);
 
 
 }

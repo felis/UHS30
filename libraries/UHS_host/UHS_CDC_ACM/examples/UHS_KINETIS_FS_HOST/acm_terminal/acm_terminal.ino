@@ -1,7 +1,7 @@
 // Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
-// Load USB Host Shield
-#define LOAD_USB_HOST_SHIELD
+// Load the Kinetis core
+#define LOAD_UHS_KINETIS_FS_HOST
 // Use USB hub
 #define LOAD_UHS_HUB
 
@@ -10,6 +10,9 @@
 //#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD 1
+
+// Redirect debugging and printf
+#define USB_HOST_SERIAL Serial1
 
 
 // These all get combined under UHS_CDC_ACM multiplexer.
@@ -33,8 +36,9 @@
 
 #include <UHS_host.h>
 
-MAX3421E_HOST KINETIS_Usb;
-UHS_USBHub hub_MAX3421E(&KINETIS_Usb);
+UHS_KINETIS_FS_HOST KINETIS_Usb;
+
+UHS_USBHub hub_KINETIS(&KINETIS_Usb);
 
 class MY_ACM : public UHS_CDC_ACM {
 public:

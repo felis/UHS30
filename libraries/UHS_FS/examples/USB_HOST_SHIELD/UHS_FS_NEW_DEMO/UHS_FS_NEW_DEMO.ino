@@ -148,9 +148,9 @@
 #include <UHS_host.h>
 
 
-MAX3421E_HOST MAX3421E_Usb;
+MAX3421E_HOST KINETIS_Usb;
 #if MAKE_BIG_DEMO
-UHS_USBHub hub_MAX3421E(&MAX3421E_Usb);
+UHS_USBHub hub_MAX3421E(&KINETIS_Usb);
 PFAT_DIRINFO *de;
 uint8_t *data;
 #endif
@@ -246,8 +246,8 @@ void setup() {
         delay(10000);
         USB_HOST_SERIAL.println("Start.");
         // Initialize generic storage. This must be done before USB starts.
-        Init_Generic_Storage(&MAX3421E_Usb);
-        while(MAX3421E_Usb.Init(1000) != 0);
+        Init_Generic_Storage(&KINETIS_Usb);
+        while(KINETIS_Usb.Init(1000) != 0);
 #if defined(SWI_IRQ_NUM)
         printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
 #endif
@@ -260,11 +260,11 @@ uint8_t last_state = 255;
 void loop() {
         // The following does not work yet!
 #if !USB_HOST_SHIELD_USE_ISR
-        MAX3421E_Usb.Task();
+        KINETIS_Usb.Task();
 #endif
 
 #if 1
-        current_state = MAX3421E_Usb.getUsbTaskState();
+        current_state = KINETIS_Usb.getUsbTaskState();
         if(current_state != last_state) {
                 last_state = current_state;
                 printf("USB HOST state %2.2x\r\n", current_state);
