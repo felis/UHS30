@@ -18,7 +18,11 @@ __This set of libraries is EXTERMELY ALPHA!__
 * PROLIFIC serial
 * FTDI serial
 
-## AVR Arduino hardware instructions
+## AVR Arduino 
+#software tools
+Arduino AVR boards by Arduino 1.6.11.
+Newer versions are broken.
+#hardware instructions
 On AVR based Arduino boards and clones, you must do one of the following:
 
 Connect pin 9 to pin 3 with a jumper wire.
