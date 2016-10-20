@@ -24,4 +24,5 @@
 
 *.jpg -text -diff
 
+*.zip binary
 
