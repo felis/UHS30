@@ -59,7 +59,7 @@ UHS_EpInfo* UHS_USB_HOST_BASE::getEpInfoEntry(uint8_t addr, uint8_t ep) {
  * @param addr device address
  * @param epcount how many endpoints
  * @param eprecord pointer to the endpoint structure
- * @return
+ * @return Zero for success, or error code
  */
 uint8_t UHS_USB_HOST_BASE::setEpInfoEntry(uint8_t addr, uint8_t epcount, volatile UHS_EpInfo* eprecord) {
         if(!eprecord)
@@ -113,7 +113,7 @@ void UHS_USB_HOST_BASE::DeviceDefaults(uint8_t maxep, UHS_USBInterface *interfac
  * @param parent index to Parent
  * @param port what port on the parent
  * @param address address of the device
- * @return zero on success
+ * @return Zero for success, or error code
  */
 
 uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t address) {
@@ -193,11 +193,12 @@ uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t add
  */
 
 /**
+ * Enumerates interfaces on devices
  *
  * @param parent index to Parent
  * @param port what port on the parent
  * @param speed the speed of the device
- * @return
+ * @return Zero for success, or error code
  */
 uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t speed) {
         //uint8_t bAddress = 0;
@@ -498,6 +499,15 @@ uint8_t UHS_USB_HOST_BASE::getDevDescr(uint8_t addr, uint16_t nbytes, uint8_t* d
         return ( ctrlReq(addr, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, 0x00, USB_DESCRIPTOR_DEVICE, 0x0000, nbytes), nbytes, dataptr));
 }
 
+/**
+ * Gets the config descriptor, or part of it from endpoint Zero.
+ *
+ * @param addr Address of the device
+ * @param nbytes how many bytes to return
+ * @param conf index to descriptor to return
+ * @param dataptr ointer to the data to return
+ * @return status of the request, zero is success.
+ */
 uint8_t UHS_USB_HOST_BASE::getConfDescr(uint8_t addr, uint16_t nbytes, uint8_t conf, uint8_t* dataptr) {
         return ( ctrlReq(addr, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, conf, USB_DESCRIPTOR_CONFIGURATION, 0x0000, nbytes), nbytes, dataptr));
 }
@@ -549,6 +559,15 @@ uint8_t UHS_USB_HOST_BASE::setConf(uint8_t addr, uint8_t conf_value) {
 }
 
 /* rcode 0 if no errors. rcode 01-0f is relayed from HRSL                       */
+/**
+ * Writes data to an interface pipe
+ *
+ * @param addr Address of the device
+ * @param ep Endpoint of the pipe
+ * @param nbytes number of bytes to transfer
+ * @param data pointer to buffer to hold transfer
+ * @return zero for success or error code
+ */
 uint8_t UHS_USB_HOST_BASE::outTransfer(uint8_t addr, uint8_t ep, uint16_t nbytes, uint8_t* data) {
         UHS_EpInfo *pep = NULL;
         uint16_t nak_limit = 0;
@@ -561,6 +580,15 @@ uint8_t UHS_USB_HOST_BASE::outTransfer(uint8_t addr, uint8_t ep, uint16_t nbytes
         return rcode;
 };
 
+/**
+ * Reads data from an interface pipe
+ *
+ * @param addr Address of the device
+ * @param ep Endpoint of the pipe
+ * @param nbytesptr number of bytes to transfer
+ * @param data pointer to buffer to hold transfer
+ * @return zero for success or error code
+ */
 uint8_t UHS_USB_HOST_BASE::inTransfer(uint8_t addr, uint8_t ep, uint16_t *nbytesptr, uint8_t* data) {
         UHS_EpInfo *pep = NULL;
         uint16_t nak_limit = 0;
@@ -579,6 +607,18 @@ uint8_t UHS_USB_HOST_BASE::inTransfer(uint8_t addr, uint8_t ep, uint16_t *nbytes
 
 }
 
+/**
+ * Initialize the descriptor stream, works much like opening a file.
+ *
+ * @param ei
+ * @param ucd
+ * @param pep
+ * @param data
+ * @param left
+ * @param read
+ * @param offset
+ * @return zero for success or error code
+ */
 uint8_t UHS_USB_HOST_BASE::initDescrStream(ENUMERATION_INFO *ei, USB_CONFIGURATION_DESCRIPTOR *ucd, UHS_EpInfo *pep, uint8_t *data, uint16_t *left, uint16_t *read, uint8_t *offset) {
         if(!ei || !ucd) return UHS_HOST_ERROR_BAD_ARGUMENT;
         if(!pep) return UHS_HOST_ERROR_NULL_EPINFO;
@@ -942,6 +982,7 @@ uint8_t UHS_USB_HOST_BASE::enumerateInterface(ENUMERATION_INFO *ei) {
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * Might go away, depends on if it is useful, or not.
  *
  * @param ei Enumeration information
  * @return true if this interface driver can handle this interface description
@@ -1038,16 +1079,6 @@ uint8_t UHS_USB_HOST_BASE::DefaultAddressing(uint8_t parent, uint8_t port, uint8
         return 0;
 }
 #endif
-
-
-
-
-
-
-
-
-
-// TO-DO: Endpoint copy and bNumEP set method to reduce driver code size even more!
 
 #else
 #error "Never include UHS_host_INLINE.h, include UHS_host.h instead"
