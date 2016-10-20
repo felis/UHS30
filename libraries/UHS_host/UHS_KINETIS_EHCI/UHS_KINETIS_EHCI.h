@@ -154,6 +154,7 @@ class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
 #if LED_STATUS
         volatile bool CL1;
         volatile bool CL2;
+        volatile bool CL3;
 #endif
 
 
@@ -171,15 +172,14 @@ public:
 #if LED_STATUS
                 CL1 = false;
                 CL2 = true;
+                CL3 = false;
 #endif
         };
         void UHS_NI poopOutStatus();
         void ISRTask(void);
-//        void ISRbottom(void);
+        void ISRbottom(void);
 
-        // helper functions too
-//        void busprobe(void);
-//        virtual void VBUS_changed(void);
+        virtual void VBUS_changed(void);
 
         // Note, this is not counting SOFs :-)
 
@@ -248,7 +248,7 @@ public:
         };
 
         void dyn_SWISR(void) {
-//                ISRbottom();
+                ISRbottom();
         };
 
 };

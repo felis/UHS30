@@ -1,8 +1,9 @@
 // Note: to use Serial 1 for debugging
 // Attach FTDI or similar to pins 0 and 1
 // N/8/1 @ 115200
-// and uncomment the next line.
+// and uncomment the next two lines.
 //#define USB_HOST_SERIAL Serial1
+//#define USB_HOST_SERIAL_NOWAIT
 // Send an 's' to print out the INTEN and CTL registers.
 // Send a 'p' to print out status of the interface.
 
@@ -14,6 +15,8 @@
 // Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
 
+// enable testing output
+#define EHCI_TEST_DEV
 
 #include <Arduino.h>
 #ifdef true
@@ -34,9 +37,11 @@ uint8_t d;
 
 
 void setup() {
+#if !defined(USB_HOST_SERIAL_NOWAIT)
+        while(!USB_HOST_SERIAL);
+#endif
+        delay(5000); //wait 5 seconds for user to bring up a terminal
         USB_HOST_SERIAL.begin(115200);
-        USB_HOST_SERIAL.println("Waiting 5 seconds...");
-        delay(5000); //wait 5 seconds
         USB_HOST_SERIAL.println("Start.");
         while(KINETIS_EHCI_Usb.Init(1000) != 0);
         KINETIS_EHCI_Usb.vbusPower(vbus_on);
