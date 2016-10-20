@@ -144,7 +144,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                 interrupts();
         }
 
-        printf("ISRbottom, usb_task_state: %x \r\n", (uint8_t)usb_task_state);
+        // printf("ISRbottom, usb_task_state: %x \r\n", (uint8_t)usb_task_state);
 
         switch(usb_task_state) {
                 case UHS_USB_HOST_STATE_INITIALIZE: // initial state
@@ -264,6 +264,10 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
 #endif
                 if(timer_countdown) {
                         timer_countdown--;
+                        counted = true;
+                }
+                if(sof_countdown) {
+                        sof_countdown--;
                         counted = true;
                 }
         }
