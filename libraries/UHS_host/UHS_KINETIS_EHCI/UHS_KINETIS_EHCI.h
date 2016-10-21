@@ -85,18 +85,18 @@ typedef struct _uhs_kehci_sitd {
 } uhs_kehci_sitd_t;
 
 #if 0
+
 /*
  *
  * reference from fs stack structures, we'll be doing something smarter here...
  */
-typedef struct _usb_host_ehci_iso
-{
-    struct _usb_host_ehci_iso *next;       /* Next instance pointer */
-    usb_host_pipe_t *ehciPipePointer;      /* This ISO's EHCI pipe pointer */
-    usb_host_transfer_t *ehciTransferHead; /* Transfer list head on this ISO pipe */
-    usb_host_transfer_t *ehciTransferTail; /* Transfer list head on this ISO pipe */
+typedef struct _usb_host_ehci_iso {
+        struct _usb_host_ehci_iso *next; /* Next instance pointer */
+        usb_host_pipe_t *ehciPipePointer; /* This ISO's EHCI pipe pointer */
+        usb_host_transfer_t *ehciTransferHead; /* Transfer list head on this ISO pipe */
+        usb_host_transfer_t *ehciTransferTail; /* Transfer list head on this ISO pipe */
 
-    uint16_t lastLinkFrame; /*!< It means that the inserted frame for ISO ITD/SITD. 0xFFFF is invalid. For ITD, it is a
+        uint16_t lastLinkFrame; /*!< It means that the inserted frame for ISO ITD/SITD. 0xFFFF is invalid. For ITD, it is a
                                micro-frame value. For SITD, it is a frame value */
 } usb_host_ehci_iso_t;
 
@@ -113,14 +113,11 @@ typedef struct _usb_host_ehci_iso
 
 typedef struct _Qs {
         uhs_kehci_qh_t __attribute__((aligned(64))) qh[UHS_KEHCI_MAX_QH];
-        uhs_kehci_qtd_t  __attribute__((aligned(32))) qtd[UHS_KEHCI_MAX_QTD];
-        uhs_kehci_itd_t  __attribute__((aligned(32))) itd[UHS_KEHCI_MAX_ITD];
-        uhs_kehci_sitd_t  __attribute__((aligned(32))) sitd[UHS_KEHCI_MAX_SITD];
+        uhs_kehci_qtd_t __attribute__((aligned(32))) qtd[UHS_KEHCI_MAX_QTD];
+        uhs_kehci_itd_t __attribute__((aligned(32))) itd[UHS_KEHCI_MAX_ITD];
+        uhs_kehci_sitd_t __attribute__((aligned(32))) sitd[UHS_KEHCI_MAX_SITD];
 
 } Qs_t;
-
-
-
 
 class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
         volatile uint8_t frame[4 * UHS_KEHCI_MAX_FRAMES] __attribute__((aligned(4096)));
@@ -146,6 +143,7 @@ class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
         volatile bool sofevent;
         volatile bool counted;
         volatile bool condet;
+        volatile bool doingreset;
 
         volatile uint32_t sof_mark; // Next time in MICROSECONDS that an SOF will be seen
         volatile uint32_t last_mark; // LAST time in MICROSECONDS that a packet was completely sent
@@ -166,6 +164,7 @@ public:
                 insidetask = false;
                 busevent = false;
                 sofevent = false;
+                doingreset = false;
                 hub_present = 0;
                 last_mark = 0;
                 frame_counter = 0;
@@ -178,6 +177,8 @@ public:
         void UHS_NI poopOutStatus();
         void ISRTask(void);
         void ISRbottom(void);
+
+        void busprobe(void);
 
         virtual void VBUS_changed(void);
 
@@ -197,23 +198,21 @@ public:
 
         virtual void Task(void); // {};
 
-//        virtual uint8_t SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t &nak_limit);
-//        virtual uint8_t OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data);
-//        virtual uint8_t InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data);
-//        virtual UHS_EpInfo *ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr);
-//        virtual uint8_t ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr);
-//        virtual uint8_t ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t *dataptr);
-//        virtual uint8_t dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit);
-
+        //        virtual uint8_t SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t &nak_limit);
+        //        virtual uint8_t OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data);
+        //        virtual uint8_t InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data);
+        //        virtual UHS_EpInfo *ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr);
+        //        virtual uint8_t ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr);
+        //        virtual uint8_t ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t *dataptr);
+        //        virtual uint8_t dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit);
 
         bool UHS_NI IsHub(uint8_t klass) {
                 if(klass == UHS_USB_CLASS_HUB) {
-//                        hub_present = UHS_KINETIS_FS_bmHUBPRE;
+                        //                        hub_present = UHS_KINETIS_FS_bmHUBPRE;
                         return true;
                 }
                 return false;
-       };
-
+        };
 
         void UHS_NI ReleaseChildren(void) {
                 hub_present = 0;
@@ -227,11 +226,19 @@ public:
                 USBTRACE("\r\nBUS RESET.\r\n");
 
                 // Issue a bus reset
-                // YOUR CODE HERE to issue a BUS_RESET
+                noInterrupts();
+                doingreset = true;
+                busevent = true;
                 USBHS_PORTSC1 |= USBHS_PORTSC_PR;
-                sof_delay(20); // delay at least 20 ms
-                USBHS_PORTSC1 &= ~USBHS_PORTSC_PR;
-                sofevent = true;
+                interrupts();
+                while(busevent) {
+                        DDSB();
+                }
+                noInterrupts();
+                doingreset = false;
+                DDSB();
+                interrupts();
+                //sofevent = true;
                 // start SOF generation
                 // YOUR CODE HERE to start SOF generation (IF REQUIRED!)
 
@@ -239,6 +246,7 @@ public:
                 // while(sofevent) {
                 // }
                 sof_delay(200);
+                //sofevent = false;
         };
 
         int16_t UHS_NI Init(int16_t mseconds);

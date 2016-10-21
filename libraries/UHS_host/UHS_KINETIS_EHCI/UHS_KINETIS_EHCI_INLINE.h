@@ -45,11 +45,11 @@ void UHS_NI UHS_KINETIS_EHCI::poopOutStatus() {
         }
         printf("speed=");
         switch(((n >> 26) & 3)) {
-                case 0: printf("12 Mbps ");
+                case 0: printf("12 Mbps FS ");
                         break;
-                case 1: printf("1.5 Mbps ");
+                case 1: printf("1.5 Mbps LS ");
                         break;
-                case 2: printf("480 Mbps ");
+                case 2: printf("480 Mbps HS ");
                         break;
                 default: printf("(undef) ");
         }
@@ -92,42 +92,52 @@ void UHS_NI UHS_KINETIS_EHCI::poopOutStatus() {
 #endif
 }
 
-
-void UHS_NI UHS_KINETIS_EHCI::VBUS_changed(void) {
-        /* modify USB task state because Vbus changed or unknown */
+void UHS_NI UHS_KINETIS_EHCI::busprobe(void) {
         uint8_t speed = 1;
-        // printf("\r\n\r\n\r\n\r\nSTATE %2.2x -> ", usb_task_state);
+
+
         switch(vbusState) {
+                case 0: // Full speed
+                        break;
                 case 1: // Low speed
                         speed = 0;
-                        //intentional fall-through
-                case 0: // Full speed
-                        // Resets to the device cause an IRQ
-                        ReleaseChildren();
-                        timer_countdown = 0;
-                        sof_countdown = 0;
-                        usb_task_state = UHS_USB_HOST_STATE_DEBOUNCE;
                         break;
                 case 2: // high speed
                         speed = 2;
-                        ReleaseChildren();
-                        timer_countdown = 0;
-                        sof_countdown = 0;
+                        break;
+                default:
+                        // no speed.. hrmmm :-)
+                        speed = 15;
+                        break;
+        }
+        printf("USB host speed now %1.1x\r\n", speed);
+        usb_host_speed = speed;
+        if(speed == 2) {
+                USBPHY_CTRL |= USBPHY_CTRL_ENHOSTDISCONDETECT;
+        } else {
+                USBPHY_CTRL &= ~USBPHY_CTRL_ENHOSTDISCONDETECT;
+        }
+}
+
+void UHS_NI UHS_KINETIS_EHCI::VBUS_changed(void) {
+        /* modify USB task state because Vbus changed or unknown */
+        // printf("\r\n\r\n\r\n\r\nSTATE %2.2x -> ", usb_task_state);
+        ReleaseChildren();
+        timer_countdown = 0;
+        sof_countdown = 0;
+        switch(vbusState) {
+                case 0: // Full speed
+                case 1: // Low speed
+                case 2: // high speed
                         usb_task_state = UHS_USB_HOST_STATE_DEBOUNCE;
                         break;
                 default:
-                        ReleaseChildren();
-                        timer_countdown = 0;
-                        sof_countdown = 0;
                         usb_task_state = UHS_USB_HOST_STATE_IDLE;
-                        USB0_INTEN |= USB_INTEN_ATTACHEN;
                         break;
         }
         // printf("0x%2.2x\r\n\r\n\r\n\r\n", usb_task_state);
-        usb_host_speed = speed;
         return;
 };
-
 
 /**
  * Bottom half of the ISR task
@@ -135,7 +145,7 @@ void UHS_NI UHS_KINETIS_EHCI::VBUS_changed(void) {
 void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
         uint8_t x;
 #if LED_STATUS
-                digitalWriteFast(34, HIGH);
+        digitalWriteFast(34, HIGH);
 #endif
         if(condet) {
                 VBUS_changed();
@@ -164,21 +174,26 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
 
                 case UHS_USB_HOST_STATE_RESET_DEVICE:
                         //printf("ISRbottom, UHS_USB_HOST_STATE_RESET_DEVICE\r\n");
+                        noInterrupts();
                         busevent = true;
+                        doingreset = true;
                         usb_task_state = UHS_USB_HOST_STATE_RESET_NOT_COMPLETE;
                         //issue bus reset
-                        USB0_CTL |= USB_CTL_RESET;
-                        timer_countdown = 20;
+                        USBHS_PORTSC1 |= USBHS_PORTSC_PR;
+                        interrupts();
+                        //timer_countdown = 20;
                         break;
                 case UHS_USB_HOST_STATE_RESET_NOT_COMPLETE:
                         //printf("ISRbottom, UHS_USB_HOST_STATE_RESET_NOT_COMPLETE\r\n");
-                        USB0_CTL &= ~USB_CTL_RESET; // stop bus reset
-                        USB0_CTL |= USB_CTL_USBENSOFEN; // start SOF generation
-                        usb_task_state = UHS_USB_HOST_STATE_WAIT_BUS_READY;
+                        if(!busevent) usb_task_state = UHS_USB_HOST_STATE_WAIT_BUS_READY;
                         // We delay two extra ms to ensure that at least one SOF has been sent.
                         // This trick is performed by just moving to the next state.
                         break;
                 case UHS_USB_HOST_STATE_WAIT_BUS_READY:
+                        noInterrupts();
+                        doingreset = false;
+                        DDSB();
+                        interrupts();
                         //printf("ISRbottom, UHS_USB_HOST_STATE_WAIT_BUS_READY\r\n");
                         usb_task_state = UHS_USB_HOST_STATE_CONFIGURING;
                         break; // don't fall through
@@ -228,10 +243,9 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
         }
         usb_task_polling_disabled--;
 #if LED_STATUS
-                digitalWriteFast(34, LOW);
+        digitalWriteFast(34, LOW);
 #endif
 }
-
 
 /**
  * Top half of the ISR. This is what services the hardware, and calls the bottom half as-needed.
@@ -249,13 +263,45 @@ void UHS_NI UHS_KINETIS_EHCI::Task(void) {
 
 void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
         counted = false;
-        // ACK all IRQ early
         uint32_t Ostat = USBHS_OTGSC; // OTG status
-        USBHS_OTGSC &= Ostat;
-        uint32_t Ustat = USBHS_USBSTS; // USB status
-        USBHS_USBSTS &= Ustat;
+        uint32_t Ustat = USBHS_USBSTS /*& USBHS_USBINTR */; // USB status
         uint32_t Pstat = USBHS_PORTSC1; // Port status
-        //USBHS_PORTSC1 &= Pstat;
+        USBHS_OTGSC &= Ostat;
+        USBHS_USBSTS &= Ustat;
+
+        if(Ustat & USBHS_USBSTS_PCI) {
+                // port change
+                vbusState = ((Pstat & 0x04000000U) ? 1 : 0) | ((Pstat & 0x08000000U) ? 2 : 0);
+#if defined(EHCI_TEST_DEV)
+                printf("PCI Vbus state changed to %1.1x\r\n", vbusState);
+#endif
+                busprobe();
+                if(!doingreset) condet = true;
+                busevent = false;
+#if LED_STATUS
+                // toggle LEDs so a mere human can see them
+                digitalWriteFast(31, CL1);
+                digitalWriteFast(32, CL2);
+                CL1 = !CL1;
+                CL2 = !CL2;
+#endif
+        }
+
+        if(Ustat & USBHS_USBSTS_SEI) {
+        }
+        if(Ustat & USBHS_USBSTS_FRI) {
+                // nothing yet...
+        }
+
+        if((Ustat & USBHS_USBSTS_UEI) || (Ustat & USBHS_USBSTS_UI)) {
+                // USB interrupt or USB error interrupt both end a transaction
+                if(Ustat & USBHS_USBSTS_UEI) {
+                        // nothing yet :-)
+                }
+                if(Ustat & USBHS_USBSTS_UI) {
+                        // nothing yet :-)
+                }
+        }
 
         if(Ostat & USBHS_OTGSC_MSS) {
 #if LED_STATUS
@@ -272,42 +318,6 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
                 }
         }
 
-
-        if(Ustat & USBHS_USBSTS_PCI) {
-                // port change
-#if LED_STATUS
-                // toggle LEDs so a mere human can see them
-                digitalWriteFast(31, CL1);
-                digitalWriteFast(32, CL2);
-                CL1 = !CL1;
-                CL2 = !CL2;
-#endif
-                USBHS_USBSTS = USBHS_USBSTS_PCI;
-                // record vbus state here
-                // 0x0 = full, 0x1 = low, 0x2 = high, 0x3 = disconnected
-                vbusState = ((Pstat & 0x04000000U) ? 1 : 0) | ((Pstat & 0x08000000U) ? 2 : 0);
-#if defined(EHCI_TEST_DEV)
-                printf("Vbus state changed to %1.1x\r\n", vbusState);
-#endif
-                condet = true;
-        }
-
-        if(Ustat & USBHS_USBSTS_SEI) {
-        }
-        if(Ustat & USBHS_USBSTS_FRI) {
-                // nothing yet...
-        }
-
-        if((Ustat & USBHS_USBSTS_UEI) || (Ustat & USBHS_USBSTS_UI)) {
-                // USB interrupt or USB error interrupt both end a transaction
-                if(Ustat & USBHS_USBSTS_UEI) {
-                // nothing yet :-)
-                }
-                if(Ustat & USBHS_USBSTS_UI) {
-                // nothing yet :-)
-                }
-        }
-
 #if LED_STATUS
         // shit out speed status on LEDs
         // Indicate speed on 2,3
@@ -316,6 +326,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
         // connected on pin 4
         digitalWriteFast(4, (Pstat & USBHS_PORTSC_CCS) ? 1 : 0);
 #endif
+        //USBHS_PORTSC1 &= Pstat;
 
         DDSB();
         if(!timer_countdown && !sof_countdown && !counted && !usb_task_polling_disabled) {
@@ -426,6 +437,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
 #endif
         PORTE_PCR6 = PORT_PCR_MUX(1);
         GPIOE_PDDR |= (1 << 6);
+        // this possibly is for the actual vbus???
         GPIOE_PSOR = (1 << 6); // turn on USB host power
 
         vbusPower(vbus_off);
@@ -489,13 +501,13 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         USBHS_USBCMD = USBHS_USBCMD_ITC(0) | USBHS_USBCMD_RS | USBHS_USBCMD_ASP(3) |
                 USBHS_USBCMD_FS2 | USBHS_USBCMD_FS(0); // periodic table is 64 pointers
 
+        uint32_t s;
         /*
-                poop();
-                do {
-                        s = (USBHS_USBSTS & USBHS_USBSTS_AS) | (USBHS_USBCMD & USBHS_USBCMD_ASE);
-                } while((s == USBHS_USBSTS_AS) || (s == USBHS_USBCMD_ASE));
-                USBHS_PERIODICLISTBASE = (uint32_t)frame;
-                USBHS_USBCMD |= USBHS_USBCMD_PSE;
+        do {
+                s = (USBHS_USBSTS & USBHS_USBSTS_AS) | (USBHS_USBCMD & USBHS_USBCMD_ASE);
+        } while((s == USBHS_USBSTS_AS) || (s == USBHS_USBCMD_ASE));
+        USBHS_PERIODICLISTBASE = (uint32_t)frame;
+        USBHS_USBCMD |= USBHS_USBCMD_PSE;
          */
 
         /*
@@ -504,7 +516,6 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         } while((s == USBHS_USBSTS_AS) || (s == USBHS_USBCMD_ASE));
         USBHS_ASYNCLISTADDR = (uint32_t)Q.qh;
         USBHS_USBCMD |= USBHS_USBCMD_ASE;
-        poop();
          */
         USBHS_PORTSC1 |= USBHS_PORTSC_PP;
 #if defined(EHCI_TEST_DEV)
@@ -515,7 +526,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
                 //        USBHS_OTGSC_BSEIE | // B session end
                 //        USBHS_OTGSC_BSVIE | // B session valid
                 //        USBHS_OTGSC_IDIE  | // USB ID
-                        USBHS_OTGSC_MSS   | // 1mS timer
+                USBHS_OTGSC_MSS | // 1mS timer
                 //        USBHS_OTGSC_BSEIS | // B session end
                 //        USBHS_OTGSC_BSVIS | // B session valid
                 //        USBHS_OTGSC_ASVIS | // A session valid
