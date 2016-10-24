@@ -464,8 +464,6 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
 #endif
         PORTE_PCR6 = PORT_PCR_MUX(1);
         GPIOE_PDDR |= (1 << 6);
-        // Is this possibly is for the actual vbus???
-        GPIOE_PSOR = (1 << 6); // turn on USB host power
 
         vbusPower(vbus_off);
         // Delay a minimum of 1 second to ensure any capacitors are drained.

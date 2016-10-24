@@ -213,7 +213,11 @@ public:
         };
 
         virtual void UHS_NI vbusPower(VBUS_t state) {
-                //digitalWriteFast(32, !state);
+                if(state) {
+                        GPIOE_PCOR = (1 << 6); // turn off USB host power
+                } else {
+                        GPIOE_PSOR = (1 << 6); // turn on USB host power
+                }
         };
 
         virtual void Task(void); // {};
