@@ -27,7 +27,16 @@
             </formatting>
         </data>
         <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+            <word>Atmoically</word>
+            <word>Bitbanding</word>
+            <word>bitbands</word>
+            <word>isr</word>
             <word>Kroll</word>
+            <word>lu</word>
+            <word>Mbps</word>
+            <word>printf</word>
+            <word>usb</word>
+            <word>Vbus</word>
         </spellchecker-wordlist>
     </configuration>
 </project>

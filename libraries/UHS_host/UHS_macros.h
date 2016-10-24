@@ -242,6 +242,17 @@ e-mail   :  support@circuitsathome.com
 // HANDY MACROS
 ////////////////////////////////////////////////////////////////////////////////
 
+// Atmoically set/clear single bits using bitbands.
+// Believe it or not, this boils down to a constant,
+// and is less code than using |= &= operators.
+// Bonus, it makes code easier to read too.
+// Bitbanding is a wonderful thing.
+#define BITNR(i) (i&0x1?0:i&0x2?1:i&0x4?2:i&0x8?3:i&0x10?4:i&0x20?5:i&0x40?6:i&0x80?7:i&0x100?8:i&0x200?9:i&0x400?10:i&0x800?11:i&0x1000?12:i&0x2000?13:i&0x4000?14:i&0x8000?15:i&0x10000?16:i&0x20000?17:i&0x40000?18:i&0x80000?19:i&0x100000?20:i&0x200000?21:i&0x400000?22:i&0x800000?23:i&0x1000000?24:i&0x2000000?25:i&0x4000000?26:i&0x8000000?27:i&0x10000000?28:i&0x20000000?29:i&0x40000000?30:i&0x80000000?31:32)
+#define UHS_KIO_BITBAND_ADDR(r, i) (((uint32_t)&(r) - 0x40000000) * 32 + (i) * 4 + 0x42000000)
+#define UHS_KIO_SETBIT_ATOMIC(r, m) (*(uint32_t *)UHS_KIO_BITBAND_ADDR((r), BITNR((m)))) = 1
+#define UHS_KIO_CLRBIT_ATOMIC(r, m) (*(uint32_t *)UHS_KIO_BITBAND_ADDR((r), BITNR((m)))) = 0
+
+
 #define VALUE_BETWEEN(v,l,h) (((v)>(l)) && ((v)<(h)))
 #define VALUE_WITHIN(v,l,h) (((v)>=(l)) && ((v)<=(h)))
 #define output_pgm_message(wa,fp,mp,el) wa = &mp, fp((char *)pgm_read_pointer(wa), el)

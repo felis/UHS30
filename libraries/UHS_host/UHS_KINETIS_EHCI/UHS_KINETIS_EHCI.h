@@ -6,6 +6,25 @@
  */
 
 
+/*
+ * Notes.
+ *
+ *
+ * Supported: Asynchronous for bulk and control
+ * Asynchronous List Queue Head Pointer
+ *
+ *
+ * Stuff I won't support at first, these do not fit the model, and no interface drivers uses them.
+ * isochronous interrupt
+ * Periodic Frame List schedule is for all periodic isochronous and interrupt transfers.
+ * Thus, we do not use PERIODICLISTBASE or FRINDEX.
+ * This also means we don't have to directly deal with any transaction translators,
+ * built-in or otherwise.
+ *
+ */
+
+
+
 // TO-DO: TX/RX packets.
 
 #ifndef UHS_KINETIS_EHCI_H
@@ -60,6 +79,7 @@ typedef struct _uhs_kehci_qtd {
         uint32_t bufferPointers[4]; /* QTD specification filed, transfer buffer fields */
 } uhs_kehci_qtd_t;
 
+#if defined(UHS_FUTURE)
 typedef struct _uhs_kehci_itd {
         uint32_t nextLinkPointer; /* ITD specification filed, the next linker pointer */
         uint32_t transactions[8]; /* ITD specification filed, transactions information */
@@ -83,8 +103,6 @@ typedef struct _uhs_kehci_sitd {
                                  index. 0xFF means invalid. */
         uint8_t reserved; /* Reserved fields for 32 bytes align */
 } uhs_kehci_sitd_t;
-
-#if 0
 
 /*
  *
@@ -112,15 +130,17 @@ typedef struct _usb_host_ehci_iso {
 #endif
 
 typedef struct _Qs {
-        uhs_kehci_qh_t __attribute__((aligned(64))) qh[UHS_KEHCI_MAX_QH];
-        uhs_kehci_qtd_t __attribute__((aligned(32))) qtd[UHS_KEHCI_MAX_QTD];
-        uhs_kehci_itd_t __attribute__((aligned(32))) itd[UHS_KEHCI_MAX_ITD];
-        uhs_kehci_sitd_t __attribute__((aligned(32))) sitd[UHS_KEHCI_MAX_SITD];
-
+        uhs_kehci_qh_t qh[UHS_KEHCI_MAX_QH] __attribute__((aligned(64))) ;
+        uhs_kehci_qtd_t qtd[UHS_KEHCI_MAX_QTD] __attribute__((aligned(32)));
+#if defined(UHS_FUTURE)
+        uhs_kehci_itd_t itd[UHS_KEHCI_MAX_ITD] __attribute__((aligned(32)));
+        uhs_kehci_sitd_t sitd[UHS_KEHCI_MAX_SITD] __attribute__((aligned(32)));
+#endif
 } Qs_t;
 
 class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
-        volatile uint8_t frame[4 * UHS_KEHCI_MAX_FRAMES] __attribute__((aligned(4096)));
+        // Still needed???
+        volatile uint32_t frame[UHS_KEHCI_MAX_FRAMES] __attribute__((aligned(4096)));
 
         volatile Qs_t Q;
 

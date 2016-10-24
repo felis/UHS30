@@ -11,7 +11,6 @@
 
 #define UHS_KINETIS_EHCI_LOADED
 
-
 static UHS_KINETIS_EHCI *_UHS_KINETIS_EHCI_THIS_;
 
 static void UHS_NI call_ISR_kinetis_EHCI(void) {
@@ -51,10 +50,10 @@ void UHS_NI UHS_KINETIS_EHCI::poopOutStatus() {
                         break;
                 case 2: printf("480 Mbps HS ");
                         break;
-                default: printf("(undef) ");
+                default: printf("(undefined) ");
         }
         if(n & USBHS_PORTSC_HSP) {
-                printf("highspeed ");
+                printf("high-speed ");
         }
         if(n & USBHS_PORTSC_OCA) {
                 printf("overcurrent ");
@@ -69,6 +68,10 @@ void UHS_NI UHS_KINETIS_EHCI::poopOutStatus() {
 
         // print info about the EHCI status
         n = USBHS_USBSTS;
+        printf(",SUSP=%i", n & USBHS_USBSTS_HCH ? 1 : 0);
+        printf(",RECL=%i", n & USBHS_USBSTS_RCL ? 1 : 0);
+        printf(",PSRUN=%i", n & USBHS_USBSTS_PS ? 1 : 0);
+        printf(",ASRUN=%i", n & USBHS_USBSTS_AS ? 1 : 0);
         printf(",USBINT=%i", n & USBHS_USBSTS_UI ? 1 : 0);
         printf(",USBERRINT=%i", n & USBHS_USBSTS_UEI ? 1 : 0);
         printf(",PCHGINT=%i", n & USBHS_USBSTS_PCI ? 1 : 0);
@@ -77,10 +80,6 @@ void UHS_NI UHS_KINETIS_EHCI::poopOutStatus() {
         printf(",AAINT=%i", n & USBHS_USBSTS_AAI ? 1 : 0);
         printf(",RSTINT=%i", n & USBHS_USBSTS_URI ? 1 : 0);
         printf(",SOFINT=%i", n & USBHS_USBSTS_SRI ? 1 : 0);
-        printf(",SUSP=%i", n & USBHS_USBSTS_HCH ? 1 : 0);
-        printf(",RECL=%i", n & USBHS_USBSTS_RCL ? 1 : 0);
-        printf(",PSRUN=%i", n & USBHS_USBSTS_PS ? 1 : 0);
-        printf(",ASRUN=%i", n & USBHS_USBSTS_AS ? 1 : 0);
         printf(",NAKINT=%i", n & USBHS_USBSTS_NAKI ? 1 : 0);
         printf(",ASINT=%i", n & USBHS_USBSTS_UAI ? 1 : 0);
         printf(",PSINT=%i", n & USBHS_USBSTS_UPI ? 1 : 0);
@@ -91,6 +90,16 @@ void UHS_NI UHS_KINETIS_EHCI::poopOutStatus() {
 
 #endif
 }
+
+/*
+ * This will be part of packet dispatch.
+        do {
+                s = (USBHS_USBSTS & USBHS_USBSTS_AS) | (USBHS_USBCMD & USBHS_USBCMD_ASE);
+        } while((s == USBHS_USBSTS_AS) || (s == USBHS_USBCMD_ASE));
+        USBHS_USBCMD |= USBHS_USBCMD_ASE;
+        while (!(USBHS_USBSTS & USBHS_USBSTS_AS)); // spin
+ */
+
 
 void UHS_NI UHS_KINETIS_EHCI::busprobe(void) {
         uint8_t speed = 1;
@@ -113,9 +122,11 @@ void UHS_NI UHS_KINETIS_EHCI::busprobe(void) {
         printf("USB host speed now %1.1x\r\n", speed);
         usb_host_speed = speed;
         if(speed == 2) {
-                USBPHY_CTRL |= USBPHY_CTRL_ENHOSTDISCONDETECT;
+                UHS_KIO_SETBIT_ATOMIC(USBPHY_CTRL,USBPHY_CTRL_ENHOSTDISCONDETECT);
+                //USBPHY_CTRL |= USBPHY_CTRL_ENHOSTDISCONDETECT;
         } else {
-                USBPHY_CTRL &= ~USBPHY_CTRL_ENHOSTDISCONDETECT;
+                UHS_KIO_CLRBIT_ATOMIC(USBPHY_CTRL,USBPHY_CTRL_ENHOSTDISCONDETECT);
+                //USBPHY_CTRL &= ~USBPHY_CTRL_ENHOSTDISCONDETECT;
         }
 }
 
@@ -160,7 +171,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                 case UHS_USB_HOST_STATE_INITIALIZE: // initial state
                         //printf("ISRbottom, UHS_USB_HOST_STATE_INITIALIZE\r\n");
                         // if an attach happens we will detect it in the isr
-                        // update usb_task_state and check speed (so we replace busprobe and VBUS_changed funcs)
+                        // update usb_task_state and check speed (so we replace busprobe and VBUS_changed methods)
                         break;
                 case UHS_USB_HOST_STATE_DEBOUNCE:
                         //printf("ISRbottom, UHS_USB_HOST_STATE_DEBOUNCE\r\n");
@@ -179,7 +190,8 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                         doingreset = true;
                         usb_task_state = UHS_USB_HOST_STATE_RESET_NOT_COMPLETE;
                         //issue bus reset
-                        USBHS_PORTSC1 |= USBHS_PORTSC_PR;
+                        UHS_KIO_SETBIT_ATOMIC(USBHS_PORTSC1, USBHS_PORTSC_PR);
+                        //USBHS_PORTSC1 |= USBHS_PORTSC_PR;
                         interrupts();
                         //timer_countdown = 20;
                         break;
@@ -373,14 +385,17 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         _UHS_KINETIS_EHCI_THIS_ = this;
 #if defined(EHCI_TEST_DEV)
         printf("*Q = %p\r\n", &Q);
+        printf("*Q.qh = %p\r\n", (Q.qh));
         printf("*Q.qh[0] = %p\r\n", &(Q.qh[0]));
         printf("*Q.qh[1] = %p\r\n\n", &(Q.qh[1]));
         printf("*Q.qtd[0] = %p\r\n", &(Q.qtd[0]));
         printf("*Q.qtd[1] = %p\r\n\n", &(Q.qtd[1]));
+#if defined(UHS_FUTURE)
         printf("*Q.itd[0] = %p\r\n", &(Q.itd[0]));
         printf("*Q.itd[1] = %p\r\n\n", &(Q.itd[1]));
         printf("*Q.sitd[0] = %p\r\n", &(Q.sitd[0]));
         printf("*Q.sitd[1] = %p\r\n\n", &(Q.sitd[1]));
+#endif
 #endif
         // Zero entire Q structure.
         uint8_t *bz = (uint8_t *)(&Q);
@@ -394,7 +409,12 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         printf("\r\nInit QH %u queue heads...", UHS_KEHCI_MAX_QH);
 #endif
         for(unsigned int i = 0; i < UHS_KEHCI_MAX_QH; i++) {
-                Q.qh[i].horizontalLinkPointer = 2LU | (uint32_t)&(Q.qh[i + 1]);
+                Q.qh[i].horizontalLinkPointer = 1;
+                //2LU | (uint32_t)&(Q.qh[i + 1]);
+                Q.qh[i].currentQtdPointer = 1;
+                Q.qh[i].nextQtdPointer=1;
+                Q.qh[i].alternateNextQtdPointer=1;
+
         }
         Q.qh[UHS_KEHCI_MAX_QH - 1].horizontalLinkPointer = (uint32_t)3;
 
@@ -403,11 +423,16 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         printf("\r\nInit QTD %u queue transfer descriptors...", UHS_KEHCI_MAX_QTD);
 #endif
         for(unsigned int i = 0; i < UHS_KEHCI_MAX_QTD; i++) {
-                Q.qtd[i].nextQtdPointer = (uint32_t)&(Q.qtd[i + 1]);
+                Q.qtd[i].nextQtdPointer = 1;
+                // (uint32_t)&(Q.qtd[i + 1]);
+                Q.qtd[i].alternateNextQtdPointer=1;
+                //Q.qtd[i].bufferPointers;
+                //Q.qtd[i].transferResults;
         }
         Q.qtd[UHS_KEHCI_MAX_QTD - 1].nextQtdPointer = (uint32_t)NULL;
 
         // Init isochronous transfer descriptors
+#if defined(UHS_FUTURE)
 #if defined(EHCI_TEST_DEV)
         printf("\r\nInit ITD %u isochronous transfer descriptors...", UHS_KEHCI_MAX_ITD);
 #endif
@@ -424,12 +449,14 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
                 Q.sitd[i].nextLinkPointer = (uint32_t)&(Q.sitd[i + 1]);
         }
         Q.sitd[UHS_KEHCI_MAX_SITD - 1].nextLinkPointer = (uint32_t)NULL;
+#endif
+
+
 #if defined(EHCI_TEST_DEV)
         printf("\r\n");
 #endif
-        uint32_t *framePointer = (uint32_t *)(&frame[0]);
         for(int i = 0; i < UHS_KEHCI_MAX_FRAMES; i++) {
-                framePointer[i] = 1;
+                frame[i] = 1;
         }
 
 #ifdef HAS_KINETIS_MPU
@@ -437,7 +464,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
 #endif
         PORTE_PCR6 = PORT_PCR_MUX(1);
         GPIOE_PDDR |= (1 << 6);
-        // this possibly is for the actual vbus???
+        // Is this possibly is for the actual vbus???
         GPIOE_PSOR = (1 << 6); // turn on USB host power
 
         vbusPower(vbus_off);
@@ -502,22 +529,19 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
                 USBHS_USBCMD_FS2 | USBHS_USBCMD_FS(0); // periodic table is 64 pointers
 
         uint32_t s;
-        /*
+#if defined(UHS_FUTURE)
+        // periodic
         do {
                 s = (USBHS_USBSTS & USBHS_USBSTS_AS) | (USBHS_USBCMD & USBHS_USBCMD_ASE);
         } while((s == USBHS_USBSTS_AS) || (s == USBHS_USBCMD_ASE));
         USBHS_PERIODICLISTBASE = (uint32_t)frame;
         USBHS_USBCMD |= USBHS_USBCMD_PSE;
-         */
+#endif
+        // async list
+        USBHS_ASYNCLISTADDR = (uint32_t)(Q.qh);
 
-        /*
-        do {
-                s = (USBHS_USBSTS & USBHS_USBSTS_AS) | (USBHS_USBCMD & USBHS_USBCMD_ASE);
-        } while((s == USBHS_USBSTS_AS) || (s == USBHS_USBCMD_ASE));
-        USBHS_ASYNCLISTADDR = (uint32_t)Q.qh;
-        USBHS_USBCMD |= USBHS_USBCMD_ASE;
-         */
         USBHS_PORTSC1 |= USBHS_PORTSC_PP;
+
 #if defined(EHCI_TEST_DEV)
         poopOutStatus();
 #endif
