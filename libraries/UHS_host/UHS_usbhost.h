@@ -36,7 +36,6 @@ e-mail   :  support@circuitsathome.com
 #define UHS_HOST_ERROR_JERR      0x0D // J-state instead of response
 #define UHS_HOST_ERROR_BADRQ     0x0A // Packet error. Increase max packet.
 #define UHS_HOST_ERROR_TIMEOUT   0x0E // Device did not respond in time
-#define UHS_HOST_ERROR_NOT_SUPPORTED   0x0D //Request not supported
 
 // Addressing error codes
 #define ADDR_ERROR_INVALID_INDEX                        0xA0
@@ -188,12 +187,12 @@ public:
 
         virtual uint8_t hwlPowerUp(void) {
                  /* This is for machine specific support to enable/power up the USB HW to operate*/
-                return UHS_HOST_ERROR_NOT_SUPPORTED;
+                return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
         virtual uint8_t hwPowerDown(void) {
                 /* This is for machine specific support to disable/powerdown the USB Hw */
-                return UHS_HOST_ERROR_NOT_SUPPORTED;
+                return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
         virtual bool IsHub(uint8_t klass) {
