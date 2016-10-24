@@ -185,6 +185,16 @@ public:
                 return Init(INT16_MIN);
         };
 
+        virtual uint8_t hwlPowerUp(void) {
+                 /* This is for machine specific support to enable/power up the USB HW to operate*/
+                return UHS_HOST_ERROR_NOT_IMPLEMENTED;
+        };
+
+        virtual uint8_t hwPowerDown(void) {
+                /* This is for machine specific support to disable/powerdown the USB Hw */
+                return UHS_HOST_ERROR_NOT_IMPLEMENTED;
+        };
+
         virtual bool IsHub(uint8_t klass) {
                 return (klass == UHS_USB_CLASS_HUB);
         };
