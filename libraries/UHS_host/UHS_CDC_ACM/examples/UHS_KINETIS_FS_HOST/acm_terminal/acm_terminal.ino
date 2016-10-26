@@ -11,7 +11,8 @@
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_USB_HUB 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD 1
-
+//#define DEBUG_PRINTF_EXTRA_HUGE_ACM_HOST 1
+//#define UHS_DEBUG_USB_ADDRESS 1
 // Redirect debugging and printf
 #define USB_HOST_SERIAL Serial1
 
@@ -78,33 +79,35 @@ uint8_t MY_ACM::OnStart(void) {
         return 0;
 }
 
-// declare EVERYTHING here AFTER all classes are described.
-// TO-DO: use new instancing instead.
 
-UHS_KINETIS_FS_HOST KINETIS_Usb;
-UHS_USBHub hub_KINETIS1(&KINETIS_Usb);
-UHS_USBHub hub_KINETIS2(&KINETIS_Usb);
-MY_ACM Acm(&KINETIS_Usb);
+UHS_KINETIS_FS_HOST *KINETIS_Usb;
+UHS_USBHub *hub_KINETIS1;
+UHS_USBHub *hub_KINETIS2;
+MY_ACM *Acm;
 
 void setup() {
+        KINETIS_Usb = new UHS_KINETIS_FS_HOST();
+        hub_KINETIS1 = new UHS_USBHub(KINETIS_Usb);
+        hub_KINETIS2 = new UHS_USBHub(KINETIS_Usb);
+        Acm = new MY_ACM(KINETIS_Usb);
         while(!USB_HOST_SERIAL);
         USB_HOST_SERIAL.begin(115200);
 
         printf_P(PSTR("\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nStarting CDC-ACM test program...\r\n"));
-        while(KINETIS_Usb.Init(1000) != 0);
+        while(KINETIS_Usb->Init(1000) != 0);
         printf_P(PSTR("\r\n\r\nWaiting for Connection...\r\n"));
 }
 
 void loop() {
 
-        if(Acm.isReady()) {
+        if(Acm->isReady()) {
                 uint8_t rcode;
 
                 /* read the keyboard */
                 if(USB_HOST_SERIAL.available()) {
                         uint8_t data = USB_HOST_SERIAL.read();
                         /* send to client */
-                        rcode = Acm.Write(1, &data);
+                        rcode = Acm->Write(1, &data);
                         if(rcode) {
                                 printf_P(PSTR("\r\nError %i on write\r\n"), rcode);
                                 return;
@@ -119,7 +122,7 @@ void loop() {
                  */
                 uint8_t buf[64];
                 uint16_t rcvd = 64;
-                rcode = Acm.Read(&rcvd, buf);
+                rcode = Acm->Read(&rcvd, buf);
                 if(rcode && rcode != hrNAK) {
                         printf_P(PSTR("\r\nError %i on read\r\n"), rcode);
                         return;

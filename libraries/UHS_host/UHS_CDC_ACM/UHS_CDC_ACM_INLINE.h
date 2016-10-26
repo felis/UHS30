@@ -21,15 +21,6 @@ e-mail   :  support@circuitsathome.com
 #define UHS_CDC_ACM_LOADED
 
 
-#if DEBUG_PRINTF_EXTRA_HUGE
-#ifdef DEBUG_PRINTF_EXTRA_HUGE_ACM_HOST
-#define ACM_HOST_DEBUG(...) printf(__VA_ARGS__)
-#else
-#define ACM_HOST_DEBUG(...) VOID0
-#endif
-#else
-#define ACM_HOST_DEBUG(...) VOID0
-#endif
 
 UHS_NI UHS_CDC_ACM::UHS_CDC_ACM(UHS_USB_HOST_BASE *p) {
         pUsb = p;
@@ -287,7 +278,14 @@ uint8_t UHS_NI UHS_CDC_ACM::Read(uint16_t *bytes_rcvd, uint8_t * dataptr) {
                                 st_modem = dataptr[0];
                                 st_line = dataptr[1];
                                 *bytes_rcvd -=2;
-                                if(*bytes_rcvd) memmove(dataptr, (dataptr+2), *bytes_rcvd);
+                                if(*bytes_rcvd) {
+                                        ACM_HOST_DEBUG("UHS_CDC_ACM::Read FTDI moving %x bytes\r\n", *bytes_rcvd);
+                                        memmove(dataptr, (dataptr+2), *bytes_rcvd);
+                                }
+                        } else {
+                                // bug??
+                                ACM_HOST_DEBUG("UHS_CDC_ACM::Read FTDI < 2 bytes bug?: %x\r\n", *bytes_rcvd);
+                                *bytes_rcvd = 0;
                         }
                 }
         }

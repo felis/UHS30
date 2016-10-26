@@ -117,7 +117,7 @@ void UHS_USB_HOST_BASE::DeviceDefaults(uint8_t maxep, UHS_USBInterface *interfac
  */
 
 uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t address) {
-        uint8_t rcode;
+        uint8_t rcode = 0;
 
         if(parent == 0) {
                 // Send a bus reset on the root interface.
@@ -133,13 +133,19 @@ uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t add
         // Most devices will be happy without a retry.
         //
         uint8_t retries = 0;
-        do {
-                rcode = setAddr(0, address);
-                if(!rcode) break;
-                retries++;
-                sof_delay(10);
-        } while(retries < 200);
-        HOST_DUBUG("%i retries.\r\n", retries);
+        if(address) {
+                do {
+                        rcode = setAddr(0, address);
+                        if(!rcode) break;
+                        retries++;
+                        sof_delay(10);
+                } while(retries < 200);
+                HOST_DUBUG("%i retries.\r\n", retries);
+        } else {
+#if DEBUG_PRINTF_EXTRA_HUGE
+                printf("\r\ndoSoftReset called with address == 0!\r\n");
+#endif
+        }
         return rcode;
 }
 

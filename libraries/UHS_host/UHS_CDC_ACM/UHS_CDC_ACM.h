@@ -37,6 +37,16 @@ e-mail   :  support@circuitsathome.com
 #define UHS_USB_ACM_PROLIFIC 3
 #define TEST_ACM_PROLIFIC() (ei->vid == UHS_VID_PROLIFIC_TECHNOLOGY && (ei->pid == UHS_CDC_PROLIFIC_PID_1 || ei->pid == UHS_CDC_PROLIFIC_PID_2))
 
+#if DEBUG_PRINTF_EXTRA_HUGE
+#ifdef DEBUG_PRINTF_EXTRA_HUGE_ACM_HOST
+#define ACM_HOST_DEBUG(...) printf(__VA_ARGS__)
+#else
+#define ACM_HOST_DEBUG(...) VOID0
+#endif
+#else
+#define ACM_HOST_DEBUG(...) VOID0
+#endif
+
 /**
  * This structure is used to report the extended capabilities of the connected device.
  * It is also used to report the current status.
@@ -207,12 +217,11 @@ public:
                         else // 1.0
                                 if(baud_value == 0x4001) baud_value = 1; // 1.5
                 }
-                USBTRACE2("baud_value:", baud_value);
-                USBTRACE2("baud_index:", baud_index);
-                //printf("FTDI baud_value: %x\r\n", baud_value);
-                //printf("FTDI baud_index: %x\r\n", baud_index);
+                ACM_HOST_DEBUG("UHS_FTDI_SetBaudRate baud_value: %x\r\n", baud_value);
+                ACM_HOST_DEBUG("UHS_FTDI_SetBaudRate baud_index: %x\r\n", baud_index);
+                ACM_HOST_DEBUG("UHS_FTDI_SetBaudRate bAddress: %x\r\n", bAddress);
                 uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_VENDOR_OUT, FTDI_SIO_SET_BAUD_RATE, baud_value, baud_index, 0), 0, NULL);
-                //printf("FTDI_SetBaudRate rv %x\r\n", rv);
+                ACM_HOST_DEBUG("FTDI_SetBaudRate rv %x\r\n", rv);
                 if(rv) Release();
                 pUsb->EnablePoll();
                 return rv;
@@ -221,8 +230,9 @@ public:
         uint8_t UHS_FTDI_SetFlowControl(uint8_t protocol, uint8_t xon, uint8_t xoff) {
                 if(!bAddress) return hrDISCONNECTED;
                 pUsb->DisablePoll();
+                ACM_HOST_DEBUG("FTDI_SetFlowControl bAddress: %x\r\n", bAddress);
                 uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_SET_FLOW_CTRL, xon, xoff, protocol << 8, 0), 0, NULL);
-                //printf("FTDI_SetFlowControl rv %x\r\n", rv);
+                ACM_HOST_DEBUG("FTDI_SetFlowControl rv %x\r\n", rv);
                 if(rv) Release();
                 pUsb->EnablePoll();
                 return rv;
@@ -234,8 +244,9 @@ public:
                 if(!bAddress) return hrDISCONNECTED;
                 pUsb->DisablePoll();
                 uint16_t s = ((signal & 1) << 1) | ((signal & 2) >> 1);
+                ACM_HOST_DEBUG("FTDI_SetControlLineState bAddress: %x\r\n", bAddress);
                 uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_MODEM_CTRL, s, 0, 0, 0), 0, NULL);
-                //printf("FTDI_SetControlLineState rv %x\r\n", rv);
+                ACM_HOST_DEBUG("FTDI_SetControlLineState rv %x\r\n", rv);
                 if(rv) Release();
                 pUsb->EnablePoll();
                 return rv;
@@ -244,8 +255,11 @@ public:
         uint8_t UHS_FTDI_SetData(uint16_t databm) {
                 if(!bAddress) return hrDISCONNECTED;
                 pUsb->DisablePoll();
+                ACM_HOST_DEBUG("FTDI_SetData bAddress: %x\r\n", bAddress);
+                ACM_HOST_DEBUG("FTDI_SetData databm: %x %x\r\n", databm >> 8, databm & 0xff);
+
                 uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_SET_DATA, databm & 0xff, databm >> 8, 0, 0), 0, NULL);
-                //printf("FTDI_SetData rv %x\r\n", rv);
+                ACM_HOST_DEBUG("FTDI_SetData rv %x\r\n", rv);
                 if(rv) Release();
                 pUsb->EnablePoll();
                 return rv;
@@ -258,12 +272,13 @@ public:
                 pUsb->DisablePoll();
                 uint8_t rv;
                 rv = UHS_FTDI_SetBaudRate(dataptr->dwDTERate);
-                //printf("FTDI_SetLineCoding (baud rate) rv %x\r\n", rv);
+                ACM_HOST_DEBUG("FTDI_SetLineCoding bAddress: %x\r\n", bAddress);
+                ACM_HOST_DEBUG("FTDI_SetLineCoding (baud rate) rv %x\r\n", rv);
                 if(!rv) {
                         uint16_t s = ((dataptr->bCharFormat) << 11) | ((dataptr->bParityType) << 8) | dataptr->bDataBits;
                         rv = UHS_FTDI_SetData(s);
                 }
-                //printf("FTDI_SetLineCoding rv %x\r\n", rv);
+                ACM_HOST_DEBUG("FTDI_SetLineCoding rv %x\r\n", rv);
                 if(rv) Release();
                 pUsb->EnablePoll();
                 return rv;

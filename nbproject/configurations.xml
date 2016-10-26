@@ -4,20 +4,6 @@
     <df root="." name="0">
       <df name="libraries">
         <df name="RTClib">
-          <df name="examples">
-            <df name="datecalc">
-              <in>datecalc.ino</in>
-            </df>
-            <df name="ds1307Memory">
-              <in>ds1307Memory.ino</in>
-            </df>
-            <df name="ds1307SqwPin">
-              <in>ds1307SqwPin.ino</in>
-            </df>
-            <df name="RTC">
-              <in>RTC.ino</in>
-            </df>
-          </df>
           <in>RTClib.cpp</in>
           <in>asc_store.c</in>
           <in>asctime.c</in>
@@ -112,15 +98,6 @@
               <df name="USB_HOST_SHIELD">
                 <df name="acm_terminal">
                   <in>acm_terminal.ino</in>
-                </df>
-              </df>
-            </df>
-          </df>
-          <df name="UHS_HID">
-            <df name="examples">
-              <df name="USB_HOST_SHIELD">
-                <df name="UHS_HID">
-                  <in>UHS_HID.ino</in>
                 </df>
               </df>
             </df>
