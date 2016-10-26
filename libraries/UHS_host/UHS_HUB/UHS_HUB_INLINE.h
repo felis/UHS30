@@ -270,8 +270,8 @@ uint8_t UHS_NI UHS_USBHub::PortStatusChange(uint8_t port, UHS_HubEvent &evt) {
                                 UHS_SLEEP_MS(200);
 
                                 a.devAddress = bAddress;
-
-                                pUsb->Configuring(a.bmAddress, port, (evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED));
+                                HUB_DUBUG("USBHub configure %2.2x %2.2x %2.2x\r\n", a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED)==UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED?0:1));
+                                pUsb->Configuring(a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED)==UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED?0:1));
                                 bResetInitiated = false;
                         }
                         break;

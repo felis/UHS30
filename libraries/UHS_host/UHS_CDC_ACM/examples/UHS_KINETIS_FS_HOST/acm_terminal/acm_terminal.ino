@@ -9,6 +9,7 @@
 #define LOAD_UHS_PRINTF_HELPER
 //#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
+//#define DEBUG_PRINTF_EXTRA_HUGE_USB_HUB 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD 1
 
 // Redirect debugging and printf
@@ -35,10 +36,6 @@
 #endif
 
 #include <UHS_host.h>
-
-UHS_KINETIS_FS_HOST KINETIS_Usb;
-
-UHS_USBHub hub_KINETIS(&KINETIS_Usb);
 
 class MY_ACM : public UHS_CDC_ACM {
 public:
@@ -81,13 +78,19 @@ uint8_t MY_ACM::OnStart(void) {
         return 0;
 }
 
+// declare EVERYTHING here AFTER all classes are described.
+// TO-DO: use new instancing instead.
+
+UHS_KINETIS_FS_HOST KINETIS_Usb;
+UHS_USBHub hub_KINETIS1(&KINETIS_Usb);
+UHS_USBHub hub_KINETIS2(&KINETIS_Usb);
 MY_ACM Acm(&KINETIS_Usb);
 
 void setup() {
         while(!USB_HOST_SERIAL);
         USB_HOST_SERIAL.begin(115200);
 
-        printf_P(PSTR("\r\n\r\nStarting CDC-ACM test program...\r\n"));
+        printf_P(PSTR("\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nStarting CDC-ACM test program...\r\n"));
         while(KINETIS_Usb.Init(1000) != 0);
         printf_P(PSTR("\r\n\r\nWaiting for Connection...\r\n"));
 }

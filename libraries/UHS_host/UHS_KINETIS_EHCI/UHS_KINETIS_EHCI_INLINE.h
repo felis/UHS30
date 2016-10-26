@@ -526,12 +526,12 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         USBHS_USBCMD = USBHS_USBCMD_ITC(0) | USBHS_USBCMD_RS | USBHS_USBCMD_ASP(3) |
                 USBHS_USBCMD_FS2 | USBHS_USBCMD_FS(0); // periodic table is 64 pointers
 
-        uint32_t s;
 #if defined(UHS_FUTURE)
+        uint32_t s;
         // periodic
         do {
-                s = (USBHS_USBSTS & USBHS_USBSTS_AS) | (USBHS_USBCMD & USBHS_USBCMD_ASE);
-        } while((s == USBHS_USBSTS_AS) || (s == USBHS_USBCMD_ASE));
+                s = (USBHS_USBSTS & USBHS_USBSTS_PS) | (USBHS_USBCMD & USBHS_USBCMD_PSE);
+        } while((s == USBHS_USBSTS_PS) || (s == USBHS_USBCMD_PSE));
         USBHS_PERIODICLISTBASE = (uint32_t)frame;
         USBHS_USBCMD |= USBHS_USBCMD_PSE;
 #endif
