@@ -459,6 +459,11 @@
             tool="1"
             flavor2="4">
       </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/UHS_KINETIS_FS_HOST/acm_terminal/acm_terminal.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
       <item path="libraries/UHS_host/UHS_KINETIS_EHCI/examples/KINETIS_EHCI_TEST/KINETIS_EHCI_TEST.ino"
             ex="false"
             tool="1"

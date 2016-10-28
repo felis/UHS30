@@ -63,7 +63,7 @@ uint8_t MY_ACM::OnStart(void) {
         }
 
         UHS_CDC_LINE_CODING lc;
-        lc.dwDTERate = 9600;
+        lc.dwDTERate = 115200;
         lc.bCharFormat = 0;
         lc.bParityType = 0;
         lc.bDataBits = 8;
@@ -86,11 +86,32 @@ UHS_USBHub *hub_KINETIS2;
 MY_ACM *Acm;
 
 void setup() {
+        // This is so you can be ensured the dev board has power,
+        // since teensy lacks a power indicator LED.
+        // It also flashes at each stage.
+        // If the code wedges at any point, you'll see the LED stuck on.
+        pinMode(LED_BUILTIN, OUTPUT);
+        digitalWriteFast(LED_BUILTIN, HIGH);
+        delay(250);
+        digitalWriteFast(LED_BUILTIN, LOW);
+        delay(250);
+        digitalWriteFast(LED_BUILTIN, HIGH);
+        delay(250);
         KINETIS_Usb = new UHS_KINETIS_FS_HOST();
         hub_KINETIS1 = new UHS_USBHub(KINETIS_Usb);
+        digitalWriteFast(LED_BUILTIN, LOW);
+        delay(250);
+        digitalWriteFast(LED_BUILTIN, HIGH);
+        delay(250);
         hub_KINETIS2 = new UHS_USBHub(KINETIS_Usb);
         Acm = new MY_ACM(KINETIS_Usb);
+        digitalWriteFast(LED_BUILTIN, LOW);
+        delay(250);
+        digitalWriteFast(LED_BUILTIN, HIGH);
+        delay(250);
         while(!USB_HOST_SERIAL);
+        digitalWriteFast(LED_BUILTIN, LOW);
+        delay(250);
         USB_HOST_SERIAL.begin(115200);
 
         printf_P(PSTR("\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nStarting CDC-ACM test program...\r\n"));
@@ -105,6 +126,7 @@ void loop() {
 
                 /* read the keyboard */
                 if(USB_HOST_SERIAL.available()) {
+                        digitalWriteFast(LED_BUILTIN, HIGH);
                         uint8_t data = USB_HOST_SERIAL.read();
                         /* send to client */
                         rcode = Acm->Write(1, &data);
@@ -112,6 +134,7 @@ void loop() {
                                 printf_P(PSTR("\r\nError %i on write\r\n"), rcode);
                                 return;
                         }
+                        digitalWriteFast(LED_BUILTIN, LOW);
                 }
 
 
@@ -129,12 +152,13 @@ void loop() {
                 }
 
                 if(rcvd) {
+                        digitalWriteFast(LED_BUILTIN, HIGH);
                         // More than zero bytes received, display the text.
                         for(uint16_t i = 0; i < rcvd; i++) {
                                 putc((char)buf[i], stdout);
-                                //printf_P(PSTR("%c"),(char)buf[i]);
                         }
                         fflush(stdout);
+                        digitalWriteFast(LED_BUILTIN, LOW);
                 }
         }
 }
