@@ -54,7 +54,7 @@ void MY_ACM::OnRelease(void) {
 
 uint8_t MY_ACM::OnStart(void) {
         uint8_t rcode;
-        // Set DTR = 1 RTS=1
+        // Set DTR = 1 RTS = 1
         rcode = SetControlLineState(3);
 
         if(rcode) {

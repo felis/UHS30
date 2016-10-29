@@ -217,7 +217,6 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
         //const uint8_t biggest = max(max(max(sizeof (USB_DEVICE_DESCRIPTOR), sizeof (USB_CONFIGURATION_DESCRIPTOR)), sizeof (USB_INTERFACE_DESCRIPTOR)), sizeof (USB_ENDPOINT_DESCRIPTOR));
         const uint8_t biggest = 18;
         uint8_t buf[biggest];
-
         USB_DEVICE_DESCRIPTOR *udd = reinterpret_cast<USB_DEVICE_DESCRIPTOR *>(buf);
         USB_CONFIGURATION_DESCRIPTOR *ucd = reinterpret_cast<USB_CONFIGURATION_DESCRIPTOR *>(buf);
 
@@ -250,7 +249,12 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
         p->epinfo[0].maxPktSize = 8; // speed ? 8 : 16; if we get more than 8, this is fine.
         HOST_DUBUG("\r\n\r\nConfiguring...\r\n");
 again:
+#if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
+        // Emulate Windows bug part 1, thanks M$
+        rcode = (ctrlReq(addr, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, 0x00, USB_DESCRIPTOR_DEVICE, 0x0000, 64), nbytes, dataptr));
+#else
         rcode = getDevDescr(0, biggest, (uint8_t*)buf);
+#endif
         if(rcode) {
                 if(rcode == UHS_HOST_ERROR_JERR && retries < 4) {
                         //
@@ -278,6 +282,21 @@ again:
         }
 
         HOST_DUBUG("retries: %i\r\n", retries);
+#if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
+        // Emulate Windows bug part 2, thanks M$
+        // Give this device a temporary address.
+        // The real address is set below.
+        // The {} wrapper causes the ta variable to be discarded at the }.
+        {
+                uint8_t ta = addrPool.AllocAddress(parent, false, port);
+                if(!ta) return UHS_HOST_ERROR_ADDRESS_POOL_FULL;
+                rcode = doSoftReset(parent, port, ta);
+                if(!rcode) rcode = getDevDescr(ta, biggest, (uint8_t*)buf);
+                addrPool.FreeAddress(ta);
+                if(rcode) return rcode;
+        }
+#endif
+
         ei.vid = udd->idVendor;
         ei.pid = udd->idProduct;
         ei.bcdDevice = udd->bcdDevice;
@@ -449,7 +468,7 @@ again:
                                                 rcode = devConfig[devConfigIndex]->Finalize();
                                                 rcode = devConfig[devConfigIndex]->Start();
                                                 if(!rcode) {
-                                                        HOST_DUBUG("Total endpoints = (%i)%i\r\n", p->epcount,devConfig[devConfigIndex]->bNumEP);
+                                                        HOST_DUBUG("Total endpoints = (%i)%i\r\n", p->epcount, devConfig[devConfigIndex]->bNumEP);
                                                 } else {
                                                         break;
                                                 }
@@ -464,7 +483,7 @@ again:
 #if defined(UHS_HID_LOADED)
                         // Now do HID
 #endif
-                        }
+                }
         } else {
                 addrPool.FreeAddress(ei.address);
         }
@@ -544,7 +563,7 @@ uint8_t UHS_USB_HOST_BASE::getStrDescr(uint8_t addr, uint16_t ns, uint8_t index,
  * @return status of the request, zero is success.
  */
 uint8_t UHS_USB_HOST_BASE::setAddr(uint8_t oldaddr, uint8_t newaddr) {
-        uint8_t rcode = ctrlReq(oldaddr,  mkSETUP_PKT8(UHS_bmREQ_SET, USB_REQUEST_SET_ADDRESS, newaddr, 0x00, 0x0000, 0x0000), 0x0000, NULL);
+        uint8_t rcode = ctrlReq(oldaddr, mkSETUP_PKT8(UHS_bmREQ_SET, USB_REQUEST_SET_ADDRESS, newaddr, 0x00, 0x0000, 0x0000), 0x0000, NULL);
         sof_delay(300); // Older spec says you should wait at least 200ms
         return rcode;
 }
@@ -565,6 +584,7 @@ uint8_t UHS_USB_HOST_BASE::setConf(uint8_t addr, uint8_t conf_value) {
 }
 
 /* rcode 0 if no errors. rcode 01-0f is relayed from HRSL                       */
+
 /**
  * Writes data to an interface pipe
  *
@@ -872,10 +892,10 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbyt
                 //                Serial.println("No pep");
                 return UHS_HOST_ERROR_NULL_EPINFO;
         }
-        uint8_t rt = (uint8_t)(Request &0xFFU);
+        uint8_t rt = (uint8_t)(Request & 0xFFU);
 
         //        Serial.println("Opened");
-        uint16_t left = (uint16_t)(Request >>48) /*total*/;
+        uint16_t left = (uint16_t)(Request >> 48) /*total*/;
         if(dataptr != NULL) //data stage, if present
         {
                 if((rt & 0x80) == 0x80) //IN transfer
