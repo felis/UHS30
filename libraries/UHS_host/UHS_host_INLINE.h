@@ -246,7 +246,11 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
         }
 
         p->speed = speed;
-        p->epinfo[0].maxPktSize = 8; // speed ? 8 : 16; if we get more than 8, this is fine.
+#if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
+        p->epinfo[0].maxPktSize = 64; // Windows bug is expected.
+#else
+        p->epinfo[0].maxPktSize = 8; // USB Spec, start small, work your way up.
+#endif
         HOST_DUBUG("\r\n\r\nConfiguring...\r\n");
 again:
 #if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
@@ -268,10 +272,13 @@ again:
                         sof_delay(100);
                         retries++;
                         goto again;
-                } else if(rcode == hrDMA && retries < 4) {
+                } else if(rcode == UHS_HOST_ERROR_DMA && retries < 4) {
+#if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
+                        if(p->epinfo[0].maxPktSize > 8) p->epinfo[0].maxPktSize = p->epinfo[0].maxPktSize >> 1;
+#else
                         if(p->epinfo[0].maxPktSize < 32) p->epinfo[0].maxPktSize = p->epinfo[0].maxPktSize << 1;
-
-                        HOST_DUBUG("Configuring error: hrDMA. Retry with maxPktSize: %i\r\n", p->epinfo[0].maxPktSize);
+#endif
+                        HOST_DUBUG("Configuring error: UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", p->epinfo[0].maxPktSize);
                         doSoftReset(parent, port, 0);
                         retries++;
                         sof_delay(200);
@@ -287,14 +294,14 @@ again:
         // Give this device a temporary address.
         // The real address is set below.
         // The {} wrapper causes the ta variable to be discarded at the }.
-        {
-                uint8_t ta = addrPool.AllocAddress(parent, false, port);
-                if(!ta) return UHS_HOST_ERROR_ADDRESS_POOL_FULL;
-                rcode = doSoftReset(parent, port, ta);
-                if(!rcode) rcode = getDevDescr(ta, biggest, (uint8_t*)buf);
-                addrPool.FreeAddress(ta);
-                if(rcode) return rcode;
-        }
+        //{
+        //        uint8_t ta = addrPool.AllocAddress(parent, false, port);
+        //        if(!ta) return UHS_HOST_ERROR_ADDRESS_POOL_FULL;
+        //        rcode = doSoftReset(parent, port, ta);
+        //        if(!rcode) rcode = getDevDescr(ta, biggest, (uint8_t*)buf);
+        //        addrPool.FreeAddress(ta);
+        //        if(rcode) return rcode;
+        //}
 #endif
 
         ei.vid = udd->idVendor;
@@ -315,9 +322,12 @@ again:
         }
 
         p = addrPool.GetUsbDevicePtr(ei.address);
+// set to 1 if you suspect address table corruption.
+#if 0
         if(!p) {
                 return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
         }
+#endif
 
         p->speed = speed;
 

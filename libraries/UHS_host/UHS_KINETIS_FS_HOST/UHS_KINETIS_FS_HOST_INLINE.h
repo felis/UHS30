@@ -196,7 +196,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
                         x = Configuring(0, 1, usb_host_speed);
                         if(usb_task_state == UHS_USB_HOST_STATE_CHECK) {
                                 if(x) {
-                                        if(x == hrJERR) {
+                                        if(x == UHS_HOST_ERROR_JERR) {
                                                 usb_task_state = UHS_USB_HOST_STATE_IDLE;
                                         } else if(x != UHS_HOST_ERROR_DEVICE_INIT_INCOMPLETE) {
                                                 usb_error = x;
@@ -242,7 +242,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
  * SPECIAL NOTES:
  *      1: After an error, set isrError to zero.
  *
- *      2: If DMA bandwidth is not enough, hrNAK is returned.
+ *      2: If DMA bandwidth is not enough, UHS_HOST_ERROR_NAK is returned.
  *              Drivers that have NAK processing know to retry.
  */
 
@@ -263,7 +263,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
                 uint8_t err = USB0_ERRSTAT;
                 USB0_ERRSTAT = err; // clear errors that we don't care about
                 newError = true;
-                isrError = hrSTALL;
+                isrError = UHS_HOST_ERROR_STALL;
                 HW_CLEAR |= USB_ISTAT_STALL;
         } else {
                 if((status & USB_ISTAT_ERROR)) { // error
@@ -273,17 +273,17 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
                         //printf("\aISR: error: %2.2x \r\n", err);
                         isrError = 0;
                         if(err & USB_ERRSTAT_PIDERR) {
-                                isrError = hrWRONGPID; // Received wrong Packet ID
+                                isrError = UHS_HOST_ERROR_WRONGPID; // Received wrong Packet ID
                         } else if(err & USB_ERRSTAT_CRC16) {
-                                isrError = hrCRCERR; // USB CRC was incorrect
+                                isrError = UHS_HOST_ERROR_CRC; // USB CRC was incorrect
                         } else if(err & (USB_ERRSTAT_DFN8 | USB_ERRSTAT_BTSERR)) {
-                                isrError = hrBABBLE; // Line noise/unexpected data
+                                isrError = UHS_HOST_ERROR_BABBLE; // Line noise/unexpected data
                         } else if(err & USB_ERRSTAT_DMAERR) {
-                                isrError = hrDMA; // Data was truncated. Device sent too much.
+                                isrError = UHS_HOST_ERROR_DMA; // Data was truncated. Device sent too much.
                         } else if(err & USB_ERRSTAT_BTOERR) {
                                 // Device didn't respond in time. It is most likely unplugged.
                                 USBTRACE("\r\n\r\n*** ISR sees error 0x10, Device unplugged? ***\r\n\r\n");
-                                isrError = UHS_HOST_ERROR_UNPLUGGED; //hrNAK;
+                                isrError = UHS_HOST_ERROR_UNPLUGGED; //UHS_HOST_ERROR_NAK;
 #if 0
                                 // Ignore these, for now.
                         } else if(err & USB_ERRSTAT_CRC5EOF) {
@@ -307,27 +307,27 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
                 // update to signal non-isr code what happened
                 switch(pid & 0x0f) {
                         case 0x00:
-                                isrError = hrTIMEOUT;
+                                isrError = UHS_HOST_ERROR_TIMEOUT;
                                 break;
                         case 0x0a:
-                                isrError = hrNAK;
+                                isrError = UHS_HOST_ERROR_NAK;
                                 break;
                         case 0x0e:
-                                isrError = hrSTALL;
+                                isrError = UHS_HOST_ERROR_STALL;
                                 break;
                         case 0x0f:
-                                if(isrError != hrDMA) {
+                                if(isrError != UHS_HOST_ERROR_DMA) {
 #if defined(LOAD_UHS_PRINTF_HELPER)
                                         printf("\r\nMEMORY LATENCY PROBLEM.\r\n");
 #endif
-                                        isrError = hrNAK; // Error was due to memory latency.
+                                        isrError = UHS_HOST_ERROR_NAK; // Error was due to memory latency.
                                 }
                                 break;
-                                // What do we do with these??
+                                // Completed good packets
                         case 0x03:
                         case 0x0b:
                         case 0x02:
-                                // isrError = hrSUCCESS;
+                                // isrError = UHS_HOST_ERROR_NONE;
                                 break;
                 }
 
@@ -506,7 +506,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
         //HOST_DUBUG("dispatchPkt: token %x, ep: %i, nak_limit: %i \r\n", token, ep, nak_limit);
         //printf("dispatchPkt: token %x, ep: %i, nak_limit: %i \r\n", token, ep, nak_limit);
 
-        rcode = hrTIMEOUT;
+        rcode = UHS_HOST_ERROR_TIMEOUT;
         newError = false;
         newToken = false;
         isrError = 0;
@@ -544,7 +544,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
                                 } // error
                                 if(newToken) { // token completed
 
-                                        if(rcode == hrTIMEOUT) rcode = hrSUCCESS;
+                                        if(rcode == UHS_HOST_ERROR_TIMEOUT) rcode = UHS_HOST_ERROR_NONE;
                                         newToken = false;
                                 } // token completed
                                 //USBTRACE2("isrPid: ", isrPid);
@@ -563,7 +563,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
                 rcode = UHS_HOST_ERROR_UNPLUGGED;
         }
         //if(rcode) printf("Final rcode: 0x%2.2x, isrPid: 0x%8.8x\r\n", rcode, isrPid);
-        //        if(rcode == hrTIMEOUT) {
+        //        if(rcode == UHS_HOST_ERROR_TIMEOUT) {
         //                retry_count++;
         //                if(retry_count == UHS_HOST_TRANSFER_RETRY_MAXIMUM) break;
         //        } else break;
@@ -590,7 +590,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
  */
 uint8_t UHS_NI UHS_KINETIS_FS_HOST::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t * data) {
 
-        uint8_t rcode = hrSUCCESS;
+        uint8_t rcode = UHS_HOST_ERROR_NONE;
         uint16_t bytes_tosend;
         uint16_t bytes_left = nbytes;
 
@@ -675,7 +675,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_lim
                         // DMA error: we got more data than expected.
                         // This means that the device's mackpaxketsize is actually larger than maxpktsize
                         // copy the packet that we received and return so that Configuring can deal with it.
-                        //if(rcode == hrDMA) {
+                        //if(rcode == UHS_HOST_ERROR_DMA) {
                         //        memcpy(p_buffer, data_in_buf, pktsize); // copy packet into buffer
                         //        *nbytesptr += pktsize; // add to the number of bytes read
                         //        break;

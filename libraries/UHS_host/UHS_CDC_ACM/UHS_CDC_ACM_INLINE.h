@@ -266,7 +266,7 @@ void UHS_NI UHS_CDC_ACM::PrintEndpointDescriptor(const USB_ENDPOINT_DESCRIPTOR *
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::Read(uint16_t *bytes_rcvd, uint8_t * dataptr) {
-        if(!bAddress) return hrDISCONNECTED;
+        if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         pUsb->DisablePoll();
         uint8_t rv = pUsb->inTransfer(bAddress, epInfo[epDataInIndex].epAddr, bytes_rcvd, dataptr);
 #if defined(LOAD_UHS_CDC_ACM_FTDI)
@@ -284,63 +284,65 @@ uint8_t UHS_NI UHS_CDC_ACM::Read(uint16_t *bytes_rcvd, uint8_t * dataptr) {
                                 }
                         } else {
                                 // bug??
-                                ACM_HOST_DEBUG("UHS_CDC_ACM::Read FTDI < 2 bytes bug?: %x\r\n", *bytes_rcvd);
+                                ACM_HOST_DEBUG("UHS_CDC_ACM::Read FTDI < 2 bytes, bug?: %x\r\n", *bytes_rcvd);
                                 *bytes_rcvd = 0;
                         }
                 }
         }
 #endif
-        if(rv && rv != hrNAK) Release();
+        if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::Write(uint16_t nbytes, uint8_t * dataptr) {
-        if(!bAddress) return hrDISCONNECTED;
+        if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         pUsb->DisablePoll();
         uint8_t rv = pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, nbytes, dataptr);
-        if(rv && rv != hrNAK) Release();
+        if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::SetCommFeature(uint16_t fid, uint8_t nbytes, uint8_t * dataptr) {
         uint8_t rv = 0;
-        if(!bAddress) return hrDISCONNECTED;
+        if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_FTDI)
         if(adaptor == UHS_USB_ACM_FTDI) {
+                // TO-DO: Not sure what to do here yet...
         } else
 
 #endif
         {
                 rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SET_COMM_FEATURE, fid, bControlIface, nbytes), nbytes, dataptr);
         }
-        if(rv && rv != hrNAK) Release();
+        if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::GetCommFeature(uint16_t fid, uint8_t nbytes, uint8_t * dataptr) {
         uint8_t rv = 0;
-        if(!bAddress) return hrDISCONNECTED;
+        if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_FTDI)
         if(adaptor == UHS_USB_ACM_FTDI) {
+                // TO-DO: Not sure what to do here yet...
         } else
 
 #endif
         {
                 rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCIN, UHS_CDC_GET_COMM_FEATURE, fid, bControlIface, nbytes), nbytes, dataptr);
         }
-        if(rv && rv != hrNAK) Release();
+        if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::ClearCommFeature(uint16_t fid) {
         uint8_t rv = 0;
-        if(!bAddress) return hrDISCONNECTED;
+        if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_FTDI)
         if(adaptor == UHS_USB_ACM_FTDI) {
@@ -349,14 +351,14 @@ uint8_t UHS_NI UHS_CDC_ACM::ClearCommFeature(uint16_t fid) {
         {
                 rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_CLEAR_COMM_FEATURE, fid, bControlIface, 0), 0, NULL);
         }
-        if(rv && rv != hrNAK) Release();
+        if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::SetLineCoding(const UHS_CDC_LINE_CODING * dataptr) {
         uint8_t rv;
-        if(!bAddress) return hrDISCONNECTED;
+        if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_FTDI)
         if(adaptor == UHS_USB_ACM_FTDI) {
@@ -366,14 +368,14 @@ uint8_t UHS_NI UHS_CDC_ACM::SetLineCoding(const UHS_CDC_LINE_CODING * dataptr) {
         {
                 rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SET_LINE_CODING, 0x0000U, bControlIface, sizeof (UHS_CDC_LINE_CODING)), sizeof (UHS_CDC_LINE_CODING), (uint8_t*)dataptr);
         }
-        if(rv && rv != hrNAK) Release();
+        if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::GetLineCoding(UHS_CDC_LINE_CODING * dataptr) {
         uint8_t rv = 0;
-        if(!bAddress) return hrDISCONNECTED;
+        if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_FTDI)
         if(adaptor == UHS_USB_ACM_FTDI) {
@@ -383,14 +385,14 @@ uint8_t UHS_NI UHS_CDC_ACM::GetLineCoding(UHS_CDC_LINE_CODING * dataptr) {
         {
                 rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCIN, UHS_CDC_GET_LINE_CODING, 0x0000U, bControlIface, sizeof (UHS_CDC_LINE_CODING)), sizeof (UHS_CDC_LINE_CODING), (uint8_t*)dataptr);
         }
-        if(rv && rv != hrNAK) Release();
+        if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::SetControlLineState(uint8_t state) {
         uint8_t rv;
-        if(!bAddress) return hrDISCONNECTED;
+        if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_FTDI)
         if(adaptor == UHS_USB_ACM_FTDI) {
@@ -400,24 +402,24 @@ uint8_t UHS_NI UHS_CDC_ACM::SetControlLineState(uint8_t state) {
         {
                 rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_CDCOUT, UHS_CDC_SET_CONTROL_LINE_STATE, state, 0, bControlIface, 0), 0, NULL);
         }
-        if(rv && rv != hrNAK) Release();
+        if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
 }
 
 uint8_t UHS_NI UHS_CDC_ACM::SendBreak(uint16_t duration) {
         uint8_t rv = 0;
-        if(!bAddress) return hrDISCONNECTED;
+        if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         pUsb->DisablePoll();
 #if defined(LOAD_UHS_CDC_ACM_FTDI)
         if(adaptor == UHS_USB_ACM_FTDI) {
-                // not implemented on chip?
+                // TO-DO
         } else
 #endif
         {
                 rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SEND_BREAK, duration, bControlIface, 0), 0, NULL);
         }
-        if(rv && rv != hrNAK) Release();
+        if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
 }

@@ -60,7 +60,7 @@ e-mail   :  support@circuitsathome.com
 #define               UHS_BULK_CMD_DIR_IN 0x80U
 
 /* Bulk error codes */
-#define              UHS_BULK_ERR_SUCCESS 0x00U
+#define              UHS_BULK_ERR_SUCCESS UHS_HOST_ERROR_NONE
 #define          UHS_BULK_ERR_PHASE_ERROR 0x22U
 #define       UHS_BULK_ERR_UNIT_NOT_READY 0x23U
 #define            UHS_BULK_ERR_UNIT_BUSY 0x24U
@@ -70,13 +70,13 @@ e-mail   :  support@circuitsathome.com
 #define             UHS_BULK_ERR_NO_MEDIA 0x28U
 #define              UHS_BULK_ERR_BAD_LBA 0x29U
 #define        UHS_BULK_ERR_MEDIA_CHANGED 0x2AU
-#define  UHS_BULK_ERR_DEVICE_DISCONNECTED hrDISCONNECTED
-#define    UHS_BULK_ERR_UNABLE_TO_RECOVER 0x12U // Reset recovery error
-#define          UHS_BULK_ERR_INVALID_LUN 0x13U
-#define          UHS_BULK_ERR_WRITE_STALL 0x14U
-#define            UHS_BULK_ERR_READ_NAKS 0x15U
-#define           UHS_BULK_ERR_WRITE_NAKS 0x16U
-#define      UHS_BULK_ERR_WRITE_PROTECTED 0x17U
+#define  UHS_BULK_ERR_DEVICE_DISCONNECTED UHS_HOST_ERROR_UNPLUGGED
+#define    UHS_BULK_ERR_UNABLE_TO_RECOVER 0x32U // Reset recovery error
+#define          UHS_BULK_ERR_INVALID_LUN 0x33U
+#define          UHS_BULK_ERR_WRITE_STALL 0x34U
+#define            UHS_BULK_ERR_READ_NAKS 0x35U
+#define           UHS_BULK_ERR_WRITE_NAKS 0x36U
+#define      UHS_BULK_ERR_WRITE_PROTECTED 0x37U
 #define      UHS_BULK_ERR_NOT_IMPLEMENTED 0xFDU
 #define   UHS_BULK_ERR_GENERAL_SCSI_ERROR 0xF0U
 #define    UHS_BULK_ERR_GENERAL_USB_ERROR 0xFFU

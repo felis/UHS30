@@ -445,7 +445,7 @@ uint8_t UHS_NI MAX3421E_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, ui
                 rcode = dispatchPkt(MAX3421E_tokIN, pep->epAddr, nak_limit); //IN packet to EP-'endpoint'. Function takes care of NAKS.
 #if 0
                 // This issue should be resolved now.
-                if(rcode == hrTOGERR) {
+                if(rcode == UHS_HOST_ERROR_TOGERR) {
                         //MAX_HOST_DEBUG("toggle wrong\r\n");
                         // yes, we flip it wrong here so that next time it is actually correct!
                         pep->bmRcvToggle = (regRd(rHRSL) & bmSNDTOGRD) ? 0 : 1;
@@ -507,7 +507,7 @@ uint8_t UHS_NI MAX3421E_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, ui
  * @return 0 on success
  */
 uint8_t UHS_NI MAX3421E_HOST::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data) {
-        uint8_t rcode = hrSUCCESS;
+        uint8_t rcode = UHS_HOST_ERROR_NONE;
         uint8_t retry_count;
         uint8_t *data_p = data; //local copy of the data pointer
         uint16_t bytes_tosend;
@@ -536,17 +536,17 @@ uint8_t UHS_NI MAX3421E_HOST::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, u
 
                 while(rcode && ((long)(millis() - timeout) < 0L)) {
                         switch(rcode) {
-                                case hrNAK:
+                                case UHS_HOST_ERROR_NAK:
                                         nak_count++;
                                         if(nak_limit && (nak_count == nak_limit))
                                                 goto breakout;
                                         break;
-                                case hrTIMEOUT:
+                                case UHS_HOST_ERROR_TIMEOUT:
                                         retry_count++;
                                         if(retry_count == UHS_HOST_TRANSFER_RETRY_MAXIMUM)
                                                 goto breakout;
                                         break;
-                                case hrTOGERR:
+                                case UHS_HOST_ERROR_TOGERR:
                                         // yes, we flip it wrong here so that next time it is actually correct!
                                         pep->bmSndToggle = (regRd(rHRSL) & bmSNDTOGRD) ? 0 : 1;
                                         regWr(rHCTL, (pep->bmSndToggle) ? bmSNDTOG1 : bmSNDTOG0); //set toggle value
@@ -590,7 +590,7 @@ breakout:
 uint8_t UHS_NI MAX3421E_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit) {
         unsigned long timeout = millis() + UHS_HOST_TRANSFER_MAX_MS;
         uint8_t tmpdata;
-        uint8_t rcode = hrSUCCESS;
+        uint8_t rcode = UHS_HOST_ERROR_NONE;
         uint8_t retry_count = 0;
         uint16_t nak_count = 0;
 
@@ -611,13 +611,13 @@ uint8_t UHS_NI MAX3421E_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint16_t na
                 rcode = (regRd(rHRSL) & 0x0f); //analyze transfer result
 
                 switch(rcode) {
-                        case hrNAK:
+                        case UHS_HOST_ERROR_NAK:
                                 nak_count++;
                                 if(nak_limit && (nak_count == nak_limit))
                                         return (rcode);
                                 delayMicroseconds(200);
                                 break;
-                        case hrTIMEOUT:
+                        case UHS_HOST_ERROR_TIMEOUT:
                                 retry_count++;
                                 if(retry_count == UHS_HOST_TRANSFER_RETRY_MAXIMUM)
                                         return (rcode);
@@ -672,7 +672,7 @@ uint8_t UHS_NI MAX3421E_HOST::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint1
 again:
                 *read = nbytes;
                 uint8_t rcode = InTransfer(pep, nak_limit, read, dataptr);
-                if(rcode == hrTOGERR) {
+                if(rcode == UHS_HOST_ERROR_TOGERR) {
                         // yes, we flip it wrong here so that next time it is actually correct!
                         pep->bmRcvToggle = (regRd(rHRSL) & bmSNDTOGRD) ? 0 : 1;
                         goto again;
@@ -700,7 +700,7 @@ uint8_t UHS_NI MAX3421E_HOST::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, u
                 while(left) {
                         uint16_t read = nbytes;
                         rcode = InTransfer(pep, 0, &read, dataptr);
-                        if(rcode == hrTOGERR) {
+                        if(rcode == UHS_HOST_ERROR_TOGERR) {
                                 // yes, we flip it wrong here so that next time it is actually correct!
                                 pep->bmRcvToggle = (regRd(rHRSL) & bmSNDTOGRD) ? 0 : 1;
                                 continue;
@@ -782,7 +782,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
                         if(usb_task_state == UHS_USB_HOST_STATE_CHECK) {
                                 if(x) {
                                         MAX_HOST_DEBUG("Error 0x%2.2x", x);
-                                        if(x == hrJERR) {
+                                        if(x == UHS_HOST_ERROR_JERR) {
                                                 usb_task_state = UHS_USB_HOST_STATE_IDLE;
                                         } else if(x != UHS_HOST_ERROR_DEVICE_INIT_INCOMPLETE) {
                                                 usb_error = x;

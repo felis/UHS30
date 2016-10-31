@@ -163,7 +163,7 @@ public:
 #if defined(LOAD_UHS_CDC_ACM_XR21B1411)
 
         uint8_t XR_read_register(uint16_t reg, uint16_t *val) {
-                if(!bAddress) return hrDISCONNECTED;
+                if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
                 pUsb->DisablePoll();
                 uint8_t rv = (pUsb->ctrlReq(bAddress, mkSETUP_PKT16(XR_READ_REQUEST_TYPE, 1, 0x0000U, reg, 2), 2, (uint8_t *)val));
                 if(rv) Release();
@@ -172,7 +172,7 @@ public:
         }
 
         uint8_t XR_write_register(uint16_t reg, uint16_t val) {
-                if(!bAddress) return hrDISCONNECTED;
+                if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
                 pUsb->DisablePoll();
                 uint8_t rv = (pUsb->ctrlReq(bAddress, mkSETUP_PKT16(XR_WRITE_REQUEST_TYPE, 0, val, reg, 0), 0, NULL));
                 if(rv) Release();
@@ -185,7 +185,7 @@ public:
         // FTDI bloat...
 
         uint8_t UHS_FTDI_SetBaudRate(uint32_t baud) {
-                if(!bAddress) return hrDISCONNECTED;
+                if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
                 pUsb->DisablePoll();
                 uint16_t baud_value, baud_index = 0;
                 uint32_t divisor3;
@@ -228,7 +228,7 @@ public:
         };
 
         uint8_t UHS_FTDI_SetFlowControl(uint8_t protocol, uint8_t xon, uint8_t xoff) {
-                if(!bAddress) return hrDISCONNECTED;
+                if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
                 pUsb->DisablePoll();
                 ACM_HOST_DEBUG("FTDI_SetFlowControl bAddress: %x\r\n", bAddress);
                 uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_SET_FLOW_CTRL, xon, xoff, protocol << 8, 0), 0, NULL);
@@ -241,7 +241,7 @@ public:
         uint8_t UHS_FTDI_SetControlLineState(uint8_t signal) {
                 // Normally RTS is bit 0), and DTR bit 1...
                 // Of course, FTDI flipped these.
-                if(!bAddress) return hrDISCONNECTED;
+                if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
                 pUsb->DisablePoll();
                 uint16_t s = ((signal & 1) << 1) | ((signal & 2) >> 1);
                 ACM_HOST_DEBUG("FTDI_SetControlLineState bAddress: %x\r\n", bAddress);
@@ -253,7 +253,7 @@ public:
         };
 
         uint8_t UHS_FTDI_SetData(uint16_t databm) {
-                if(!bAddress) return hrDISCONNECTED;
+                if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
                 pUsb->DisablePoll();
                 ACM_HOST_DEBUG("FTDI_SetData bAddress: %x\r\n", bAddress);
                 ACM_HOST_DEBUG("FTDI_SetData databm: %x %x\r\n", databm >> 8, databm & 0xff);
@@ -268,7 +268,7 @@ public:
         // More FTDI hoops we have to jump through...
 
         uint8_t UHS_FTDI_SetLineCoding(const UHS_CDC_LINE_CODING *dataptr) {
-                if(!bAddress) return hrDISCONNECTED;
+                if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
                 pUsb->DisablePoll();
                 uint8_t rv;
                 rv = UHS_FTDI_SetBaudRate(dataptr->dwDTERate);

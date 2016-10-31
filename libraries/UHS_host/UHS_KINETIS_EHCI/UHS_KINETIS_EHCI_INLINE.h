@@ -216,7 +216,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                         x = Configuring(0, 1, usb_host_speed);
                         if(usb_task_state == UHS_USB_HOST_STATE_CHECK) {
                                 if(x) {
-                                        if(x == hrJERR) {
+                                        if(x == UHS_HOST_ERROR_JERR) {
                                                 usb_task_state = UHS_USB_HOST_STATE_IDLE;
                                         } else if(x != UHS_HOST_ERROR_DEVICE_INIT_INCOMPLETE) {
                                                 usb_error = x;
@@ -265,7 +265,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
  * SPECIAL NOTES:
  *      1: After an error, set isrError to zero.
  *
- *      2: If DMA bandwidth is not enough, hrNAK is returned.
+ *      2: If DMA bandwidth is not enough, UHS_HOST_ERROR_NAK is returned.
  *              Drivers that have NAK processing know to retry.
  */
 

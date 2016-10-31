@@ -146,7 +146,7 @@ void loop() {
                 uint8_t buf[64];
                 uint16_t rcvd = 64;
                 rcode = Acm->Read(&rcvd, buf);
-                if(rcode && rcode != hrNAK) {
+                if(rcode && rcode != UHS_HOST_ERROR_NAK) {
                         printf_P(PSTR("\r\nError %i on read\r\n"), rcode);
                         return;
                 }

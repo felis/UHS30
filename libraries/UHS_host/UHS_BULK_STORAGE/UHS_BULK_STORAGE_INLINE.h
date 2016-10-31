@@ -924,7 +924,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::HandleUsbError(uint8_t error, uint8_t index) {
                         ErrorMessage<uint8_t > (PSTR("Index"), index);
                 }
                 switch(error) {
-                                // case hrWRONGPID:
+                                // case UHS_HOST_ERROR_WRONGPID:
                         case UHS_HOST_ERROR_NONE:
                                 return UHS_BULK_ERR_SUCCESS;
                         case UHS_HOST_ERROR_BUSY:
@@ -1020,7 +1020,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::Transaction(UHS_BULK_CommandBlockWrapper *pcbw,
                         }
                         if(!usberr) break;
                         if(tries) {
-                                if(usberr == hrSTALL) {
+                                if(usberr == UHS_HOST_ERROR_STALL) {
                                         ResetRecovery();
                                 } else {
                                         ClearEpHalt(epDataInIndex);
