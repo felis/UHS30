@@ -23,46 +23,6 @@ e-mail   :  support@circuitsathome.com
 #if !defined(_USBHOST_H_)
 #define _USBHOST_H_
 
-// Host SIE result codes.
-// The SIE result is stored in the low nybble.
-// Return these result codes from your host controller driver to match the error condition
-// ALL Non-zero values are errors that are not handled in the base class.
-// Values > 0x0F are driver or other internal error conditions.
-#define UHS_HOST_ERROR_NONE      0x00 // No error
-#define UHS_HOST_ERROR_BUSY      0x01 // transfer pending
-#define UHS_HOST_ERROR_NAK       0x04 // Peripheral returned NAK
-#define UHS_HOST_ERROR_STALL     0x05 // Peripheral returned STALL
-#define UHS_HOST_ERROR_TOGERR    0x06 // Toggle error/ISO over-underrun
-#define UHS_HOST_ERROR_JERR      0x0D // J-state instead of response
-#define UHS_HOST_ERROR_BADRQ     0x0A // Packet error. Increase max packet.
-#define UHS_HOST_ERROR_TIMEOUT   0x0E // Device did not respond in time
-
-// Addressing error codes
-#define ADDR_ERROR_INVALID_INDEX                        0xA0
-#define ADDR_ERROR_INVALID_ADDRESS                      0xA1
-
-// Driver error codes
-#define UHS_HOST_ERROR_DEVICE_NOT_SUPPORTED             0xD1
-#define UHS_HOST_ERROR_DEVICE_INIT_INCOMPLETE           0xD2
-#define UHS_HOST_ERROR_CANT_REGISTER_DEVICE_CLASS       0xD3
-#define UHS_HOST_ERROR_ADDRESS_POOL_FULL                0xD4
-#define UHS_HOST_ERROR_HUB_ADDRESS_OVERFLOW             0xD5
-#define UHS_HOST_ERROR_NO_ADDRESS_IN_POOL               0xD6
-#define UHS_HOST_ERROR_NULL_EPINFO                      0xD7
-#define UHS_HOST_ERROR_BAD_ARGUMENT                     0xD8
-#define UHS_HOST_ERROR_DEVICE_DRIVER_BUSY               0xD9
-#define UHS_HOST_ERROR_BAD_MAX_PACKET_SIZE              0xDA
-#define UHS_HOST_ERROR_NO_ENDPOINT_IN_TABLE             0xDB
-#define UHS_HOST_ERROR_UNPLUGGED                        0xDE
-#define UHS_HOST_ERROR_FailGetDevDescr                  0xE1
-#define UHS_HOST_ERROR_FailSetDevTblEntry               0xE2
-#define UHS_HOST_ERROR_FailGetConfDescr                 0xE3
-#define UHS_HOST_ERROR_END_OF_STREAM                    0xEF
-
-// Host base class specific Error codes
-#define UHS_HOST_ERROR_NOT_IMPLEMENTED                  0xFE
-#define UHS_HOST_ERROR_TRANSFER_TIMEOUT                 0xFF
-
 // Very early prototypes
 #if defined(UHS_LOAD_BT)
 void UHS_BT_SetUSBInterface(UHS_USB_HOST_BASE *host, ENUMERATION_INFO *ei);
@@ -186,7 +146,7 @@ public:
         };
 
         virtual uint8_t hwlPowerUp(void) {
-                 /* This is for machine specific support to enable/power up the USB HW to operate*/
+                /* This is for machine specific support to enable/power up the USB HW to operate*/
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
@@ -212,9 +172,9 @@ public:
 #if defined(UHS_LOAD_HID)
                 UHS_HID_Poll(this);
 #endif
-//#if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
-//                UHS_CDC_ACM_Poll(this);
-//#endif
+                //#if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
+                //                UHS_CDC_ACM_Poll(this);
+                //#endif
         }
 
         inline void DisablePoll(void) {
@@ -295,6 +255,7 @@ public:
 };
 
 // All device interface drivers use this subclass
+
 class UHS_USBInterface {
 public:
 
@@ -444,7 +405,7 @@ public:
  * -- AJK
  */
 
-class UHS_VSI: public UHS_USBInterface {
+class UHS_VSI : public UHS_USBInterface {
 public:
         volatile UHS_EpInfo epInfo[1];
         volatile ENUMERATION_INFO eInfo;

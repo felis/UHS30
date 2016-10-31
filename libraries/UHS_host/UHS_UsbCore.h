@@ -23,29 +23,48 @@ e-mail   :  support@circuitsathome.com
 #define USBCORE_H
 
 #ifndef UHS_HOST_MAX_INTERFACE_DRIVERS
-#define                  UHS_HOST_MAX_INTERFACE_DRIVERS 16      // Maximum number of USB interface drivers
+#define                  UHS_HOST_MAX_INTERFACE_DRIVERS 0x10U // Default maximum number of USB interface drivers
 #endif
 
 
 // As we make extensions to a target interface add to UHS_HOST_MAX_INTERFACE_DRIVERS
 // This offset gets calculated for supporting wide subclasses, such as HID, BT, etc.
-#define UHS_HID_INDEX (UHS_HOST_MAX_INTERFACE_DRIVERS + 1)
+#define                                   UHS_HID_INDEX (UHS_HOST_MAX_INTERFACE_DRIVERS + 1)
 
 /* Common setup data constant combinations  */
 //get descriptor request type
-#define UHS_bmREQ_GET_DESCR \
-        (USB_SETUP_DEVICE_TO_HOST|USB_SETUP_TYPE_STANDARD|USB_SETUP_RECIPIENT_DEVICE)
+#define                             UHS_bmREQ_GET_DESCR (USB_SETUP_DEVICE_TO_HOST|USB_SETUP_TYPE_STANDARD|USB_SETUP_RECIPIENT_DEVICE)
 
 //set request type for all but 'set feature' and 'set interface'
-#define UHS_bmREQ_SET \
-        (USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_STANDARD|USB_SETUP_RECIPIENT_DEVICE)
+#define                                   UHS_bmREQ_SET (USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_STANDARD|USB_SETUP_RECIPIENT_DEVICE)
+
 //get interface request type
-#define UHS_bmREQ_CL_GET_INTF \
-        (USB_SETUP_DEVICE_TO_HOST|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE)
+#define                           UHS_bmREQ_CL_GET_INTF (USB_SETUP_DEVICE_TO_HOST|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE)
 
 // D7           data transfer direction (0 - host-to-device, 1 - device-to-host)
 // D6-5         Type (0- standard, 1 - class, 2 - vendor, 3 - reserved)
 // D4-0         Recipient (0 - device, 1 - interface, 2 - endpoint, 3 - other, 4..31 - reserved)
+
+
+// TO-DO: These definitions are to be deprecated, use the newer definitions below.
+// Host error result codes
+#define                                       hrSUCCESS 0x00U // No Error
+#define                                          hrBUSY 0x01U // Hardware is busy, transfer pending
+#define                                        hrBADREQ 0x02U // Transfer Launch Request was bad
+#define                                           hrDMA 0x03U // DMA was too short, or too long
+#define                                           hrNAK 0x04U // Device sent NAK
+#define                                         hrSTALL 0x05U // Device sent STALL
+#define                                        hrTOGERR 0x06U // toggle bit incorrect
+#define                                      hrWRONGPID 0x07U // Received wrong Packet ID
+#define                                         hrBADBC 0x08U // Byte count is bad
+#define                                        hrPIDERR 0x09U // Received Packet ID is corrupted
+#define                                        hrPKTERR 0x0AU // All other packet errors
+#define                                        hrCRCERR 0x0BU // USB CRC was incorrect
+#define                                          hrKERR 0x0CU // K-state instead of response, Usually indicates wrong speed
+#define                                          hrJERR 0x0DU // J-state instead of response, Usually indicates wrong speed
+#define                                       hrTIMEOUT 0x0EU // Device timed out, and did not respond in time
+#define                                        hrBABBLE 0x0FU // Line noise/unexpected data
+#define                                  hrDISCONNECTED 0x1FU // Device was disconnected.
 
 // TO-DO: Use the python script to generate these.
 // TO-DO: Add _all_ subclasses here.
@@ -152,7 +171,7 @@ e-mail   :  support@circuitsathome.com
 /* USB state machine states */
 #define UHS_USB_HOST_STATE_MASK                         0xF0U
 
-// Configure states, MSN == 0
+// Configure states, MSN == 0 ----------------------------V
 #define                     UHS_USB_HOST_STATE_DETACHED 0x00U
 #define                     UHS_USB_HOST_STATE_DEBOUNCE 0x01U
 #define        UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE 0x02U
@@ -165,30 +184,67 @@ e-mail   :  support@circuitsathome.com
 #define                        UHS_USB_HOST_STATE_CHECK 0x0EU
 #define                      UHS_USB_HOST_STATE_ILLEGAL 0x0FU // Foo
 
-// Run states, MSN != 0
+// Run states, MSN != 0 ----------------------------------V
 #define                      UHS_USB_HOST_STATE_RUNNING 0x60U // Looks like "GO"
 #define                         UHS_USB_HOST_STATE_IDLE 0x1DU // Looks like "ID"le
 #define                        UHS_USB_HOST_STATE_ERROR 0xF0U // Looks like "FO"o
 #define                   UHS_USB_HOST_STATE_INITIALIZE 0x10U // Looks like "I"nit
 
-/* Host error result codes */
-#define                                       hrSUCCESS 0x00U // No Error
-#define                                          hrBUSY 0x01U // Hardware is busy, transfer pending
-#define                                        hrBADREQ 0x02U // Transfer Launch Request was bad
-#define                                           hrDMA 0x03U // DMA was too short, or too long
-#define                                           hrNAK 0x04U // Device sent NAK
-#define                                         hrSTALL 0x05U // Device sent STALL
-#define                                        hrTOGERR 0x06U // toggle bit incorrect
-#define                                      hrWRONGPID 0x07U // Received wrong Packet ID
-#define                                         hrBADBC 0x08U // Byte count is bad
-#define                                        hrPIDERR 0x09U // Received Packet ID is corrupted
-#define                                        hrPKTERR 0x0AU // All other packet errors
-#define                                        hrCRCERR 0x0BU // USB CRC was incorrect
-#define                                          hrKERR 0x0CU // K-state instead of response, Usually indicates wrong speed
-#define                                          hrJERR 0x0DU // J-state instead of response, Usually indicates wrong speed
-#define                                       hrTIMEOUT 0x0EU // Device timed out, and did not respond in time
-#define                                        hrBABBLE 0x0FU // Line noise/unexpected data
-#define                                  hrDISCONNECTED 0xEEU // Device was disconnected.
+// Host SE result codes.
+// Common SE results are stored in the low nybble, all interface drivers understand these plus 0x1f.
+// Extended SE results are 0x10-0x1e. SE code only understands these internal to the hardware.
+// Values > 0x1F are driver or other internal error conditions.
+// Return these result codes from your host controller driver to match the error condition
+// ALL Non-zero values are errors.
+// Values not listed in this table are not handled in the base class, or any host driver.
+
+#define                             UHS_HOST_ERROR_NONE 0x00U // No error
+#define                             UHS_HOST_ERROR_BUSY 0x01U // transfer pending
+#define                           UHS_HOST_ERROR_BADREQ 0x02U // Transfer Launch Request was bad
+#define                              UHS_HOST_ERROR_DMA 0x03U // DMA was too short, or too long
+#define                              UHS_HOST_ERROR_NAK 0x04U // Peripheral returned NAK
+#define                            UHS_HOST_ERROR_STALL 0x05U // Peripheral returned STALL
+#define                           UHS_HOST_ERROR_TOGERR 0x06U // Toggle error/ISO over-underrun
+#define                         UHS_HOST_ERROR_WRONGPID 0x07U // Received wrong Packet ID
+#define                            UHS_HOST_ERROR_BADBC 0x08U // Byte count is bad
+#define                           UHS_HOST_ERROR_PIDERR 0x09U // Received Packet ID is corrupted
+#define                            UHS_HOST_ERROR_BADRQ 0x0AU // Packet error. Increase max packet.
+#define                           UHS_HOST_ERROR_CRCERR 0x0BU // USB CRC was incorrect
+#define                             UHS_HOST_ERROR_KERR 0x0CU // K-state instead of response, usually indicates wrong speed
+#define                             UHS_HOST_ERROR_JERR 0x0DU // J-state instead of response, usually indicates wrong speed
+#define                          UHS_HOST_ERROR_TIMEOUT 0x0EU // Device did not respond in time
+#define                           UHS_HOST_ERROR_BABBLE 0x0FU // Line noise/unexpected data
+#define                          UHS_HOST_ERROR_MEM_LAT 0x10U // Error caused by memory latency.
+#define                     UHS_HOST_ERROR_DISCONNECTED 0x1FU // Device was disconnected.
+
+// Addressing error codes
+#define                        ADDR_ERROR_INVALID_INDEX 0xA0U
+#define                      ADDR_ERROR_INVALID_ADDRESS 0xA1U
+
+// Common Interface Driver error codes
+#define             UHS_HOST_ERROR_DEVICE_NOT_SUPPORTED 0xD1U
+#define           UHS_HOST_ERROR_DEVICE_INIT_INCOMPLETE 0xD2U
+#define       UHS_HOST_ERROR_CANT_REGISTER_DEVICE_CLASS 0xD3U
+#define                UHS_HOST_ERROR_ADDRESS_POOL_FULL 0xD4U
+#define             UHS_HOST_ERROR_HUB_ADDRESS_OVERFLOW 0xD5U
+#define               UHS_HOST_ERROR_NO_ADDRESS_IN_POOL 0xD6U
+#define                      UHS_HOST_ERROR_NULL_EPINFO 0xD7U
+#define                     UHS_HOST_ERROR_BAD_ARGUMENT 0xD8U
+#define               UHS_HOST_ERROR_DEVICE_DRIVER_BUSY 0xD9U
+#define              UHS_HOST_ERROR_BAD_MAX_PACKET_SIZE 0xDAU
+#define             UHS_HOST_ERROR_NO_ENDPOINT_IN_TABLE 0xDBU
+#define                        UHS_HOST_ERROR_UNPLUGGED 0xDEU
+
+// Control request stream errors
+#define                  UHS_HOST_ERROR_FailGetDevDescr 0xE1U
+#define               UHS_HOST_ERROR_FailSetDevTblEntry 0xE2U
+#define                 UHS_HOST_ERROR_FailGetConfDescr 0xE3U
+#define                    UHS_HOST_ERROR_END_OF_STREAM 0xEFU
+
+// Host base class specific Error codes
+#define                  UHS_HOST_ERROR_NOT_IMPLEMENTED 0xFEU
+#define                 UHS_HOST_ERROR_TRANSFER_TIMEOUT 0xFFU
+
 // SEI interaction defaults
 #define                        UHS_HOST_TRANSFER_MAX_MS 10000   // (originally 5000) USB transfer timeout in milliseconds, per section 9.2.6.1 of USB 2.0 spec
 #define                 UHS_HOST_TRANSFER_RETRY_MAXIMUM 3       // 3 retry limit for a transfer

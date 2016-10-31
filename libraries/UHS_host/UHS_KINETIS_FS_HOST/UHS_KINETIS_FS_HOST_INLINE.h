@@ -51,6 +51,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::busprobe(void) {
         switch(bus_sample) { //start full-speed or low-speed host
                 case(UHS_KINETIS_FS_bmJSTATUS): // full speed
                         USBTRACE("full speed\r\n");
+                        USB0_OTGCTL &= ~(USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW); // disable D+ and D- pulldowns
                         USB0_INTEN &= ~USB_INTEN_ATTACHEN;
                         USB0_ADDR = 0;
                         USB0_ENDPT0 &= ~USB_ENDPT_HOSTWOHUB; // no hub present, communicate directly with device
@@ -62,31 +63,40 @@ void UHS_NI UHS_KINETIS_FS_HOST::busprobe(void) {
                         break;
                 case(UHS_KINETIS_FS_bmKSTATUS): // low speed
                         USBTRACE("low speed\r\n");
+                        USB0_OTGCTL &= ~(USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW); // disable D+ and D- pulldowns
                         USB0_INTEN &= ~USB_INTEN_ATTACHEN;
                         USB0_ADDR = USB_ADDR_LSEN; // low speed enable, address 0
                         USB0_ENDPT0 |= USB_ENDPT_HOSTWOHUB; // no hub present, communicate directly with device
                         USB0_SOFTHLD = 0x4A; // set to 0x4A for 64 byte transfers, 0x12 for 8-byte, 0x1A=16-bytes
-
                         usb_host_speed = 0;
                         USB0_CTL |= USB_CTL_USBENSOFEN; // start SOF generation
                         vbusState = UHS_KINETIS_FS_LSHOST;
                         break;
                 case(UHS_KINETIS_FS_bmSE0): //disconnected state
                         USBTRACE("disconnected\r\n");
-                        // Set D+ and D- low
-                        USB0_ADDR = 0;
+                        vbusState = UHS_KINETIS_FS_SE0;
                         USB0_OTGCTL = USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW; // enable D+ and D- pulldowns
+                        USB0_ADDR = 0;
                         USB0_CTL &= ~USB_CTL_USBENSOFEN;
                         USB0_INTEN |= USB_INTEN_ATTACHEN;
-                        vbusState = UHS_KINETIS_FS_SE0;
+                        //USB0_CTL = USB_CTL_ODDRST;
+                        //ep0_tx_bdt_bank = 0;
+                        //ep0_rx_bdt_bank = 0;
+                        //ep0_tx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
+                        //ep0_rx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
                         break;
                 case(UHS_KINETIS_FS_bmSE1): // second disconnected state
                         USBTRACE("disconnected2\r\n");
-                        USB0_ADDR = 0;
+                        vbusState = UHS_KINETIS_FS_SE1;
                         USB0_OTGCTL = USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW; // enable D+ and D- pulldowns
+                        USB0_ADDR = 0;
                         USB0_CTL &= ~USB_CTL_USBENSOFEN;
                         USB0_INTEN |= USB_INTEN_ATTACHEN;
-                        vbusState = UHS_KINETIS_FS_SE1;
+                        //USB0_CTL = USB_CTL_ODDRST;
+                        //ep0_tx_bdt_bank = 0;
+                        //ep0_rx_bdt_bank = 0;
+                        //ep0_tx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
+                        //ep0_rx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
                         break;
         }//end switch( bus_sample )
 }
@@ -307,6 +317,9 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
                                 break;
                         case 0x0f:
                                 if(isrError != hrDMA) {
+#if defined(LOAD_UHS_PRINTF_HELPER)
+                                        printf("\r\nMEMORY LATENCY PROBLEM.\r\n");
+#endif
                                         isrError = hrNAK; // Error was due to memory latency.
                                 }
                                 break;
