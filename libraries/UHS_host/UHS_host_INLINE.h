@@ -247,19 +247,24 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
 
         p->speed = speed;
 #if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
-        p->epinfo[0].maxPktSize = 64; // Windows bug is expected.
+        p->epinfo[0].maxPktSize = 0x40; // Windows bug is expected.
+        // poison data
+        udd->bMaxPacketSize0 = 0U;
 #else
-        p->epinfo[0].maxPktSize = 8; // USB Spec, start small, work your way up.
+        p->epinfo[0].maxPktSize = 0x08; // USB Spec, start small, work your way up.
 #endif
         HOST_DUBUG("\r\n\r\nConfiguring...\r\n");
 again:
-#if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
-        // Emulate Windows bug part 1, thanks M$
-        rcode = (ctrlReq(addr, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, 0x00, USB_DESCRIPTOR_DEVICE, 0x0000, 64), nbytes, dataptr));
-#else
+        HOST_DUBUG("\r\ntry packet size %2.2x\r\n", p->epinfo[0].maxPktSize);
         rcode = getDevDescr(0, biggest, (uint8_t*)buf);
+
+        if
+#if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
+                (rcode || udd->bMaxPacketSize0 < 8)
+#else
+                (rcode)
 #endif
-        if(rcode) {
+        {
                 if(rcode == UHS_HOST_ERROR_JERR && retries < 4) {
                         //
                         // Some devices return JERR when plugged in.
@@ -272,10 +277,11 @@ again:
                         sof_delay(100);
                         retries++;
                         goto again;
-                } else if(rcode == UHS_HOST_ERROR_DMA && retries < 4) {
 #if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
+                } else if((rcode == UHS_HOST_ERROR_DMA && retries < 4) || (udd->bMaxPacketSize0 < 8 && !rcode)) {
                         if(p->epinfo[0].maxPktSize > 8) p->epinfo[0].maxPktSize = p->epinfo[0].maxPktSize >> 1;
 #else
+                } else if(rcode == UHS_HOST_ERROR_DMA && retries < 4) {
                         if(p->epinfo[0].maxPktSize < 32) p->epinfo[0].maxPktSize = p->epinfo[0].maxPktSize << 1;
 #endif
                         HOST_DUBUG("Configuring error: UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", p->epinfo[0].maxPktSize);
@@ -290,18 +296,13 @@ again:
 
         HOST_DUBUG("retries: %i\r\n", retries);
 #if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
-        // Emulate Windows bug part 2, thanks M$
-        // Give this device a temporary address.
-        // The real address is set below.
-        // The {} wrapper causes the ta variable to be discarded at the }.
-        //{
-        //        uint8_t ta = addrPool.AllocAddress(parent, false, port);
-        //        if(!ta) return UHS_HOST_ERROR_ADDRESS_POOL_FULL;
-        //        rcode = doSoftReset(parent, port, ta);
-        //        if(!rcode) rcode = getDevDescr(ta, biggest, (uint8_t*)buf);
-        //        addrPool.FreeAddress(ta);
-        //        if(rcode) return rcode;
-        //}
+        HOST_DUBUG("\r\nEnumeration info:\r\n");
+        HOST_DUBUG("bMaxPacketSize0: %2.2x\r\n\r\n", udd->bMaxPacketSize0);
+        p->epinfo[0].maxPktSize = udd->bMaxPacketSize0;
+        rcode = doSoftReset(parent, port, 0);
+        if(rcode) HOST_DUBUG("Configuring error: %2.2x Can't do soft reset\r\n", rcode);
+        rcode = getDevDescr(0, biggest, (uint8_t*)buf);
+        if(rcode) HOST_DUBUG("Configuring error: %2.2x Can't get USB_DEVICE_DESCRIPTOR\r\n", rcode);
 #endif
 
         ei.vid = udd->idVendor;
@@ -322,7 +323,7 @@ again:
         }
 
         p = addrPool.GetUsbDevicePtr(ei.address);
-// set to 1 if you suspect address table corruption.
+        // set to 1 if you suspect address table corruption.
 #if 0
         if(!p) {
                 return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
