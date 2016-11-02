@@ -181,17 +181,19 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
                         adaptor = UHS_USB_ACM_XR21B1411;
                 } else if(TEST_ACM_PROLIFIC()) {
                         adaptor = UHS_USB_ACM_PROLIFIC;
+#if defined(LOAD_UHS_CDC_ACM_FTDI)
                 } else if(TEST_ACM_FTDI()) {
                         adaptor = UHS_USB_ACM_FTDI;
                         if(ChipType == FT232AM) {
                                 // Read quirk. Are there others?
                                 epInfo[epDataInIndex].bmRcvToggle=1;
                         }
+#endif
                 } else {
                         adaptor = UHS_USB_ACM_PLAIN;
                 }
                 bAddress = SbAddress;
-                if(qPollRate < 50) qPollRate = 50; // Lets be reasonable.
+                //if(qPollRate < 50) qPollRate = 50; // Lets be reasonable.
                 epInfo[0].epAddr = 0;
                 epInfo[0].maxPktSize = ei->bMaxPacketSize0;
                 epInfo[0].bmNakPower = USB_NAK_MAX_POWER;
@@ -314,9 +316,7 @@ uint8_t UHS_NI UHS_CDC_ACM::SetCommFeature(uint16_t fid, uint8_t nbytes, uint8_t
         } else
 
 #endif
-        {
-                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SET_COMM_FEATURE, fid, bControlIface, nbytes), nbytes, dataptr);
-        }
+        rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SET_COMM_FEATURE, fid, bControlIface, nbytes), nbytes, dataptr);
         if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
@@ -332,9 +332,7 @@ uint8_t UHS_NI UHS_CDC_ACM::GetCommFeature(uint16_t fid, uint8_t nbytes, uint8_t
         } else
 
 #endif
-        {
-                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCIN, UHS_CDC_GET_COMM_FEATURE, fid, bControlIface, nbytes), nbytes, dataptr);
-        }
+        rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCIN, UHS_CDC_GET_COMM_FEATURE, fid, bControlIface, nbytes), nbytes, dataptr);
         if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
@@ -348,9 +346,7 @@ uint8_t UHS_NI UHS_CDC_ACM::ClearCommFeature(uint16_t fid) {
         if(adaptor == UHS_USB_ACM_FTDI) {
         } else
 #endif
-        {
-                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_CLEAR_COMM_FEATURE, fid, bControlIface, 0), 0, NULL);
-        }
+        rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_CLEAR_COMM_FEATURE, fid, bControlIface, 0), 0, NULL);
         if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
@@ -365,11 +361,10 @@ uint8_t UHS_NI UHS_CDC_ACM::SetLineCoding(const UHS_CDC_LINE_CODING * dataptr) {
                 rv = UHS_FTDI_SetLineCoding(dataptr);
         } else
 #endif
-        {
-                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SET_LINE_CODING, 0x0000U, bControlIface, sizeof (UHS_CDC_LINE_CODING)), sizeof (UHS_CDC_LINE_CODING), (uint8_t*)dataptr);
-        }
+        rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SET_LINE_CODING, 0x0000U, bControlIface, sizeof (UHS_CDC_LINE_CODING)), sizeof (UHS_CDC_LINE_CODING), (uint8_t*)dataptr);
         if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
+        printf("\r\n%u\r\n", rv);
         return rv;
 }
 
@@ -382,9 +377,7 @@ uint8_t UHS_NI UHS_CDC_ACM::GetLineCoding(UHS_CDC_LINE_CODING * dataptr) {
                 // not implemented on chip?
         } else
 #endif
-        {
-                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCIN, UHS_CDC_GET_LINE_CODING, 0x0000U, bControlIface, sizeof (UHS_CDC_LINE_CODING)), sizeof (UHS_CDC_LINE_CODING), (uint8_t*)dataptr);
-        }
+        rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCIN, UHS_CDC_GET_LINE_CODING, 0x0000U, bControlIface, sizeof (UHS_CDC_LINE_CODING)), sizeof (UHS_CDC_LINE_CODING), (uint8_t*)dataptr);
         if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
@@ -399,9 +392,7 @@ uint8_t UHS_NI UHS_CDC_ACM::SetControlLineState(uint8_t state) {
                 rv = UHS_FTDI_SetControlLineState(state);
         } else
 #endif
-        {
-                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_CDCOUT, UHS_CDC_SET_CONTROL_LINE_STATE, state, 0, bControlIface, 0), 0, NULL);
-        }
+        rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_CDCOUT, UHS_CDC_SET_CONTROL_LINE_STATE, state, 0, bControlIface, 0), 0, NULL);
         if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;
@@ -416,9 +407,7 @@ uint8_t UHS_NI UHS_CDC_ACM::SendBreak(uint16_t duration) {
                 // TO-DO
         } else
 #endif
-        {
-                rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SEND_BREAK, duration, bControlIface, 0), 0, NULL);
-        }
+        rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(bmREQ_CDCOUT, UHS_CDC_SEND_BREAK, duration, bControlIface, 0), 0, NULL);
         if(rv && rv != UHS_HOST_ERROR_NAK) Release();
         pUsb->EnablePoll();
         return rv;

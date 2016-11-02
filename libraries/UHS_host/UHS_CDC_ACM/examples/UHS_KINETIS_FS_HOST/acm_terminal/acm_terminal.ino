@@ -97,6 +97,11 @@ void setup() {
         delay(250);
         digitalWriteFast(LED_BUILTIN, HIGH);
         delay(250);
+
+        // USB data switcher, PC -> device.
+        pinMode(5,OUTPUT),
+        digitalWriteFast(5, HIGH);
+
         KINETIS_Usb = new UHS_KINETIS_FS_HOST();
         hub_KINETIS1 = new UHS_USBHub(KINETIS_Usb);
         digitalWriteFast(LED_BUILTIN, LOW);
