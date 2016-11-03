@@ -1,9 +1,9 @@
 #BOARD=teensy:avr:teensy30:usb=disable,speed=96opt,keys=en-us
-BOARD=teensy:avr:teensy31:usb=disable,speed=96opt,keys=en-us
+#BOARD=teensy:avr:teensy31:usb=disable,speed=96opt,keys=en-us
 #BOARD=teensy:avr:teensy33:usb=disable,speed=96opt,keys=en-us
 #BOARD=teensy:avr:teensy34:usb=disable,speed=96opt,keys=en-us
 #BOARD=teensy:avr:teensy35:usb=disable,speed=96opt,keys=en-us
-#BOARD=teensy:avr:teensy36:usb=disable,speed=96opt,keys=en-us
+BOARD=teensy:avr:teensy36:usb=disable,speed=96opt,keys=en-us
 
 PORT = /dev/ttyUSB0
 
