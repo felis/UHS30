@@ -155,7 +155,7 @@ public:
                 thePool[0].address.devAddress = 0;
                 thePool[0].epinfo = &dev0ep;
                 dev0ep.epAddr = 0;
-#if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
+#if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
                 dev0ep.maxPktSize = 0x40; //starting at 0x40 and work down
 #else
                 dev0ep.maxPktSize = 0x08;

@@ -63,7 +63,7 @@ public:
         volatile uint8_t hub_present;
 
         UHS_USB_HOST_BASE(void) {
-                for(int i = 0; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
+                for(uint i = 0; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
                         devConfig[i] = NULL;
                 }
                 usb_task_polling_disabled = 0;
@@ -197,9 +197,9 @@ public:
 
         uint8_t UHS_NI EPClearHalt(uint8_t addr, uint8_t ep);
 
-        uint8_t UHS_NI ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbytes, uint8_t* dataptr, bool bShortMsg=0);
+        uint8_t UHS_NI ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbytes, uint8_t* dataptr);
 
-        uint8_t UHS_NI getDevDescr(uint8_t addr, uint16_t nbytes, uint8_t* dataptr,  bool bShortMsg=0);
+        uint8_t UHS_NI getDevDescr(uint8_t addr, uint16_t nbytes, uint8_t* dataptr);
 
         uint8_t UHS_NI getConfDescr(uint8_t addr, uint16_t nbytes, uint8_t conf, uint8_t* dataptr);
 

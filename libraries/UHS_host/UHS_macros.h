@@ -52,6 +52,59 @@ e-mail   :  support@circuitsathome.com
 #endif
 
 
+#if !defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
+
+#if !defined(UHS_BIG_FLASH)
+
+#if defined(FLASHEND) && defined(FLASHSTART)
+#if (FLASHEND - FLASHSTART) > 0x0FFFFU
+#define UHS_BIG_FLASH 1
+#else
+#define UHS_BIG_FLASH 0
+#endif
+
+#elif defined(__PIC32_FLASH_SIZE)
+#if __PIC32_FLASH_SIZE > 511
+#define UHS_BIG_FLASH 1
+#else
+#define UHS_BIG_FLASH 0
+#endif
+
+#elif defined(FLASHEND) && !defined(FLASHSTART)
+// Assumes flash starts at 0x00000, is this a safe assumption?
+// 192K + should be OK
+#if FLASHEND > 0x02FFFFU
+#define UHS_BIG_FLASH 1
+#else
+#define UHS_BIG_FLASH 0
+#endif
+
+#elif defined(IFLASH_SIZE)
+#if IFLASH_SIZE > 0x0FFFFU
+#define UHS_BIG_FLASH 1
+#else
+#define UHS_BIG_FLASH 0
+#endif
+
+#elif defined(ESP8266)
+#define UHS_BIG_FLASH 1
+
+#elif defined(__arm__) && defined(CORE_TEENSY)
+#define UHS_BIG_FLASH 1
+#else
+// safe default
+#warning Small flash?
+#define UHS_BIG_FLASH 0
+#endif
+#endif
+
+#if UHS_BIG_FLASH
+#define UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE 1
+#else
+#define UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE 0
+#endif
+#endif
+
 #if defined(__arm__) && defined(CORE_TEENSY)
 #define UHS_PIN_WRITE(p, v) digitalWriteFast(p, v)
 #define UHS_PIN_READ(p) digitalReadFast(p)
