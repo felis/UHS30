@@ -807,7 +807,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqT
 
         if(((bmReqType & 0x80) == 0x80) && pep && left && dataptr) {
                 //Serial.println("Drain");
-                HOST_DUBUG("ctrlReqRead Sinking %i\r\n", left);
+                HOST_DUBUG("ctrlReqClose Sinking %i\r\n", left);
                 // If reading, sink the rest of the data.
                 while(left) {
                         uint16_t read = nbytes;

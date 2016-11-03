@@ -155,7 +155,11 @@ public:
                 thePool[0].address.devAddress = 0;
                 thePool[0].epinfo = &dev0ep;
                 dev0ep.epAddr = 0;
-                dev0ep.maxPktSize = 8;
+#if defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
+                dev0ep.maxPktSize = 0x40; //starting at 0x40 and work down
+#else
+                dev0ep.maxPktSize = 0x08;
+#endif
                 dev0ep.epAttribs = 0; //set DATA0/1 toggles to 0
                 dev0ep.bmNakPower = USB_NAK_MAX_POWER;
                 InitAllAddresses();

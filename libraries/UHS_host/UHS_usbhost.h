@@ -197,9 +197,9 @@ public:
 
         uint8_t UHS_NI EPClearHalt(uint8_t addr, uint8_t ep);
 
-        uint8_t UHS_NI ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbytes, uint8_t* dataptr);
+        uint8_t UHS_NI ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbytes, uint8_t* dataptr, bool bShortMsg=0);
 
-        uint8_t UHS_NI getDevDescr(uint8_t addr, uint16_t nbytes, uint8_t* dataptr);
+        uint8_t UHS_NI getDevDescr(uint8_t addr, uint16_t nbytes, uint8_t* dataptr,  bool bShortMsg=0);
 
         uint8_t UHS_NI getConfDescr(uint8_t addr, uint16_t nbytes, uint8_t conf, uint8_t* dataptr);
 
