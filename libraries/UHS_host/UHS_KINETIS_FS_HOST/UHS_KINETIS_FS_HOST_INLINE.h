@@ -456,9 +456,10 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpI
         //Serial.print("\r\nLS: ");
         //Serial.println(p->speed, HEX);
 
-        // Disable automatic retries for 1 NAK, Set hub for low-speed device
+        // Disable automatic retries for NAK!=0, Set hub for low-speed device
         USB0_ENDPT0 = USB_ENDPT_EPRXEN | USB_ENDPT_EPTXEN | USB_ENDPT_EPHSHK |
-                ((nak_limit != 1U) ? 0 : USB_ENDPT_RETRYDIS) |
+                //((nak_limit != 1U) ? 0 : USB_ENDPT_RETRYDIS) |
+                ((nak_limit != 0U) ? 0 : USB_ENDPT_RETRYDIS) |
                 ((p->speed) ? 0 : USB_ENDPT_HOSTWOHUB);
 
         // set USB0_SOFTHLD depending on the maxPktSize
@@ -544,7 +545,6 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
                                         //printf("New rcode: 0x%2.2x\r\n", rcode);
                                 } // error
                                 if(newToken) { // token completed
-
                                         if(rcode == UHS_HOST_ERROR_TIMEOUT) rcode = UHS_HOST_ERROR_NONE;
                                         newToken = false;
                                 } // token completed
@@ -554,7 +554,12 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
                                 //        printf("dispatchPkt: token %x, ep: %i, nak_limit: %i \r\n", token, ep, nak_limit);
                                 //        printf("isrPid: 0x%8.8x, rcode: 0x%2.2x\r\n", isrPid, rcode);
                                 //}
+                                if(nak_limit && rcode == UHS_HOST_ERROR_NAK) {
+                                        nak_limit--;
+                                        if(nak_limit) continue; // retry
+                                }
                                 break;
+
                         }
 
                 }
