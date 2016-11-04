@@ -19,31 +19,53 @@ e-mail   :  support@circuitsathome.com
 #if !defined(UHS_CDC_ACM_FTDI_LOADED)
 #define UHS_CDC_ACM_FTDI_LOADED
 
-#define FT232AM                          (0x0200U)
-#define FT232BM                          (0x0400U)
-#define FT2232C                          (0x0500U)
-#define FT232R                           (0x0600U)
-#define FT2232H                          (0x0700U)
-#define FT4232H                          (0x0800U)
-#define FT232H                           (0x0900U)
-#define FT230X                           (0x1000U)
+#define                         FT232AM (0x0200U)
+#define                         FT232BM (0x0400U)
+#define                         FT2232C (0x0500U)
+#define                          FT232R (0x0600U)
+#define                         FT2232H (0x0700U)
+#define                         FT4232H (0x0800U)
+#define                          FT232H (0x0900U)
+#define                          FT230X (0x1000U)
 
 
 // Commands
-#define FTDI_SIO_RESET                  (0x00U) /* Reset the port */
-#define FTDI_SIO_MODEM_CTRL             (0x01U) /* Set the modem control register */
-#define FTDI_SIO_SET_FLOW_CTRL          (0x02U) /* Set flow control register */
-#define FTDI_SIO_SET_BAUD_RATE          (0x03U) /* Set baud rate */
-#define FTDI_SIO_SET_DATA               (0x04U) /* Set the data characteristics of the port */
-#define FTDI_SIO_GET_MODEM_STATUS       (0x05U) /* Retrieve current value of modem status register */
-#define FTDI_SIO_SET_EVENT_CHAR         (0x06U) /* Set the event character */
-#define FTDI_SIO_SET_ERROR_CHAR         (0x07U) /* Set the error character */
-#define FTDI_SIO_SET_LATENCY_TIMER      (0x09U) /* Set the latency timer */
-#define FTDI_SIO_GET_LATENCY_TIMER      (0x0AU) /* Get the latency timer */
+#define                  FTDI_SIO_RESET (0x00U) // Reset the port
+#define             FTDI_SIO_MODEM_CTRL (0x01U) // Set the modem control register
+#define          FTDI_SIO_SET_FLOW_CTRL (0x02U) // Set flow control register
+#define          FTDI_SIO_SET_BAUD_RATE (0x03U) // Set baud rate
+#define               FTDI_SIO_SET_DATA (0x04U) // Set the data characteristics of the port
+#define       FTDI_SIO_GET_MODEM_STATUS (0x05U) // Get the current value of modem status register
+#define         FTDI_SIO_SET_EVENT_CHAR (0x06U) // Set the event character
+#define         FTDI_SIO_SET_ERROR_CHAR (0x07U) // Set the error character
+#define      FTDI_SIO_SET_LATENCY_TIMER (0x09U) // Set the latency timer
+#define      FTDI_SIO_GET_LATENCY_TIMER (0x0AU) // Get the latency timer
 
-#define FTDI_SIO_RESET_SIO              (0x00U)
-#define FTDI_SIO_RESET_PURGE_RX         (0x01U)
-#define FTDI_SIO_RESET_PURGE_TX         (0x02U)
+#define              FTDI_SIO_RESET_SIO (0x00U)
+#define         FTDI_SIO_RESET_PURGE_RX (0x01U)
+#define         FTDI_SIO_RESET_PURGE_TX (0x02U)
+
+#define      FTDI_SIO_DISABLE_FLOW_CTRL (0x00U)
+#define             FTDI_SIO_RTS_CTS_HS (0x01U)
+#define             FTDI_SIO_DTR_DSR_HS (0x02U)
+#define            FTDI_SIO_XON_XOFF_HS (0x04U)
+
+// status 0
+#define               FTDI_SIO_CTS_MASK (0x10U)
+#define               FTDI_SIO_DSR_MASK (0x20U)
+#define                FTDI_SIO_RI_MASK (0x40U)
+#define              FTDI_SIO_RLSD_MASK (0x80U)
+
+// status 1
+#define                     FTDI_SIO_DR (0x01U) // Data Ready
+#define                     FTDI_SIO_OE (0x02U) // Overrun Error
+#define                     FTDI_SIO_PE (0x04U) // Parity Error
+#define                     FTDI_SIO_FE (0x08U) // Framing Error
+#define                     FTDI_SIO_BI (0x10U) // Break Interrupt
+#define                   FTDI_SIO_THRE (0x20U) // Transmitter Holding Register Empty
+#define                   FTDI_SIO_TEMT (0x40U) // Transmitter Empty
+#define                   FTDI_SIO_FIFO (0x80U) // Error in RX FIFO
+
 
 // keep for notes.
 //#define FTDI_SIO_SET_DATA_PARITY_NONE   (0x0U << 8 )
@@ -55,16 +77,5 @@ e-mail   :  support@circuitsathome.com
 //#define FTDI_SIO_SET_DATA_STOP_BITS_15  (0x1U << 11)
 //#define FTDI_SIO_SET_DATA_STOP_BITS_2   (0x2U << 11)
 //#define FTDI_SIO_SET_BREAK              (0x1U << 14)
-
-
-#define FTDI_SIO_DISABLE_FLOW_CTRL      (0x00U)
-#define FTDI_SIO_RTS_CTS_HS             (0x01U)
-#define FTDI_SIO_DTR_DSR_HS             (0x02U)
-#define FTDI_SIO_XON_XOFF_HS            (0x04U)
-
-#define FTDI_SIO_CTS_MASK               (0x10U)
-#define FTDI_SIO_DSR_MASK               (0x20U)
-#define FTDI_SIO_RI_MASK                (0x40U)
-#define FTDI_SIO_RLSD_MASK              (0x80U)
 
 #endif // __UHS_CDC_ACM_FTDI_H__
