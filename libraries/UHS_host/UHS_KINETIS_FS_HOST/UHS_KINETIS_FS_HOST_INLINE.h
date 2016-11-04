@@ -448,6 +448,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpI
         USBTRACE2(" NAK Limit: ", nak_limit);
         USBTRACE("\r\n");
 
+        //HOST_DUBUG("\r\nAddress: %2.2x. EP: %2.2x, NAK Power: %2.2x, NAK Limit: %u\r\n", addr, ep, (*ppep)->bmNakPower, nak_limit);
         // address and low speed enable
         USB0_ADDR = addr | ((p->speed) ? 0 : USB_ADDR_LSEN);
 

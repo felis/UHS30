@@ -328,6 +328,8 @@ again:
                         UHS_EpInfo dev1ep;
                         dev1ep.maxPktSize = udd->bMaxPacketSize0;
                         dev1ep.epAddr = 0;
+                        dev1ep.epAttribs = 0;
+                        dev1ep.bmNakPower = USB_NAK_MAX_POWER;
                         p->address.devAddress = ei.address;
                         p->epcount = 1;
                         p->epinfo = &dev1ep;
