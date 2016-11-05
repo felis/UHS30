@@ -63,7 +63,7 @@ public:
         volatile uint8_t hub_present;
 
         UHS_USB_HOST_BASE(void) {
-                for(uint i = 0; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
+                for(uint16_t i = 0; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
                         devConfig[i] = NULL;
                 }
                 usb_task_polling_disabled = 0;
