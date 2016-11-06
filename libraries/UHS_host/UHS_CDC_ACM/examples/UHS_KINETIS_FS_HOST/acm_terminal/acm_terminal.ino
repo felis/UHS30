@@ -29,6 +29,8 @@
 // This needs testing.
 #define LOAD_UHS_CDC_ACM_FTDI
 
+//#define LOAD_UHS_ENUMERATION_OPT "UHS_host_INLINE_enumopt.h"
+
 #include <Arduino.h>
 #ifdef true
 #undef true

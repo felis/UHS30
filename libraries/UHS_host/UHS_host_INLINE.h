@@ -198,6 +198,11 @@ uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t add
  *
  */
 
+#if defined(LOAD_UHS_ENUMERATION_OPT )
+
+#include LOAD_UHS_ENUMERATION_OPT
+
+#else
 /**
  * Enumerates interfaces on devices
  *
@@ -557,6 +562,7 @@ again:
         }
         return rcode;
 }
+#endif  //LOAD_UHS_ENUMERATION_OPT
 
 /**
  * Removes a device from the tables
