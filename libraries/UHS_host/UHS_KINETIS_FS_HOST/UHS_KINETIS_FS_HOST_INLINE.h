@@ -439,7 +439,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpI
                 return UHS_HOST_ERROR_NO_ENDPOINT_IN_TABLE;
         }
 
-        nak_limit = (0x0001UL << (((*ppep)->bmNakPower > USB_NAK_MAX_POWER) ? USB_NAK_MAX_POWER : (*ppep)->bmNakPower));
+        nak_limit = (0x0001UL << (((*ppep)->bmNakPower > UHS_USB_NAK_MAX_POWER) ? UHS_USB_NAK_MAX_POWER : (*ppep)->bmNakPower));
         nak_limit--;
 
         USBTRACE2("\r\nAddress: ", addr);

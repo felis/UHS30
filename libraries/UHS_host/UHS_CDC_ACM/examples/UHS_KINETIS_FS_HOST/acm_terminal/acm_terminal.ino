@@ -64,7 +64,7 @@ uint8_t MY_ACM::OnStart(void) {
         }
 
         UHS_CDC_LINE_CODING lc;
-        lc.dwDTERate = 115200;
+        lc.dwDTERate = 57600;
         lc.bCharFormat = 0;
         lc.bParityType = 0;
         lc.bDataBits = 8;

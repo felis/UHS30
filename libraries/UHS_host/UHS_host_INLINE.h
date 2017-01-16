@@ -97,7 +97,7 @@ void UHS_USB_HOST_BASE::DeviceDefaults(uint8_t maxep, UHS_USBInterface *interfac
                 interface->epInfo[i].epAddr = 0;
                 interface->epInfo[i].maxPktSize = (i) ? 0 : 8;
                 interface->epInfo[i].epAttribs = 0;
-                interface->epInfo[i].bmNakPower = USB_NAK_DEFAULT;
+                interface->epInfo[i].bmNakPower = UHS_USB_NAK_DEFAULT;
         }
         interface->pUsb->GetAddressPool()->FreeAddress(interface->bAddress);
         interface->bIface = 0;
@@ -329,7 +329,7 @@ again:
                         dev1ep.maxPktSize = udd->bMaxPacketSize0;
                         dev1ep.epAddr = 0;
                         dev1ep.epAttribs = 0;
-                        dev1ep.bmNakPower = USB_NAK_MAX_POWER;
+                        dev1ep.bmNakPower = UHS_USB_NAK_MAX_POWER;
                         p->address.devAddress = ei.address;
                         p->epcount = 1;
                         p->epinfo = &dev1ep;

@@ -51,11 +51,11 @@ void UHS_NI UHS_USBHub::DriverDefaults(void) {
         bNbrPorts = 0;
         pUsb->DeviceDefaults(2, this);
         epInfo[0].maxPktSize = 8;
-        epInfo[0].bmNakPower = USB_NAK_MAX_POWER;
+        epInfo[0].bmNakPower = UHS_USB_NAK_MAX_POWER;
 
         epInfo[1].epAddr = 1;
         epInfo[1].maxPktSize = 8; //kludge
-        epInfo[1].bmNakPower = USB_NAK_NOWAIT;
+        epInfo[1].bmNakPower = UHS_USB_NAK_NOWAIT;
 
         bResetInitiated = false;
 }
@@ -71,7 +71,7 @@ uint8_t UHS_NI UHS_USBHub::SetInterface(ENUMERATION_INFO *ei) {
         epInfo[1].epAddr = 1;
         epInfo[1].maxPktSize = ei->interface.epInfo[0].wMaxPacketSize;
         epInfo[1].epAttribs = ei->interface.epInfo[0].bmAttributes;
-        epInfo[1].bmNakPower = USB_NAK_NOWAIT;
+        epInfo[1].bmNakPower = UHS_USB_NAK_NOWAIT;
         bIface = ei->interface.bInterfaceNumber;
         return 0;
 }

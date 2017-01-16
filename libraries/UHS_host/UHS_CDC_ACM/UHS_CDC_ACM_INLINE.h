@@ -96,7 +96,7 @@ void UHS_NI UHS_CDC_ACM::DriverDefaults(void) {
                 epInfo[i].epAddr = 0;
                 epInfo[i].maxPktSize = (i) ? 0 : 8;
                 epInfo[i].epAttribs = 0;
-                epInfo[i].bmNakPower = (i == epDataInIndex) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
+                epInfo[i].bmNakPower = (i == epDataInIndex) ? UHS_USB_NAK_NOWAIT : UHS_USB_NAK_MAX_POWER;
         }
 }
 
@@ -135,7 +135,7 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].epAddr = (ei->interface.epInfo[ep].bEndpointAddress & 0x0F);
                         epInfo[index].maxPktSize = (uint8_t)(ei->interface.epInfo[ep].wMaxPacketSize);
                         epInfo[index].epAttribs = 0;
-                        epInfo[index].bmNakPower = (index == epDataInIndex) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
+                        epInfo[index].bmNakPower = (index == epDataInIndex) ? UHS_USB_NAK_NOWAIT : UHS_USB_NAK_MAX_POWER;
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
                         bNumEP++;
@@ -144,7 +144,7 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].epAddr = (ei->interface.epInfo[ep].bEndpointAddress & 0x0F);
                         epInfo[index].maxPktSize = (uint8_t)(ei->interface.epInfo[ep].wMaxPacketSize);
                         epInfo[index].epAttribs = 0;
-                        epInfo[index].bmNakPower = USB_NAK_MAX_POWER;
+                        epInfo[index].bmNakPower = UHS_USB_NAK_MAX_POWER;
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
                         bNumEP++;
@@ -156,7 +156,7 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].epAddr = (ei->interface.epInfo[ep].bEndpointAddress & 0x0F);
                         epInfo[index].maxPktSize = (uint8_t)(ei->interface.epInfo[ep].wMaxPacketSize);
                         epInfo[index].epAttribs = 0;
-                        epInfo[index].bmNakPower = (index == epDataInIndex) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
+                        epInfo[index].bmNakPower = (index == epDataInIndex) ? UHS_USB_NAK_NOWAIT : UHS_USB_NAK_MAX_POWER;
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
                         bNumEP++;
@@ -191,10 +191,9 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
                         adaptor = UHS_USB_ACM_PLAIN;
                 }
                 bAddress = SbAddress;
-                //if(qPollRate < 50) qPollRate = 50; // Lets be reasonable.
                 epInfo[0].epAddr = 0;
                 epInfo[0].maxPktSize = ei->bMaxPacketSize0;
-                epInfo[0].bmNakPower = USB_NAK_MAX_POWER;
+                epInfo[0].bmNakPower = UHS_USB_NAK_MAX_POWER;
                 bIface = ei->interface.bInterfaceNumber;
                 // Both interfaces have finally been set and match
         } else {
