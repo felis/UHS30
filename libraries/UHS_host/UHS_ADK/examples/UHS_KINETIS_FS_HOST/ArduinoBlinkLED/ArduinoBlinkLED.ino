@@ -43,59 +43,55 @@
 #endif
 
 UHS_KINETIS_FS_HOST UsbHost;
-UHS_ADK adk(&UsbHost)
+UHS_ADK adk(&UsbHost);
 uint32_t timer;
 bool connected;
 
 void setup() {
-  Serial.begin(115200);
-#if !defined(__MIPSEL__)
-  while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
-#endif
-  if (Usb.Init() == -1) {
-    Serial.print("\r\nOSCOKIRQ failed to assert");
-    while (1); // halt
-  }
-  pinMode(LED, OUTPUT);
-  Serial.print("\r\nArduino Blink LED Started");
-  while(UsbHost->Init(1000) != 0);
+        USB_HOST_SERIAL.begin(115200);
+        if(Usb.Init() == -1) {
+                Serial.print("\r\nOSCOKIRQ failed to assert");
+                while(1); // halt
+        }
+        pinMode(LED, OUTPUT);
+        Serial.print("\r\nArduino Blink LED Started");
 }
 
 void loop() {
-  if (adk.isReady()) {
-    if (!connected) {
-      connected = true;
-      Serial.print(F("\r\nConnected to accessory"));
-    }
+        if(adk.isReady()) {
+                if(!connected) {
+                        connected = true;
+                        Serial.print(F("\r\nConnected to accessory"));
+                }
 
-    uint8_t msg[1];
-    uint16_t len = sizeof(msg);
-    uint8_t rcode = adk.Read(&len, msg);
-    if (rcode && rcode != hrNAK) {
-      Serial.print(F("\r\nData rcv: "));
-      Serial.print(rcode, HEX);
-    } else if (len > 0) {
-      Serial.print(F("\r\nData Packet: "));
-      Serial.print(msg[0]);
-      digitalWrite(LED, msg[0] ? HIGH : LOW);
-    }
+                uint8_t msg[1];
+                uint16_t len = sizeof (msg);
+                uint8_t rcode = adk.Read(&len, msg);
+                if(rcode && rcode != UHS_HOST_ERROR_NAK) {
+                        Serial.print(F("\r\nData rcv: "));
+                        Serial.print(rcode, HEX);
+                } else if(len > 0) {
+                        Serial.print(F("\r\nData Packet: "));
+                        Serial.print(msg[0]);
+                        digitalWrite(LED, msg[0] ? HIGH : LOW);
+                }
 
-    if (millis() - timer >= 1000) { // Send data every 1s
-      timer = millis();
-      rcode = adk.Write(sizeof(timer), (uint8_t*)&timer);
-      if (rcode && rcode != hrNAK) {
-        Serial.print(F("\r\nData send: "));
-        Serial.print(rcode, HEX);
-      } else if (rcode != hrNAK) {
-        Serial.print(F("\r\nTimer: "));
-        Serial.print(timer);
-      }
-    }
-  } else {
-    if (connected) {
-      connected = false;
-      Serial.print(F("\r\nDisconnected from accessory"));
-      digitalWrite(LED, LOW);
-    }
-  }
+                if(millis() - timer >= 1000) { // Send data every 1s
+                        timer = millis();
+                        rcode = adk.Write(sizeof (timer), (uint8_t*) & timer);
+                        if(rcode && rcode != UHS_HOST_ERROR_NAK) {
+                                Serial.print(F("\r\nData send: "));
+                                Serial.print(rcode, HEX);
+                        } else if(rcode != UHS_HOST_ERROR_NAK) {
+                                Serial.print(F("\r\nTimer: "));
+                                Serial.print(timer);
+                        }
+                }
+        } else {
+                if(connected) {
+                        connected = false;
+                        Serial.print(F("\r\nDisconnected from accessory"));
+                        digitalWrite(LED, LOW);
+                }
+        }
 }

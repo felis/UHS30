@@ -69,7 +69,7 @@ void UHS_NI UHS_ADK::DriverDefaults(void) {
         for(uint8_t i = 0; i < ADK_MAX_ENDPOINTS; i++) {
                 epInfo[i].bmSndToggle = 0;
                 epInfo[i].bmRcvToggle = 0;
-                epInfo[i].bmNakPower = (i) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
+                epInfo[i].bmNakPower = (i) ? UHS_USB_NAK_NOWAIT : UHS_USB_NAK_MAX_POWER;
         }
 }
 
@@ -83,7 +83,7 @@ uint8_t UHS_NI UHS_ADK::SetInterface(ENUMERATION_INFO *ei) {
                                 epInfo[index].epAddr = (ei->interface.epInfo[ep].bEndpointAddress & 0x0F);
                                 epInfo[index].maxPktSize = (uint8_t)(ei->interface.epInfo[ep].wMaxPacketSize);
                                 epInfo[index].epAttribs = 0;
-                                epInfo[index].bmNakPower = (index == epDataInIndex) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
+                                epInfo[index].bmNakPower = (index == epDataInIndex) ? UHS_USB_NAK_NOWAIT : UHS_USB_NAK_MAX_POWER;
                                 epInfo[index].bmSndToggle = 0;
                                 epInfo[index].bmRcvToggle = 0;
                                 bNumEP++;
@@ -94,7 +94,7 @@ uint8_t UHS_NI UHS_ADK::SetInterface(ENUMERATION_INFO *ei) {
         bAddress = ei->address;
         epInfo[0].epAddr = 0;
         epInfo[0].maxPktSize = ei->bMaxPacketSize0;
-        epInfo[0].bmNakPower = USB_NAK_MAX_POWER;
+        epInfo[0].bmNakPower = UHS_USB_NAK_MAX_POWER;
         bIface = ei->interface.bInterfaceNumber;
         bConfNum = ei->currentconfig;
         ADK_HOST_DEBUG("ADK: address %i, config %i, iface %i with %i endpoints\r\n", bAddress, bConfNum, bIface, bNumEP);
