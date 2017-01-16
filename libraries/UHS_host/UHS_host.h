@@ -86,6 +86,10 @@ e-mail   :  support@circuitsathome.com
 #include "UHS_CDC/UHS_CDC.h"
 #endif // CDC loaded
 
+#if defined(LOAD_UHS_ADK)
+#include "UHS_ADK/UHS_ADK.h"
+#endif
+
 #endif // System code loaded
 
 #endif // _UHS_host_h_
