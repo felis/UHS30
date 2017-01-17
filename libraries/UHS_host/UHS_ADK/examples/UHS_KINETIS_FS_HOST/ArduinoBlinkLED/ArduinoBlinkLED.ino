@@ -49,30 +49,27 @@ bool connected;
 
 void setup() {
         USB_HOST_SERIAL.begin(115200);
-        if(Usb.Init() == -1) {
-                Serial.print("\r\nOSCOKIRQ failed to assert");
-                while(1); // halt
-        }
         pinMode(LED, OUTPUT);
         Serial.print("\r\nArduino Blink LED Started");
+        while(UsbHost.Init(1000) != 0);
 }
 
 void loop() {
         if(adk.isReady()) {
                 if(!connected) {
                         connected = true;
-                        Serial.print(F("\r\nConnected to accessory"));
+                        printf_P(PSTR("\r\nConnected to accessory"));
                 }
 
                 uint8_t msg[1];
                 uint16_t len = sizeof (msg);
                 uint8_t rcode = adk.Read(&len, msg);
                 if(rcode && rcode != UHS_HOST_ERROR_NAK) {
-                        Serial.print(F("\r\nData rcv: "));
-                        Serial.print(rcode, HEX);
+                        printf_P(PSTR("\r\nData rcv: "));
+                        printf("%X", rcode);
                 } else if(len > 0) {
-                        Serial.print(F("\r\nData Packet: "));
-                        Serial.print(msg[0]);
+                        printf_P(PSTR("\r\nData Packet: "));
+                        printf("%c", msg[0]);
                         digitalWrite(LED, msg[0] ? HIGH : LOW);
                 }
 
@@ -80,17 +77,17 @@ void loop() {
                         timer = millis();
                         rcode = adk.Write(sizeof (timer), (uint8_t*) & timer);
                         if(rcode && rcode != UHS_HOST_ERROR_NAK) {
-                                Serial.print(F("\r\nData send: "));
-                                Serial.print(rcode, HEX);
+                                printf_P(PSTR("\r\nData send: "));
+                                printf("%X", rcode);
                         } else if(rcode != UHS_HOST_ERROR_NAK) {
-                                Serial.print(F("\r\nTimer: "));
-                                Serial.print(timer);
+                                printf_P(PSTR("\r\nTimer: "));
+                                printf("%lu", timer);
                         }
                 }
         } else {
                 if(connected) {
                         connected = false;
-                        Serial.print(F("\r\nDisconnected from accessory"));
+                        printf_P(PSTR("\r\nDisconnected from accessory"));
                         digitalWrite(LED, LOW);
                 }
         }
