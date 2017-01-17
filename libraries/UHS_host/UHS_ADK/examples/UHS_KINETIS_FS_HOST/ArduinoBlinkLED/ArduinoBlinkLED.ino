@@ -50,7 +50,7 @@ bool connected;
 void setup() {
         USB_HOST_SERIAL.begin(115200);
         pinMode(LED, OUTPUT);
-        Serial.print("\r\nArduino Blink LED Started");
+        USB_HOST_SERIAL.print("\r\nArduino Blink LED Started");
         while(UsbHost.Init(1000) != 0);
 }
 

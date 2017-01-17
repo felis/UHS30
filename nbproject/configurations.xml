@@ -74,6 +74,15 @@
           </df>
         </df>
         <df name="UHS_host">
+          <df name="UHS_ADK">
+            <df name="examples">
+              <df name="UHS_KINETIS_FS_HOST">
+                <df name="ArduinoBlinkLED">
+                  <in>ArduinoBlinkLED.ino</in>
+                </df>
+              </df>
+            </df>
+          </df>
           <df name="UHS_BULK_STORAGE">
             <df name="examples">
               <df name="UHS_KINETIS_FS_HOST">
@@ -474,6 +483,11 @@
             ex="false"
             tool="1"
             flavor2="4">
+      </item>
+      <item path="libraries/UHS_host/UHS_ADK/examples/UHS_KINETIS_FS_HOST/ArduinoBlinkLED/ArduinoBlinkLED.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_CDC_ACM/examples/UHS_KINETIS_FS_HOST/acm_terminal/acm_terminal.ino"
             ex="false"
