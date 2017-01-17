@@ -48,28 +48,32 @@ uint32_t timer;
 bool connected;
 
 void setup() {
+        // USB data switcher, PC -> device. (test jig, this can be ignored for regular use)
+        pinMode(5,OUTPUT),
+        digitalWriteFast(5, HIGH);
+
         USB_HOST_SERIAL.begin(115200);
         pinMode(LED, OUTPUT);
-        USB_HOST_SERIAL.print("\r\nArduino Blink LED Started");
+
+        USB_HOST_SERIAL.print("\r\n\r\n\r\n\r\nArduino Blink LED Started");
         while(UsbHost.Init(1000) != 0);
+        printf_P(PSTR("\r\nHost initialized.\r\n"));
 }
 
 void loop() {
         if(adk.isReady()) {
                 if(!connected) {
                         connected = true;
-                        printf_P(PSTR("\r\nConnected to accessory"));
+                        printf_P(PSTR("Connected to accessory\r\n"));
                 }
 
                 uint8_t msg[1];
                 uint16_t len = sizeof (msg);
                 uint8_t rcode = adk.Read(&len, msg);
                 if(rcode && rcode != UHS_HOST_ERROR_NAK) {
-                        printf_P(PSTR("\r\nData rcv: "));
-                        printf("%X", rcode);
+                        printf_P(PSTR("Data rcv: %2.2X\r\n"), rcode);
                 } else if(len > 0) {
-                        printf_P(PSTR("\r\nData Packet: "));
-                        printf("%c", msg[0]);
+                        printf_P(PSTR("Data Packet: %c\r\n"), msg[0]);
                         digitalWrite(LED, msg[0] ? HIGH : LOW);
                 }
 
@@ -77,17 +81,15 @@ void loop() {
                         timer = millis();
                         rcode = adk.Write(sizeof (timer), (uint8_t*) & timer);
                         if(rcode && rcode != UHS_HOST_ERROR_NAK) {
-                                printf_P(PSTR("\r\nData send: "));
-                                printf("%X", rcode);
+                                printf_P(PSTR("Data send: %2.2X\r\n"), rcode);
                         } else if(rcode != UHS_HOST_ERROR_NAK) {
-                                printf_P(PSTR("\r\nTimer: "));
-                                printf("%lu", timer);
+                                printf_P(PSTR("Timer: %lu\r\n"), timer);
                         }
                 }
         } else {
                 if(connected) {
                         connected = false;
-                        printf_P(PSTR("\r\nDisconnected from accessory"));
+                        printf_P(PSTR("\r\nDisconnected from accessory\r\n"));
                         digitalWrite(LED, LOW);
                 }
         }
