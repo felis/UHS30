@@ -3,20 +3,20 @@
 
 // Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
-// Load the Kinetis core
-#define LOAD_UHS_KINETIS_FS_HOST
+// Load USB Host Shield
+#define LOAD_USB_HOST_SHIELD
 #define LOAD_UHS_ADK
 
 // Patch printf so we can use it.
 #define LOAD_UHS_PRINTF_HELPER
-#define DEBUG_PRINTF_EXTRA_HUGE 1
+//#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_USB_HUB 1
-#define DEBUG_PRINTF_EXTRA_HUGE_ADK_HOST 1
+//#define DEBUG_PRINTF_EXTRA_HUGE_ADK_HOST 1
 //#define UHS_DEBUG_USB_ADDRESS 1
 // Redirect debugging and printf
 //#define UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE 1
-#define USB_HOST_SERIAL Serial1
+#define USB_HOST_SERIAL Serial
 
 char demokit_MANUFACTURER[] = "Google, Inc.";
 char demokit_MODEL[] = "DemoKit";
@@ -36,7 +36,7 @@ char demokit_SERIAL[] = "0000000012345678";
 
 #include <UHS_host.h>
 
-UHS_KINETIS_FS_HOST UsbHost;
+MAX3421E_HOST UsbHost;
 UHS_ADK adk(&UsbHost);
 uint8_t b, b1;
 
@@ -62,7 +62,7 @@ void setup() {
         printf_P(PSTR("\r\nADK demo start"));
         // USB data switcher, PC -> device. (test jig, this can be ignored for regular use)
         pinMode(5, OUTPUT);
-        digitalWriteFast(5, HIGH);
+        digitalWrite(5, HIGH);
 
         // This must be executed before host init.
         adk.SetHints(demokit_MANUFACTURER, demokit_MODEL, demokit_DESCRIPTION, demokit_VERSION, demokit_URI, demokit_SERIAL);

@@ -350,7 +350,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].epAddr = (ei->interface.epInfo[ep].bEndpointAddress & 0x0F);
                         epInfo[index].maxPktSize = (uint8_t)(ei->interface.epInfo[ep].wMaxPacketSize);
                         epInfo[index].epAttribs = 0;
-                        epInfo[index].bmNakPower = USB_NAK_MAX_POWER;
+                        epInfo[index].bmNakPower = UHS_USB_NAK_MAX_POWER;
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
                         BS_HOST_DEBUG("index: %i\r\n", index);
@@ -360,7 +360,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::SetInterface(ENUMERATION_INFO *ei) {
         bNumEP = 3;
         epInfo[0].epAddr = 0;
         epInfo[0].maxPktSize = ei->bMaxPacketSize0;
-        epInfo[0].bmNakPower = USB_NAK_MAX_POWER;
+        epInfo[0].bmNakPower = UHS_USB_NAK_MAX_POWER;
         bIface = ei->interface.bInterfaceNumber;
 
         return 0;

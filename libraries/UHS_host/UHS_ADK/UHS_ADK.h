@@ -24,11 +24,12 @@ e-mail   :  support@circuitsathome.com
 
 #define ADK_MAX_ENDPOINTS 3 // endpoint 0, bulk_IN, bulk_OUT
 
-#if !defined(UHS_ADK_MANUFACTURER)
-#define UHS_ADK_MANUFACTURER "Circuits at Home"
+#if 0
+#if !defined(BlinkLED_MANUFACTURER)
+#define BlinkLED_MANUFACTURER "Circuits at Home"
 #endif
-#if !defined(UHS_ADK_MODEL)
-#define UHS_ADK_MODEL "Arduino"
+#if !defined(BlinkLED_MODEL)
+#define BlinkLED_MODEL "Arduino"
 #endif
 #if !defined(UHS_ADK_DESCRIPTION)
 #define UHS_ADK_DESCRIPTION "Example ADK device"
@@ -41,6 +42,7 @@ e-mail   :  support@circuitsathome.com
 #endif
 #if !defined(UHS_ADK_SERIAL)
 #define UHS_ADK_SERIAL "0001"
+#endif
 #endif
 
 #define UHS_PID_GOOGLE_ADK   0x2D00
@@ -73,11 +75,30 @@ e-mail   :  support@circuitsathome.com
 
 class UHS_ADK_Enabler : public UHS_USBInterface {
 public:
+        // DO NOT reset in the defaults so that the parent can get the protocol version.
+        volatile uint16_t adkproto;
         volatile UHS_EpInfo epInfo[1]; // we only need the control endpoint
+        uint8_t qPollRate; // How fast to poll maximum
 
+        const char *UHS_S_MANUFACTURER;
+        const char *UHS_S_MODEL;
+        const char *UHS_S_DESCRIPTION;
+        const char *UHS_S_VERSION;
+        const char *UHS_S_URI;
+        const char *UHS_S_SERIAL;
+
+        UHS_ADK_Enabler(UHS_USB_HOST_BASE *p);
         bool OKtoEnumerate(ENUMERATION_INFO *ei);
         uint8_t SetInterface(ENUMERATION_INFO *ei);
-        uint8_t OnStart(void);
+        uint8_t Start(void);
+        void DriverDefaults(void);
+
+        bool Polling(void) {
+                return bPollEnable;
+        }
+
+        void Poll(void);
+
 
         /* ADK proprietary requests */
         uint8_t getProto(uint8_t *adkproto);
@@ -85,14 +106,14 @@ public:
         uint8_t switchAcc(void);
 };
 
-
 class UHS_ADK : public UHS_USBInterface {
 public:
         static const uint8_t epDataInIndex = 1; // DataIn endpoint index
         static const uint8_t epDataOutIndex = 2; // DataOUT endpoint index
         volatile UHS_EpInfo epInfo[ADK_MAX_ENDPOINTS];
         volatile bool ready; // device ready indicator
-        UHS_ADK_Enabler enabler;
+        uint8_t qPollRate; // How fast to poll maximum
+        UHS_ADK_Enabler *enabler;
 
         UHS_ADK(UHS_USB_HOST_BASE *p);
 
@@ -100,10 +121,27 @@ public:
         uint8_t Read(uint16_t *nbytesptr, uint8_t *dataptr);
         uint8_t Write(uint16_t nbytes, uint8_t *dataptr);
 
-        uint8_t OnStart(void);
+        uint8_t Start(void);
         bool OKtoEnumerate(ENUMERATION_INFO *ei);
         uint8_t SetInterface(ENUMERATION_INFO *ei);
         void DriverDefaults(void);
+
+        bool Polling(void) {
+                return bPollEnable;
+        }
+
+        // Set the string hints to send Android
+
+        void SetHints(char *s_MANUFACTURER, char *s_MODEL, char *s_DESCRIPTION = NULL, char *s_VERSION = NULL, char *s_URI = NULL, char *s_SERIAL = NULL) {
+                enabler->UHS_S_MANUFACTURER = s_MANUFACTURER;
+                enabler->UHS_S_MODEL = s_MODEL;
+                enabler->UHS_S_DESCRIPTION = s_DESCRIPTION;
+                enabler->UHS_S_VERSION = s_VERSION;
+                enabler->UHS_S_URI = s_URI;
+                enabler->UHS_S_SERIAL = s_SERIAL;
+        }
+
+        void Poll(void);
 
         uint8_t GetAddress() {
                 return bAddress;

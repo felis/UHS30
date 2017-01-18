@@ -3,20 +3,20 @@
 
 // Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
-// Load the Kinetis core
-#define LOAD_UHS_KINETIS_FS_HOST
+// Load USB Host Shield
+#define LOAD_USB_HOST_SHIELD
 #define LOAD_UHS_ADK
 
 // Patch printf so we can use it.
 #define LOAD_UHS_PRINTF_HELPER
-#define DEBUG_PRINTF_EXTRA_HUGE 1
+//#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_USB_HUB 1
-#define DEBUG_PRINTF_EXTRA_HUGE_ADK_HOST 1
+//#define DEBUG_PRINTF_EXTRA_HUGE_ADK_HOST 1
 //#define UHS_DEBUG_USB_ADDRESS 1
 // Redirect debugging and printf
 //#define UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE 1
-#define USB_HOST_SERIAL Serial1
+#define USB_HOST_SERIAL Serial
 
 
 
@@ -44,7 +44,7 @@ char BlinkLED_VERSION[] = "1.0";
 char BlinkLED_URI[] = "http://www.tkjelectronics.dk/uploads/ArduinoBlinkLED.apk";
 char BlinkLED_SERIAL[] = "123456789";
 
-UHS_KINETIS_FS_HOST UsbHost;
+MAX3421E_HOST UsbHost;
 UHS_ADK adk(&UsbHost);
 uint32_t timer;
 bool connected;
@@ -52,7 +52,7 @@ bool connected;
 void setup() {
         // USB data switcher, PC -> device. (test jig, this can be ignored for regular use)
         pinMode(5, OUTPUT);
-        digitalWriteFast(5, HIGH);
+        digitalWrite(5, HIGH);
 
         USB_HOST_SERIAL.begin(115200);
         pinMode(LED, OUTPUT);
