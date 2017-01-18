@@ -119,7 +119,7 @@ uint8_t UHS_NI UHS_ADK_Enabler::Start(void) {
                 ADK_HOST_DEBUG("ADK Enabler: switch to accessory mode\r\n");
                 rcode = switchAcc();
                 if(!rcode) {
-                        ADK_HOST_DEBUG("ADK Enabler: swAcc OK ");
+                        ADK_HOST_DEBUG("ADK Enabler: swAcc OK\r\n");
                         rcode = OnStart();
                         if(!rcode) {
                                 ADK_HOST_DEBUG("ADK Enabler: OnStart OK\r\n");
@@ -129,7 +129,7 @@ uint8_t UHS_NI UHS_ADK_Enabler::Start(void) {
                                 ADK_HOST_DEBUG("ADK Enabler: OnStart FAIL\r\n");
                         }
                 } else {
-                        ADK_HOST_DEBUG("ADK Enabler: swAcc FAIL ");
+                        ADK_HOST_DEBUG("ADK Enabler: swAcc FAIL\r\n");
                 }
         } else {
                 ADK_HOST_DEBUG("ADK Enabler: getProto FAIL\r\n");
