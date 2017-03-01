@@ -90,6 +90,10 @@ e-mail   :  support@circuitsathome.com
 #include "UHS_ADK/UHS_ADK.h"
 #endif
 
+#if defined(LOAD_UHS_MIDI)
+#include "UHS_MIDI/UHS_MIDI.h"
+#endif
+
 #endif // System code loaded
 
 #endif // _UHS_host_h_
