@@ -182,6 +182,10 @@ void show_dir(PFAT_DIRINFO *de) {
 }
 
 void setup() {
+        // USB data switcher, PC -> device.
+        pinMode(5,OUTPUT),
+        digitalWriteFast(5, HIGH);
+
         de = (PFAT_DIRINFO *)malloc(sizeof (PFAT_DIRINFO));
         data = (uint8_t *)malloc(TESTdsize);
         USB_HOST_SERIAL.begin(115200);

@@ -70,6 +70,9 @@ void test_bulk(uint8_t lun) {
 }
 
 void setup() {
+        // USB data switcher, PC -> device.
+        pinMode(5,OUTPUT),
+        digitalWriteFast(5, HIGH);
         USB_HOST_SERIAL.begin(115200);
         while(KINETIS_Usb.Init(1000) !=0);
         printf("\r\n\r\ngo!\r\n");

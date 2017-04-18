@@ -35,6 +35,10 @@ boolean lastEnable = false;
 uint8_t buf[512]; // WARNING! Assumes a sector is 512bytes!
 
 void test_bulk(uint8_t lun) {
+        // USB data switcher, PC -> device.
+        pinMode(5,OUTPUT),
+        digitalWriteFast(5, HIGH);
+
         uint8_t rcode = 0;
         uint16_t loops = 0;
         tested = true;

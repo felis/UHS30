@@ -29,6 +29,10 @@ uint8_t d;
 
 
 void setup() {
+        // USB data switcher, PC -> device.
+        pinMode(5,OUTPUT),
+        digitalWriteFast(5, HIGH);
+
         USB_HOST_SERIAL.begin(115200);
         delay(10000);
         USB_HOST_SERIAL.println("Start.");

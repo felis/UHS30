@@ -70,6 +70,10 @@ UHS_Device *p;
 uint8_t dtp;
 
 void setup() {
+        // USB data switcher, PC -> device.
+        pinMode(5,OUTPUT),
+        digitalWriteFast(5, HIGH);
+
         laststate = 0;
         USB_HOST_SERIAL.begin(115200);
 
