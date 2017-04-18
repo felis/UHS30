@@ -1,11 +1,12 @@
-#BOARD=teensy:avr:teensy30:usb=disable,speed=96opt,keys=en-us
-BOARD=teensy:avr:teensy31:usb=disable,speed=96opt,keys=en-us
-#BOARD=teensy:avr:teensy33:usb=disable,speed=96opt,keys=en-us
-#BOARD=teensy:avr:teensy34:usb=disable,speed=96opt,keys=en-us
-#BOARD=teensy:avr:teensy35:usb=disable,speed=96opt,keys=en-us
-#BOARD=teensy:avr:teensy36:usb=disable,speed=96opt,keys=en-us
+#BOARD=teensy:avr:teensy30:usb=disable,speed=96,opt=o1std,keys=en-us
+BOARD=teensy:avr:teensy31:usb=disable,speed=96,opt=o1std,keys=en-us
+#BOARD=teensy:avr:teensy33:usb=disable,speed=96,opt=o1std,keys=en-us
+#BOARD=teensy:avr:teensy34:usb=disable,speed=96,opt=o1std,keys=en-us
+#BOARD=teensy:avr:teensy35:usb=disable,speed=96,opt=o1std,keys=en-us
+#BOARD=teensy:avr:teensy36:usb=disable,speed=96,opt=o1std,keys=en-us
 
 PORT = /dev/ttyUSB0
+CPORT = /dev/ttyUSB0
 
 # And finally, the part that brings everything together for you.
 HOMEDIR =$(HOME)
