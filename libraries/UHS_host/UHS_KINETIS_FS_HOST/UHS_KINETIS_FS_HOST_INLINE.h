@@ -871,6 +871,12 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
 #ifdef HAS_KINETIS_MPU
         MPU_RGDAAC0 |= 0x03000000;
 #endif
+#if F_CPU == 180000000 || F_CPU == 216000000
+        // if using IRC48M, turn on the USB clock recovery hardware
+        USB0_CLK_RECOVER_IRC_EN = USB_CLK_RECOVER_IRC_EN_IRC_EN | USB_CLK_RECOVER_IRC_EN_REG_EN;
+        USB0_CLK_RECOVER_CTRL = USB_CLK_RECOVER_CTRL_CLOCK_RECOVER_EN |
+                USB_CLK_RECOVER_CTRL_RESTART_IFRTRIM_EN;
+#endif
 
         // reset USB module
         USB0_USBTRC0 = USB_USBTRC_USBRESET;
@@ -889,6 +895,8 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         ep0_rx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
 
         // setup buffers
+        // to-do: re-use (steal) Paul's allocated buffers, but ONLY if using his stuff.
+
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_EVEN)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_EVEN)].addr = ep0_rx0_buf;
 
@@ -923,6 +931,8 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         USB0_OTGICR = USB_OTGICR_ONEMSECEN; // activate 1ms timer interrupt
         USB0_ERREN = 0xFF; // enable all error interrupts
 
+        // Change SRAM[LU] priority to prefer backdoor (DMA/USB) over CPU.
+        MCM_CR |= MCM_CR_SRAMLAP(3) | MCM_CR_SRAMUAP(3);
         // switch isr for USB
         NVIC_DISABLE_IRQ(IRQ_USBOTG);
         NVIC_SET_PRIORITY(IRQ_USBOTG, 112);
