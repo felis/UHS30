@@ -280,6 +280,7 @@ public:
 
         /**
          * Checks if this interface is supported.
+         * Executed called when new devices are connected.
          *
          * @param ei
          * @return true if the interface is supported
@@ -291,6 +292,8 @@ public:
         /**
          * Configures any needed endpoint information for an interface.
          * You must provide this in your driver.
+         * Executed when new devices are connected and OKtoEnumerate()
+         * returned true.
          *
          * @param ei
          * @return zero on success

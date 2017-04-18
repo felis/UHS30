@@ -336,7 +336,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
                 } else {
                         newToken = true;
                 }
-#if DEBUG_PRINTF_EXTRA_HUGE
+#if DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST
                 uint8_t count = b_newToken.desc >> 16;
                 uint8_t *buf = (uint8_t *)b_newToken.addr;
                 HOST_DUBUG("ISR: TOKDNE. Pid: %lx", pid);
