@@ -940,7 +940,7 @@ uint8_t UHS_USB_HOST_BASE::getone(UHS_EpInfo *pep, uint16_t *left, uint16_t *rea
 }
 
 uint8_t UHS_USB_HOST_BASE::eat(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint8_t *dataptr, uint8_t *offset, uint16_t *yum) {
-        uint8_t rcode;
+        uint8_t rcode = 0;
         HOST_DUBUG("eating %i\r\n", *yum);
         while(*yum) {
                 *yum -= 1;
