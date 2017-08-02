@@ -760,11 +760,6 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
                         // Now at iInterface
                         // Get endpoints.
                         HOST_DUBUG("Getting %i endpoints\r\n", ei->interface.numep);
-                        if(!ei->interface.numep) {
-                                rcode = getone(pep, left, read, data, offset);
-                                if(rcode)
-                                        return rcode;
-                        }
                         while(epc < ei->interface.numep) {
                                 rcode = getone(pep, left, read, data, offset);
                                 if(rcode) {
@@ -806,7 +801,10 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
                         }
                         remain = 1;
                         // queue ahead, but do not report if error.
-                        eat(pep, left, read, data, offset, &remain);
+                        rcode = eat(pep, left, read, data, offset, &remain);
+                        if(!ei->interface.numep && rcode) {
+                                return rcode;
+                        }
                         HOST_DUBUG("ENDPOINT DESCRIPTORS FILLED\r\n");
                         return 0;
                 } else {
