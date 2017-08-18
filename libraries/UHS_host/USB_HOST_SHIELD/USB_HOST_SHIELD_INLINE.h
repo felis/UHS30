@@ -258,11 +258,25 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         noInterrupts();
 #ifdef BOARD_MEGA_ADK
         // For Mega ADK, which has a Max3421e on-board, set MAX_RESET to output mode, and then set it to HIGH
+        PORTJ bit 2
+
+        if(irq_pin == 54) {
+                DDRJ |= 0x04; // output
+                PORTJ |= 0x04;
+        }
         pinMode(55, OUTPUT);
         UHS_PIN_WRITE(55, HIGH);
+
+
 #endif
         SPI.begin();
-        pinMode(irq_pin, INPUT_PULLUP);
+#ifdef BOARD_MEGA_ADK
+        if(irq_pin == 54) {
+                DDRE &= ~0x20; // input
+                PORTE |= 0x20; // pullup
+        } else
+#endif
+                pinMode(irq_pin, INPUT_PULLUP);
         //UHS_PIN_WRITE(irq_pin, HIGH);
         pinMode(ss_pin, OUTPUT);
         UHS_PIN_WRITE(ss_pin, HIGH);
@@ -277,7 +291,14 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
 
 #if USB_HOST_SHIELD_USE_ISR
         int intr = digitalPinToInterrupt(irq_pin);
-        if(intr == NOT_AN_INTERRUPT) return (-2);
+        if(intr == NOT_AN_INTERRUPT) {
+#if defined(ARDUINO_AVR_ADK)
+                if(irq_pin == 54)
+                        intr = 6;
+                else
+#endif
+                        return (-2);
+        }
         SPI.usingInterrupt(intr);
 #else
         SPI.usingInterrupt(255);

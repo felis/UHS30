@@ -122,7 +122,11 @@ e-mail   :  support@circuitsathome.com
 #endif
 
 #if !defined(ARDUINO_SAMD_ZERO)
+#if defined(ARDUINO_AVR_ADK)
+#define UHS_GET_DPI(x) (x == 54 ? 6 : digitalPinToInterrupt(x))
+#else
 #define UHS_GET_DPI(x) digitalPinToInterrupt(x)
+#endif
 #else
 #define UHS_GET_DPI(x) (x)
 #endif

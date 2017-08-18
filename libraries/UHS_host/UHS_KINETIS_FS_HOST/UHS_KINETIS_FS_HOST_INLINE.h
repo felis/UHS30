@@ -861,6 +861,10 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqT
  * @return 0 on success, -1 on error
  */
 int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
+#if defined(UHS_USB_VBUS)
+        pinMode(UHS_USB_VBUS, OUTPUT);
+        digitalWriteFast(UHS_USB_VBUS, LOW);
+#endif
         Init_dyn_SWI();
         //UHS_printf_HELPER_init();
         _UHS_KINETIS_THIS_ = this;
@@ -945,7 +949,9 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
 
         USB0_CTL = USB_CTL_HOSTMODEEN; // host mode enable
         // USB0_CTL &= ~USB_CTL_USBENSOFEN; // disable SOF generation to avoid noise until we detect attach
-
+#if defined(UHS_USB_VBUS)
+        digitalWriteFast(UHS_USB_VBUS, HIGH);
+#endif
         return 0;
 }
 

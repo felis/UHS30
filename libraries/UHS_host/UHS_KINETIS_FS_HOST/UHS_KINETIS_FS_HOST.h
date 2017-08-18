@@ -200,7 +200,15 @@ public:
         };
 
         // VBUS is always powered for Teensy 3.x (other KINETIS products may not do that though...)
-        virtual void UHS_NI vbusPower(VBUS_t state) {};
+        virtual void UHS_NI vbusPower(VBUS_t state) {
+#if defined(UHS_USB_VBUS)
+        if(state == vbus_on) {
+                digitalWriteFast(UHS_USB_VBUS, HIGH);
+        } else {
+                digitalWriteFast(UHS_USB_VBUS, LOW);
+        }
+#endif
+        };
 
         virtual void Task(void); // {};
 
