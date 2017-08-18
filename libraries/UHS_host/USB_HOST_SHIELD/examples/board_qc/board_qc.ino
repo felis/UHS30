@@ -63,8 +63,8 @@ void setup() {
 
 #ifdef BOARD_MEGA_ADK
         // For Mega ADK, which has a Max3421e on-board, set MAX_RESET to output mode, and then set it to HIGH
-        pinMode(55, OUTPUT);
-        UHS_PIN_WRITE(55, HIGH);
+        DDRJ |= 0x04; // output
+        PORTJ |= 0x04;
 #endif
         // Manually initialize ahead of time
         Init_dyn_SWI();
@@ -74,8 +74,14 @@ void setup() {
         UHS_Usb.ss_pin = UHS_MAX3421E_SS;
         UHS_Usb.irq_pin = UHS_MAX3421E_INT;
         UHS_Usb.MAX3421E_SPI_Settings = SPISettings(UHS_MAX3421E_SPD, MSBFIRST, SPI_MODE0);
+
+#ifdef BOARD_MEGA_ADK
+        DDRE &= ~0x20; // input
+        PORTE |= 0x20; // pullup
+#else
         pinMode(UHS_Usb.irq_pin, INPUT);
         UHS_PIN_WRITE(UHS_Usb.irq_pin, HIGH);
+#endif
         pinMode(UHS_Usb.ss_pin, OUTPUT);
         UHS_PIN_WRITE(UHS_Usb.ss_pin, HIGH);
 
