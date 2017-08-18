@@ -76,8 +76,8 @@ void setup() {
         UHS_Usb.MAX3421E_SPI_Settings = SPISettings(UHS_MAX3421E_SPD, MSBFIRST, SPI_MODE0);
 
 #ifdef BOARD_MEGA_ADK
-        DDRE &= ~0x20; // input
-        PORTE |= 0x20; // pullup
+        DDRE &= ~0x40; // input
+        PORTE |= 0x40; // pullup
 #else
         pinMode(UHS_Usb.irq_pin, INPUT);
         UHS_PIN_WRITE(UHS_Usb.irq_pin, HIGH);

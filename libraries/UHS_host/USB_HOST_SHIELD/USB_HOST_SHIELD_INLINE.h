@@ -262,12 +262,8 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
 
         if(irq_pin == 54) {
                 DDRJ |= 0x04; // output
-                PORTJ |= 0x04;
+                PORTJ |= 0x04; // HIGH
         }
-        pinMode(55, OUTPUT);
-        UHS_PIN_WRITE(55, HIGH);
-
-
 #endif
         SPI.begin();
 #ifdef BOARD_MEGA_ADK

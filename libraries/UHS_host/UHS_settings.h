@@ -41,8 +41,6 @@ e-mail   :  support@circuitsathome.com
 //                              | Other modules depend  |
 //                              | on this setting.      |
 // -----------------------------+-----------------------+-----------------------
-// USE_UHS_MEGA_ADK             | 0 = no, 1 = yes       | 0
-// -----------------------------+-----------------------+-----------------------
 // USE_UHS_BLACK_WIDDOW         | 0 = no, 1 = yes       | 0
 // -----------------------------+-----------------------+-----------------------
 // ENABLE_WII_IR_CAMERA         | 0 = no, 1 = yes       | 0
@@ -74,11 +72,6 @@ e-mail   :  support@circuitsathome.com
 ////////////////////////////////////////////////////////////////////////////////
 // Manual board activation
 ////////////////////////////////////////////////////////////////////////////////
-
-/* Set this to 1 if you are using an Arduino Mega ADK board with MAX3421e built-in */
-#ifndef USE_UHS_MEGA_ADK
-#define USE_UHS_MEGA_ADK 0 // If you are using Arduino 1.5.5 or newer there is no need to do this manually
-#endif
 
 /* Set this to 1 if you are using a Black Widdow */
 #ifndef USE_UHS_BLACK_WIDDOW
