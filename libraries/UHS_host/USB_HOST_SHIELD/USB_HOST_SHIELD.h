@@ -191,11 +191,11 @@ e-mail   :  support@circuitsathome.com
 // Tsetup minimum for MISO 10ns.
 // We are in violation by 7.7ns @ 25MHz due to latency alone.
 // Even reading at end of data cycle, we only have a 2.3ns window.
-// This is too narrow to to compensate for capacitence, trace lengths, and noise.
+// This is too narrow to to compensate for capacitance, trace lengths, and noise.
 
 // 17.7ns + 10ns = 27.7ns
-// 18MHz fits and has enough slack time to compensate for capacitence, trace lengths, and noise.
-// For high speeds the SMP bit is reccommended too, which samples at the end instead of the middle.
+// 18MHz fits and has enough slack time to compensate for capacitance, trace lengths, and noise.
+// For high speeds the SMP bit is recommended too, which samples at the end instead of the middle.
 // 20Mhz seems to work.
 
 #define UHS_MAX3421E_SPD 20000000

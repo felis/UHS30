@@ -136,7 +136,8 @@ void setup() {
                 printf_P(PSTR("\r\nSPI long test passed"));
         }//SPI long test
 
-        /* GPIO test */
+#ifndef BOARD_MEGA_ADK
+        /* GPIO test , not possible on ADK */
         /* in order to simplify board layout, GPIN pins on text fixture are connected to GPOUT */
         /* in reverse order, i.e, GPIN0 is connected to GPOUT7, GPIN1 to GPOUT6, etc. */
         {
@@ -156,7 +157,7 @@ void setup() {
                 }//for( uint8_t sample_gpio...
                         printf_P(PSTR("\r\nGPIO test passed."));
         }//GPIO test
-
+#endif
         /* PLL test. Stops/starts MAX3421E oscillator several times */
         {
                 printf_P(PSTR("\r\nPLL test. 100 chip resets will be performed"));

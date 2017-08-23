@@ -92,7 +92,32 @@ e-mail   :  support@circuitsathome.com
 #define           UHS_CDC_LINE_STATE_CHANGE 0x29
 #define     UHS_CDC_CONNECTION_SPEED_CHANGE 0x2a
 
+#define                 UHS_CDC_HEADER_DESC 0x00    // header descriptor
+#define        UHS_CDC_CALL_MANAGEMENT_DESC 0x01    // call mgmt descriptor
+#define                    UHS_CDC_ACM_DESC 0x02    // acm descriptor
+#define                  UHS_CDC_UNION_DESC 0x06    // union descriptor
+#define                UHS_CDC_COUNTRY_DESC 0x07    //
+#define       UHS_CDC_NETWORK_TERMINAL_DESC 0x0a    // network terminal descriptor
+#define               UHS_CDC_ETHERNET_DESC 0x0f    // ether descriptor
+#define                   UHS_CDC_WHCM_DESC 0x11    //
+#define                   UHS_CDC_MDLM_DESC 0x12    // mdlm descriptor
+#define            UHS_CDC_MDLM_DETAIL_DESC 0x13    // mdlm detail descriptor
+#define                    UHS_CDC_DMM_DESC 0x14
+#define                   UHS_CDC_OBEX_DESC 0x15
+
+#define     USB_CDC_CALL_MGMT_CAP_CALL_MGMT 0x01
+#define     USB_CDC_CALL_MGMT_CAP_DATA_INTF 0x02
+
+
 // CDC Functional Descriptor Structures
+
+/* "Header Functional Descriptor" from CDC spec  5.2.3.1 */
+typedef struct usb_cdc_header_desc {
+        uint8_t    bLength;
+        uint8_t    bDescriptorType;
+        uint8_t    bDescriptorSubType;
+        uint16_t  bcdCDC;
+} __attribute__ ((packed)) UHS_CDC_ACM_HEADER_DESCR;
 
 typedef struct {
         uint8_t bFunctionLength;
@@ -100,14 +125,14 @@ typedef struct {
         uint8_t bDescriptorSubtype;
         uint8_t bmCapabilities;
         uint8_t bDataInterface;
-} UHS_CDC_CALL_MGMNT_FUNC_DESCR;
+} __attribute__ ((packed)) UHS_CDC_CALL_MGMNT_FUNC_DESCR;
 
 typedef struct {
         uint8_t bFunctionLength;
         uint8_t bDescriptorType;
         uint8_t bDescriptorSubtype;
         uint8_t bmCapabilities;
-} UHS_CDC_ACM_FUNC_DESCR, UHS_CDC_DLM_FUNC_DESCR, UHS_CDC_TEL_OPER_MODES_FUNC_DESCR, UHS_CDC_TEL_CALL_STATE_REP_CPBL_FUNC_DESCR;
+}  __attribute__ ((packed)) UHS_CDC_ACM_FUNC_DESCR, UHS_CDC_DLM_FUNC_DESCR, UHS_CDC_TEL_OPER_MODES_FUNC_DESCR, UHS_CDC_TEL_CALL_STATE_REP_CPBL_FUNC_DESCR;
 
 typedef struct {
         uint8_t bFunctionLength;
@@ -115,14 +140,14 @@ typedef struct {
         uint8_t bDescriptorSubtype;
         uint8_t bRingerVolSteps;
         uint8_t bNumRingerPatterns;
-} UHS_CDC_TEL_RINGER_FUNC_DESCR;
+} __attribute__ ((packed)) UHS_CDC_TEL_RINGER_FUNC_DESCR;
 
 typedef struct {
         uint32_t dwDTERate; // Data Terminal Rate in bits per second
         uint8_t bCharFormat; // 0 - 1 stop bit, 1 - 1.5 stop bits, 2 - 2 stop bits
         uint8_t bParityType; // 0 - None, 1 - Odd, 2 - Even, 3 - Mark, 4 - Space
         uint8_t bDataBits; // Data bits (5, 6, 7, 8 or 16)
-} UHS_CDC_LINE_CODING;
+} __attribute__ ((packed)) UHS_CDC_LINE_CODING;
 
 typedef struct {
         uint8_t bmRequestType; // 0xa1 for class-specific notifications
@@ -131,7 +156,7 @@ typedef struct {
         uint16_t wIndex;
         uint16_t wLength;
         uint16_t bmState; //UART state bitmap for SERIAL_STATE, other notifications variable length
-} UHS_CDC_CLASS_NOTIFICATION;
+} __attribute__ ((packed)) UHS_CDC_CLASS_NOTIFICATION;
 
 /**
  * This structure is used to report the extended capabilities of the connected device.
@@ -154,7 +179,7 @@ typedef struct {
                         bool  half_duplex : 1; // Has half-duplex capability.
                 } __attribute__((packed));
         };
-} UHS_CDC_tty_features;
+} __attribute__ ((packed)) UHS_CDC_tty_features;
 
 #if defined(LOAD_UHS_CDC_ACM_PROLIFIC) && !defined(UHS_CDC_ACM_PROLIFIC_LOADED)
 #include "../UHS_CDC_ACM/UHS_CDC_ACM_PROLIFIC.h"
