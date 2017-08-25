@@ -737,6 +737,12 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
         ei->interface.protocol = 0;
         while(*left + *read) {
                 remain = data[*offset]; // bLength
+                while(remain < 2) {
+                        rcode = getone(pep, left, read, data, offset);
+                        if(rcode)
+                                return rcode;
+                        remain = data[*offset];
+                }
                 rcode = getone(pep, left, read, data, offset);
                 if(rcode)
                         return rcode;
@@ -767,6 +773,12 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
                                         return rcode;
                                 }
                                 remain = data[*offset]; // bLength
+                                while(remain < 2) {
+                                        rcode = getone(pep, left, read, data, offset);
+                                        if(rcode)
+                                                return rcode;
+                                        remain = data[*offset];
+                                }
                                 rcode = getone(pep, left, read, data, offset);
                                 if(rcode) {
                                         HOST_DUBUG("ENDPOINT DESCRIPTOR DIED EARLY\r\n");
@@ -851,13 +863,20 @@ uint8_t UHS_USB_HOST_BASE::seekInterface(ENUMERATION_INFO *ei, uint16_t inf, USB
                 rcode = eat(pep, &left, &read, data, &offset, &remain);
                 if(rcode)
                         return rcode;
-                remain = data[offset] - 1; // bLength
+                remain = data[offset]; // bLength
+                while(remain < 2) {
+                        rcode = getone(pep, &left, &read, data, &offset);
+                        if(rcode)
+                                return rcode;
+                        remain = data[offset];
+                }
                 rcode = getone(pep, &left, &read, data, &offset);
                 if(rcode)
                         return rcode;
                 ty = data[offset]; // bDescriptorType
-                HOST_DUBUG("bLength: %i ", remain + 1);
+                HOST_DUBUG("bLength: %i ", remain);
                 HOST_DUBUG("bDescriptorType: %2.2x\r\n", ty);
+                remain--;
                 if(ty == USB_DESCRIPTOR_INTERFACE) {
                         HOST_DUBUG("INTERFACE DESCRIPTOR: %i\r\n", cinf);
                         cinf++;
@@ -882,13 +901,20 @@ uint8_t UHS_USB_HOST_BASE::seekInterface(ENUMERATION_INFO *ei, uint16_t inf, USB
                                         rcode = getone(pep, &left, &read, data, &offset);
                                         if(rcode)
                                                 return rcode;
-                                        remain = data[offset] - 1; // bLength
+                                        remain = data[offset]; // bLength
+                                        while(remain < 2) {
+                                                rcode = getone(pep, &left, &read, data, &offset);
+                                                if(rcode)
+                                                        return rcode;
+                                                remain = data[offset];
+                                        }
                                         rcode = getone(pep, &left, &read, data, &offset);
                                         if(rcode)
                                                 return rcode;
                                         ty = data[offset]; // bDescriptorType
-                                        HOST_DUBUG("bLength: %i ", remain + 1);
+                                        HOST_DUBUG("bLength: %i ", remain);
                                         HOST_DUBUG("bDescriptorType: %2.2x\r\n", ty);
+                                        remain--;
                                         if(ty == USB_DESCRIPTOR_ENDPOINT) {
                                                 HOST_DUBUG("ENDPOINT DESCRIPTOR: %i\r\n", epc);
                                                 ptr = (uint8_t *)(&(ei->interface.epInfo[epc].bEndpointAddress));

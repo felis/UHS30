@@ -114,7 +114,7 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         // Basically I use it as a name-space qualifier by declaring it here.
         // That helps to avoid name collisions in other code as it is a member.
         //
-        __attribute__ ((section(".usbdescriptortable_hosts"), used)) static bdt_t table[2];
+        __attribute__ ((section(".usbdescriptortable_hosts"), used)) static bdt_t table[4];
 
         // mark that a token was done and store its pid while inside the isr
         volatile bool newToken;

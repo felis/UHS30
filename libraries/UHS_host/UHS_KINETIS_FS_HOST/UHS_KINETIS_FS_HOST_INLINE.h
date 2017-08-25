@@ -446,6 +446,8 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpI
         USBTRACE2(" EP: ", ep);
         USBTRACE2(" NAK Power: ", (*ppep)->bmNakPower);
         USBTRACE2(" NAK Limit: ", nak_limit);
+        USBTRACE2(" RETRY DISABLE: ", ((nak_limit > 2U) ? 0 : 1));
+
         USBTRACE("\r\n");
 
         //HOST_DUBUG("\r\nAddress: %2.2x. EP: %2.2x, NAK Power: %2.2x, NAK Limit: %u\r\n", addr, ep, (*ppep)->bmNakPower, nak_limit);
@@ -457,10 +459,10 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpI
         //Serial.print("\r\nLS: ");
         //Serial.println(p->speed, HEX);
 
-        // Disable automatic retries for NAK!=0, Set hub for low-speed device
+        // Disable automatic retries for NAK > 1, Set hub for low-speed device
         USB0_ENDPT0 = USB_ENDPT_EPRXEN | USB_ENDPT_EPTXEN | USB_ENDPT_EPHSHK |
                 //((nak_limit != 1U) ? 0 : USB_ENDPT_RETRYDIS) |
-                ((nak_limit != 0U) ? 0 : USB_ENDPT_RETRYDIS) |
+                ((nak_limit >1U) ? 0 : USB_ENDPT_RETRYDIS) |
                 ((p->speed) ? 0 : USB_ENDPT_HOSTWOHUB);
 
         // set USB0_SOFTHLD depending on the maxPktSize
@@ -936,7 +938,7 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         USB0_ERREN = 0xFF; // enable all error interrupts
 
         // Change SRAM[LU] priority to prefer backdoor (DMA/USB) over CPU.
-        MCM_CR |= MCM_CR_SRAMLAP(3) | MCM_CR_SRAMUAP(3);
+        //MCM_CR |= MCM_CR_SRAMLAP(3) | MCM_CR_SRAMUAP(3);
         // switch isr for USB
         NVIC_DISABLE_IRQ(IRQ_USBOTG);
         NVIC_SET_PRIORITY(IRQ_USBOTG, 112);
