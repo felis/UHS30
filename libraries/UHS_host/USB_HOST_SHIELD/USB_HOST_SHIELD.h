@@ -64,8 +64,7 @@ e-mail   :  support@circuitsathome.com
 //
 // Polled defaults
 //
-
-#ifdef BOARD_BLACK_WIDDOW
+#if defined(BOARD_BLACK_WIDDOW)
 #define UHS_MAX3421E_SS_ 6
 #define UHS_MAX3421E_INT_ 3
 #elif defined(CORE_TEENSY) && (defined(__AVR_AT90USB646__) || defined(__AVR_AT90USB1286__))
@@ -78,7 +77,7 @@ e-mail   :  support@circuitsathome.com
 #define UHS_MAX3421E_INT_ 8
 #endif
 #define UHS_MAX3421E_SPD
-#elif defined(BOARD_MEGA_ADK)
+#elif defined(ARDUINO_AVR_ADK)
 #define UHS_MAX3421E_SS_ 53
 #define UHS_MAX3421E_INT_ 54
 #elif defined(ARDUINO_AVR_BALANDUINO)
@@ -124,6 +123,9 @@ e-mail   :  support@circuitsathome.com
 //
 #ifdef BOARD_BLACK_WIDDOW
 #error "HELP! Please send us an email, I don't know the values for Int0 and Int1 on the Black Widow board!"
+#elif defined(ARDUINO_AVR_ADK)
+#define UHS_MAX3421E_SS_ 53
+#define UHS_MAX3421E_INT_ 54
 #elif defined(CORE_TEENSY) && (defined(__AVR_AT90USB646__) || defined(__AVR_AT90USB1286__))
 
 // TO-DO!

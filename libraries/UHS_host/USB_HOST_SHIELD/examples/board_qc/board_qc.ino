@@ -61,7 +61,7 @@ void setup() {
         laststate = 0;
         USB_HOST_SERIAL.begin( 115200 );
 
-#ifdef BOARD_MEGA_ADK
+#ifdef ARDUINO_AVR_ADK
         // For Mega ADK, which has a Max3421e on-board, set MAX_RESET to output mode, and then set it to HIGH
         DDRJ |= 0x04; // output
         PORTJ |= 0x04;
@@ -75,9 +75,9 @@ void setup() {
         UHS_Usb.irq_pin = UHS_MAX3421E_INT;
         UHS_Usb.MAX3421E_SPI_Settings = SPISettings(UHS_MAX3421E_SPD, MSBFIRST, SPI_MODE0);
 
-#ifdef BOARD_MEGA_ADK
-        DDRE &= ~0x40; // input
-        PORTE |= 0x40; // pullup
+#ifdef ARDUINO_AVR_ADK
+        DDRJ &= ~0x20; // input
+        PORTJ |= 0x20; // pullup
 #else
         pinMode(UHS_Usb.irq_pin, INPUT);
         UHS_PIN_WRITE(UHS_Usb.irq_pin, HIGH);
@@ -87,7 +87,7 @@ void setup() {
 
         printf_P(PSTR("\r\nCircuits At Home 2011"));
         printf_P(PSTR("\r\nUSB Host Shield Quality Control Routine"));
-        // Do a reset ahead of time, since sometimes the chip is in an unknown state.
+        // Do a reset ahead of time, the chip is in an unknown state.
         UHS_Usb.regWr(rPINCTL, (bmFDUPSPI | bmINTLEVEL | GPX_VBDET));
         if(UHS_Usb.reset() == 0) {
                 printf_P(PSTR("Initial reset failed."));
@@ -136,7 +136,7 @@ void setup() {
                 printf_P(PSTR("\r\nSPI long test passed"));
         }//SPI long test
 
-#ifndef BOARD_MEGA_ADK
+#ifndef ARDUINO_AVR_ADK
         /* GPIO test , not possible on ADK */
         /* in order to simplify board layout, GPIN pins on text fixture are connected to GPOUT */
         /* in reverse order, i.e, GPIN0 is connected to GPOUT7, GPIN1 to GPOUT6, etc. */

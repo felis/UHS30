@@ -256,17 +256,17 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         Init_dyn_SWI();
         UHS_printf_HELPER_init();
         noInterrupts();
-#ifdef BOARD_MEGA_ADK
-        // For Mega ADK, which has a Max3421e on-board, set MAX_RESET to output mode, and then set it to HIGH
-        PORTJ bit 2
-
+#ifdef ARDUINO_AVR_ADK
+        // For Mega ADK, which has a Max3421e on-board,
+        // set MAX_RESET to output mode, and then set it to HIGH
+        // PORTJ bit 2
         if(irq_pin == 54) {
                 DDRJ |= 0x04; // output
                 PORTJ |= 0x04; // HIGH
         }
 #endif
         SPI.begin();
-#ifdef BOARD_MEGA_ADK
+#ifdef ARDUINO_AVR_ADK
         if(irq_pin == 54) {
                 DDRE &= ~0x20; // input
                 PORTE |= 0x20; // pullup
