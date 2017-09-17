@@ -255,12 +255,13 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
                 p->epinfo[0].maxPktSize = 0x40; // Windows bug is expected.
                 // poison data
-                udd->bMaxPacketSize0 = 0U;
+                // udd->bMaxPacketSize0 = 0U;
 #else
                 p->epinfo[0].maxPktSize = 0x08; // USB Spec, start small, work your way up.
 #endif
 again:
-                HOST_DUBUG("\r\n\r\nConfiguring PktSize x%2.2x,  rcode: x%2.2x, retries %i,\r\n", p->epinfo[0].maxPktSize, rcode, retries);
+                memset((void *)buf, 0, biggest);
+                HOST_DUBUG("\r\n\r\nConfiguring PktSize 0x%2.2x,  rcode: 0x%2.2x, retries %i,\r\n", p->epinfo[0].maxPktSize, rcode, retries);
                 rcode = getDevDescr(0, biggest, (uint8_t*)buf);
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
                 if(rcode || udd->bMaxPacketSize0 < 8)
@@ -281,19 +282,20 @@ again:
                                 retries++;
                                 goto again;
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
-                        } else if((rcode == UHS_HOST_ERROR_DMA && retries < 4) || (udd->bMaxPacketSize0 < 8 && !rcode)) {
-                                if(p->epinfo[0].maxPktSize > 8) p->epinfo[0].maxPktSize = p->epinfo[0].maxPktSize >> 1;
+                        } else if(((rcode == UHS_HOST_ERROR_DMA || rcode == UHS_HOST_ERROR_MEM_LAT) && retries < 4) || (udd->bMaxPacketSize0 < 8 && !rcode)) {
+
+                                if(p->epinfo[0].maxPktSize > 8 && rcode == UHS_HOST_ERROR_DMA) p->epinfo[0].maxPktSize = p->epinfo[0].maxPktSize >> 1;
 #else
-                        } else if(rcode == UHS_HOST_ERROR_DMA && retries < 4) {
+                        } else if((rcode == UHS_HOST_ERROR_DMA || rcode == UHS_HOST_ERROR_MEM_LAT) && retries < 4) {
                                 if(p->epinfo[0].maxPktSize < 32) p->epinfo[0].maxPktSize = p->epinfo[0].maxPktSize << 1;
 #endif
-                                HOST_DUBUG("Configuring error: UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", p->epinfo[0].maxPktSize);
+                                HOST_DUBUG("Configuring error: 0x%2.2x UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", rcode, p->epinfo[0].maxPktSize);
                                 doSoftReset(parent, port, 0);
                                 retries++;
                                 sof_delay(200);
                                 goto again;
                         }
-                        HOST_DUBUG("Configuring error: %2.2x Can't get USB_DEVICE_DESCRIPTOR\r\n", rcode);
+                        HOST_DUBUG("Configuring error: 0x%2.2x Can't get USB_DEVICE_DESCRIPTOR\r\n", rcode);
                         return rcode;
                 }
 
@@ -335,12 +337,12 @@ again:
                         p->epinfo = &dev1ep;
 
                         sof_delay(10);
-
+                        memset((void *)buf, 0, biggest);
                         rcode = getDevDescr(ei.address, 18, (uint8_t*)buf);
                         if(rcode) HOST_DUBUG("getDevDescr err: 0x%x \r\n", rcode);
 
                         addrPool.FreeAddress(ei.address);
-                        if(rcode) {
+                        if(rcode && rcode != UHS_HOST_ERROR_DMA) {
                                 return rcode;
                         }
                         sof_delay(10);
@@ -356,6 +358,7 @@ again:
                 ei.bMaxPacketSize0 = udd->bMaxPacketSize0;
                 ei.currentconfig = 0;
                 ei.parent = parent;
+                ei.port = port;
                 configs = udd->bNumConfigurations;
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
         } // unwrapped, old large buf now invalid and discarded.
@@ -388,15 +391,6 @@ again:
                 return rcode;
         }
 
-#if 0
-        rcode = doSoftReset(parent, port, ei.address);
-
-        if(rcode) {
-                addrPool.FreeAddress(ei.address);
-                HOST_DUBUG("Configuring error: %2.2x Can't set USB INTERFACE ADDRESS\r\n", rcode);
-                return rcode;
-        }
-#endif //0
         if(configs < 1) {
                 HOST_DUBUG("No interfaces?!\r\n");
                 addrPool.FreeAddress(ei.address);
@@ -988,10 +982,10 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbyt
 
         //        Serial.println("Opened");
         uint16_t left = (uint16_t)(Request >> 48) /*total*/;
-        if(dataptr != NULL) //data stage, if present
-        {
-                if((rt & 0x80) == 0x80) //IN transfer
-                {
+        if(dataptr != NULL) {
+                //data stage
+                if((rt & 0x80) == 0x80) {
+                        //IN transfer
                         while(left) {
                                 // Bytes read into buffer
                                 uint16_t read = nbytes;
@@ -1011,8 +1005,8 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbyt
                                 }
 #endif
                         }
-                } else //OUT transfer
-                {
+                } else {
+                        // OUT transfer
                         rcode = OutTransfer(pep, 0, nbytes, dataptr);
                 }
                 if(rcode) {

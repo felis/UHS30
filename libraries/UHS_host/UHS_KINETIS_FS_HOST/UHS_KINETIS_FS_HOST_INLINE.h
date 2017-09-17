@@ -43,14 +43,14 @@ void UHS_NI UHS_KINETIS_FS_HOST::busprobe(void) {
         //printf("\r\nUSB0_CTL: %x \r\n", USB0_CTL);
         //printf("\r\nbus_sample: %x \r\n", bus_sample);
 
-        HOST_DUBUG("bus_sample: %x", bus_sample);
+        HOST_DUBUG("bus_sample: %x ", bus_sample);
         // 0xC0 disconnected
         // 0x80 low speed
         // 0x40 disconnected
         // 0x00 full speed
         switch(bus_sample) { //start full-speed or low-speed host
                 case(UHS_KINETIS_FS_bmJSTATUS): // full speed
-                        USBTRACE("full speed\r\n");
+                        HOST_DUBUG("full speed\r\n");
                         USB0_OTGCTL &= ~(USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW); // disable D+ and D- pulldowns
                         USB0_INTEN &= ~USB_INTEN_ATTACHEN;
                         USB0_ADDR = 0;
@@ -62,7 +62,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::busprobe(void) {
                         vbusState = UHS_KINETIS_FS_FSHOST;
                         break;
                 case(UHS_KINETIS_FS_bmKSTATUS): // low speed
-                        USBTRACE("low speed\r\n");
+                        HOST_DUBUG("low speed\r\n");
                         USB0_OTGCTL &= ~(USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW); // disable D+ and D- pulldowns
                         USB0_INTEN &= ~USB_INTEN_ATTACHEN;
                         USB0_ADDR = USB_ADDR_LSEN; // low speed enable, address 0
@@ -73,7 +73,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::busprobe(void) {
                         vbusState = UHS_KINETIS_FS_LSHOST;
                         break;
                 case(UHS_KINETIS_FS_bmSE0): //disconnected state
-                        USBTRACE("disconnected\r\n");
+                        HOST_DUBUG("disconnected\r\n");
                         vbusState = UHS_KINETIS_FS_SE0;
                         USB0_OTGCTL = USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW; // enable D+ and D- pulldowns
                         USB0_ADDR = 0;
@@ -86,7 +86,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::busprobe(void) {
                         //ep0_rx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
                         break;
                 case(UHS_KINETIS_FS_bmSE1): // second disconnected state
-                        USBTRACE("disconnected2\r\n");
+                        HOST_DUBUG("disconnected2\r\n");
                         vbusState = UHS_KINETIS_FS_SE1;
                         USB0_OTGCTL = USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW; // enable D+ and D- pulldowns
                         USB0_ADDR = 0;
@@ -98,7 +98,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::busprobe(void) {
                         //ep0_tx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
                         //ep0_rx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
                         break;
-        }//end switch( bus_sample )
+        }//end switch(bus_sample)
 }
 
 void UHS_NI UHS_KINETIS_FS_HOST::VBUS_changed(void) {
@@ -226,7 +226,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
                         //printf("ISRbottom, default\r\n");
                         // Do nothing
                         break;
-        } // switch( usb_task_state )
+        } // switch(usb_task_state)
         if(condet) {
                 VBUS_changed();
                 noInterrupts();
@@ -318,7 +318,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
                         case 0x0f:
                                 if(isrError != UHS_HOST_ERROR_DMA) {
 #if defined(LOAD_UHS_PRINTF_HELPER)
-                                        printf("\r\nMEMORY LATENCY PROBLEM.\r\n");
+                                        printf("\r\nMEMORY LATENCY PROBLEM %i.\r\n", stat & 0x08);
 #endif
                                         isrError = UHS_HOST_ERROR_MEM_LAT; // Error was due to memory latency.
                                 }
@@ -442,27 +442,26 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpI
         nak_limit = (0x0001UL << (((*ppep)->bmNakPower > UHS_USB_NAK_MAX_POWER) ? UHS_USB_NAK_MAX_POWER : (*ppep)->bmNakPower));
         nak_limit--;
 
-        USBTRACE2("\r\nAddress: ", addr);
-        USBTRACE2(" EP: ", ep);
-        USBTRACE2(" NAK Power: ", (*ppep)->bmNakPower);
-        USBTRACE2(" NAK Limit: ", nak_limit);
-        USBTRACE2(" RETRY DISABLE: ", ((nak_limit > 2U) ? 0 : 1));
-
-        USBTRACE("\r\n");
+        //USBTRACE2("\r\nAddress: ", addr);
+        //USBTRACE2(" EP: ", ep);
+        //USBTRACE2(" NAK Power: ", (*ppep)->bmNakPower);
+        //USBTRACE2(" NAK Limit: ", nak_limit);
+        //USBTRACE2(" RETRY DISABLE: ", ((nak_limit > 2U) ? 0 : 1));
+        //USBTRACE("\r\n");
 
         //HOST_DUBUG("\r\nAddress: %2.2x. EP: %2.2x, NAK Power: %2.2x, NAK Limit: %u\r\n", addr, ep, (*ppep)->bmNakPower, nak_limit);
         // address and low speed enable
         USB0_ADDR = addr | ((p->speed) ? 0 : USB_ADDR_LSEN);
 
         //Serial.print("\r\nMode: ");
-        //Serial.println( mode, HEX);
+        //Serial.println(mode, HEX);
         //Serial.print("\r\nLS: ");
         //Serial.println(p->speed, HEX);
 
-        // Disable automatic retries for NAK > 1, Set hub for low-speed device
+        // Disable automatic retries for NAK < 2, Set hub for low-speed device
         USB0_ENDPT0 = USB_ENDPT_EPRXEN | USB_ENDPT_EPTXEN | USB_ENDPT_EPHSHK |
                 //((nak_limit != 1U) ? 0 : USB_ENDPT_RETRYDIS) |
-                ((nak_limit >1U) ? 0 : USB_ENDPT_RETRYDIS) |
+                ((nak_limit > 1U) ? 0 : USB_ENDPT_RETRYDIS) |
                 ((p->speed) ? 0 : USB_ENDPT_HOSTWOHUB);
 
         // set USB0_SOFTHLD depending on the maxPktSize
@@ -483,19 +482,16 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpI
 
 /**
  * Send the actual packet.
+ * Assumes peripheral address is set and relevant buffer is loaded/empty
+ * If NAK, tries to re-send up to nak_limit times
+ * If nak_limit == 0, do not count NAKs, exit after timeout
+ * If bus timeout, re-sends up to USB_RETRY_LIMIT times
  *
  * @param token
  * @param ep Endpoint
  * @param nak_limit how many NAKs before aborting
- * @return 0 on success
+ * @return codes 0x00-0x0f are HRSLT(0x00 being success), 0xff means timeout
  */
-/* Assumes peripheral address is set and relevant buffer is loaded/empty       */
-/* If NAK, tries to re-send up to nak_limit times                                                   */
-/* If nak_limit == 0, do not count NAKs, exit after timeout                                         */
-/* If bus timeout, re-sends up to USB_RETRY_LIMIT times                                             */
-
-/* return codes 0x00-0x0f are HRSLT( 0x00 being success ), 0xff means timeout                       */
-
 uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit) {
         // Short packets cause problems with bandwidth on a hub.
         // Limit the bandwidth to 2 125uS frames so we do not overload
@@ -510,7 +506,6 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
         //HOST_DUBUG("dispatchPkt: token %x, ep: %i, nak_limit: %i \r\n", token, ep, nak_limit);
         //printf("dispatchPkt: token %x, ep: %i, nak_limit: %i \r\n", token, ep, nak_limit);
 
-        // have to monitor for UHS_HOST_ERROR_MEM_LAT and auto-retry
         rcode = UHS_HOST_ERROR_TIMEOUT;
         newError = false;
         newToken = false;
@@ -537,9 +532,11 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
 
         if(!condet) {
                 last_mark = micros(); // hopefully now in sync with the SOF
+                // need to find out what is hogging RAM access
                 USB0_TOKEN = token | ep; //  Dispatch to endpoint.
                 //wait for transfer completion
                 while(!condet) {
+                        __asm__ volatile ("wfi");
                         if(newError || newToken) {
                                 if(newError) {
                                         newError = false;
@@ -562,9 +559,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
                                         if(nak_limit) continue; // retry
                                 }
                                 break;
-
                         }
-
                 }
         }
 
@@ -615,7 +610,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::OutTransfer(UHS_EpInfo *pep, uint16_t nak_li
         ep0_tx_data_toggle = pep->bmSndToggle;
 
         while(bytes_left && !rcode) {
-                HOST_DUBUG(", maxpktsize: %i, bytes_left: %i", maxpktsize, bytes_left);
+                HOST_DUBUG(", maxpktsize: %i, bytes_left: %i\r\n", maxpktsize, bytes_left);
 
                 bytes_tosend = (bytes_left >= maxpktsize) ? maxpktsize : bytes_left;
                 endpoint0_transmit(p_buffer, bytes_tosend); // setup internal buffer
@@ -623,6 +618,8 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::OutTransfer(UHS_EpInfo *pep, uint16_t nak_li
                 if(rcode == UHS_HOST_ERROR_MEM_LAT) {
                         // something we need to do here, but what?
                         // datasheet isn't clear, just says that these are transient
+                        // Never see these either.
+                        // printf("\r\nOutTransfer MEMLAT\r\n");
                         rcode = UHS_HOST_ERROR_NAK;
                         break;
                 }
@@ -631,7 +628,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::OutTransfer(UHS_EpInfo *pep, uint16_t nak_li
         }//while( bytes_left...
 
         pep->bmSndToggle = ep0_tx_data_toggle;
-        return ( rcode); //should be 0 in all cases
+        return (rcode); //should be 0 in all cases
 }
 
 /**
@@ -650,8 +647,8 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_lim
         uint8_t maxpktsize = pep->maxPktSize;
         uint8_t ep = pep->epAddr;
 
-        USBTRACE2("Requesting ", nbytes);
-        USBTRACE2("maxpktsize: ", maxpktsize);
+        //USBTRACE2("Requesting ", nbytes);
+        //USBTRACE2("maxpktsize: ", maxpktsize);
 
         *nbytesptr = 0;
 
@@ -659,7 +656,6 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_lim
         ep0_rx_data_toggle = pep->bmRcvToggle;
 
         uint32_t datalen = 0;
-
         uint8_t* p_buffer = data;
         datalen = maxpktsize;
 
@@ -672,24 +668,14 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_lim
                 endpoint0_receive(data_in_buf, datalen); // setup internal buffer
                 rcode = dispatchPkt(UHS_KINETIS_FS_TOKEN_DATA_IN, ep, nak_limit); //dispatch packet
                 //digitalWriteFast(2, LOW);
+                pktsize = b_newToken.desc >> 16; // how many bytes we actually got
+                HOST_DUBUG("pktsize: %i \r\n", pktsize);
                 if(rcode == UHS_HOST_ERROR_MEM_LAT) {
                         // something we need to do here, but what?
                         // datasheet isn't clear, just says that these are transient
+                        printf("\r\nInTransfer MEMLAT\r\n");
                         rcode = UHS_HOST_ERROR_NAK;
-                        break;
                 }
-
-                pktsize = b_newToken.desc >> 16; // how many bytes we actually got
-                HOST_DUBUG("pktsize: %i \r\n", pktsize);
-#if ENABLE_UHS_DEBUGGING
-                uint8_t i = 0;
-                HOST_DUBUG("-----Data packet: ");
-                for(i = 0; i < pktsize; i++) {
-                        HOST_DUBUG("%02x ", data_in_buf[i]);
-                }
-                HOST_DUBUG("\r\n");
-#endif
-
                 if(rcode) {
                         // DMA error: we got more data than expected.
                         // This means that the device's mackpaxketsize is actually larger than maxpktsize
@@ -703,6 +689,14 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_lim
                         break; //should be 0, indicating ACK. Else return error code.
                 }
 
+#if ENABLE_UHS_DEBUGGING
+                uint8_t i = 0;
+                HOST_DUBUG("-----Data packet: ");
+                for(i = 0; i < pktsize; i++) {
+                        HOST_DUBUG("%02x ", data_in_buf[i]);
+                }
+                HOST_DUBUG("\r\n");
+#endif
                 if(pktsize + *nbytesptr > nbytes) { // adjust pktsize if we don't need all the bytes we just got
                         pktsize = nbytes - *nbytesptr;
                 }
@@ -721,7 +715,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_lim
                 }
         }
         //digitalWriteFast(2, LOW);
-        return ( rcode);
+        return (rcode);
 }
 
 /**
@@ -769,11 +763,11 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_FS_HOST::ctrlReqOpen(uint8_t addr, uint64_t Requ
                                 }
                         }
                 } else {
-                        // USBTRACE(">>>>>>>>>>>> dispatchPkt Failed <<<<<<<<<<<<<< \r\n");
+                        // USBTRACE(">>>>>>>>>>>> ctrlReqOpen Failed <<<<<<<<<<<<<< \r\n");
                         // USBTRACE2("rcode: ", rcode);
                         // USBTRACE2(", bmReqType: ", bmReqType);
                         // USBTRACE2(", bRequest: ", bRequest);
-                        // USBTRACE(">>>>>>>>>>>> dispatchPkt Failed <<<<<<<<<<<<<< \r\n");
+                        // USBTRACE(">>>>>>>>>>>> ctrlReqOpen Failed <<<<<<<<<<<<<< \r\n");
                         pep = NULL;
                 }
         }
@@ -922,7 +916,7 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
 
         USB0_USBFRMADJUST = 0x00;
         // enable USB
-        USB0_USBTRC0 |= 0x40; // undocumented bit
+        //USB0_USBTRC0 |= 0x40; // undocumented bit
         USB0_USBCTRL = 0;
 
         USB0_OTGCTL = USB_OTGCTL_DPLOW | USB_OTGCTL_DMLOW; // enable D+ and D- pulldowns, disable D+ pullup
@@ -938,6 +932,7 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         USB0_ERREN = 0xFF; // enable all error interrupts
 
         // Change SRAM[LU] priority to prefer backdoor (DMA/USB) over CPU.
+        // 0=RR, 1=favor DMA, 2=CPU, 3=DMA
         //MCM_CR |= MCM_CR_SRAMLAP(3) | MCM_CR_SRAMUAP(3);
         // switch isr for USB
         NVIC_DISABLE_IRQ(IRQ_USBOTG);
@@ -959,15 +954,15 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
 
 void UHS_NI UHS_KINETIS_FS_HOST::endpoint0_transmit(const void *data, uint32_t len) {
 #if ENABLE_UHS_DEBUGGING && DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST
-        uint32_t i = 0;
-        uint8_t *real_data = (uint8_t *)data;
-        HOST_DUBUG("tx0: ");
-        // serial_print("tx0: ");
-        for(i = 0; i < len; i++) {
-                //D_PrintHex(*(real_data + i), 0x80);
-                HOST_DUBUG("%x ", *(real_data + i));
+        if(len > 0) {
+                uint32_t i = 0;
+                uint8_t *real_data = (uint8_t *)data;
+                HOST_DUBUG("tx0: ");
+                for(i = 0; i < len; i++) {
+                        HOST_DUBUG("%x ", *(real_data + i));
+                }
+                HOST_DUBUG(", %lx\r\n", len);
         }
-        HOST_DUBUG(", %lx", len);
 #endif
         last_count = len;
         last_address = (void *)data;

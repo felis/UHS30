@@ -82,7 +82,6 @@ typedef struct {
         void * addr;
 } bdt_t;
 
-
 class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
 
         volatile uint8_t hub_present;
@@ -115,6 +114,13 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         // That helps to avoid name collisions in other code as it is a member.
         //
         __attribute__ ((section(".usbdescriptortable_hosts"), used)) static bdt_t table[4];
+        // two buffers for tx and rx so we can do ping-pong buffering
+        // Not used right now, but they will be used in the future
+        uint8_t ep0_rx0_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
+        uint8_t ep0_rx1_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
+        uint8_t ep0_tx0_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
+        uint8_t ep0_tx1_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
+        uint8_t data_in_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to receive data in as host
 
         // mark that a token was done and store its pid while inside the isr
         volatile bool newToken;
@@ -139,23 +145,16 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         // Prints information about a token that just completed
         //static void debug_tokdne(uint8_t stat);
 
-        // two buffers for tx and rx so we can do ping-pong buffering
-        // Not used right now, but they will be used in the future
-        uint8_t ep0_rx0_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
-        uint8_t ep0_rx1_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
         const uint8_t *ep0_tx_ptr;
         uint16_t ep0_tx_len;
         uint8_t ep0_tx_bdt_bank;
         uint8_t ep0_tx_data_toggle;
 
-        uint8_t ep0_tx0_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
-        uint8_t ep0_tx1_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
         const uint8_t *ep0_rx_ptr;
         uint16_t ep0_rx_len;
         uint8_t ep0_rx_bdt_bank;
         uint8_t ep0_rx_data_toggle;
 
-        uint8_t data_in_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to receive data in as host
 
         uint8_t setup_command_buffer[8]; // for setup commands
 
