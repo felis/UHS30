@@ -18,11 +18,15 @@ __This set of libraries is EXTERMELY ALPHA!__
 * PROLIFIC serial
 * FTDI serial
 
+## AVR MEGA ADK
+No special modifications are required!
+### Thank you Olayinka Babalola for donating an Arduino Mega ADK board. It would not have been possible without your support!
+
 ## AVR Arduino 
-#software tools
+### Software tools
 Arduino AVR boards by Arduino 1.6.11.
 Newer versions are broken.
-#hardware instructions
+### hardware instructions
 On AVR based Arduino boards and clones, you must do one of the following:
 
 Connect pin 9 to pin 3 with a jumper wire.
