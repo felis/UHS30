@@ -79,11 +79,6 @@ void UHS_NI UHS_KINETIS_FS_HOST::busprobe(void) {
                         USB0_ADDR = 0;
                         USB0_CTL &= ~USB_CTL_USBENSOFEN;
                         USB0_INTEN |= USB_INTEN_ATTACHEN;
-                        //USB0_CTL = USB_CTL_ODDRST;
-                        //ep0_tx_bdt_bank = 0;
-                        //ep0_rx_bdt_bank = 0;
-                        //ep0_tx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
-                        //ep0_rx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
                         break;
                 case(UHS_KINETIS_FS_bmSE1): // second disconnected state
                         HOST_DUBUG("disconnected2\r\n");
@@ -92,13 +87,8 @@ void UHS_NI UHS_KINETIS_FS_HOST::busprobe(void) {
                         USB0_ADDR = 0;
                         USB0_CTL &= ~USB_CTL_USBENSOFEN;
                         USB0_INTEN |= USB_INTEN_ATTACHEN;
-                        //USB0_CTL = USB_CTL_ODDRST;
-                        //ep0_tx_bdt_bank = 0;
-                        //ep0_rx_bdt_bank = 0;
-                        //ep0_tx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
-                        //ep0_rx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
                         break;
-        }//end switch(bus_sample)
+        }
 }
 
 void UHS_NI UHS_KINETIS_FS_HOST::VBUS_changed(void) {
@@ -150,8 +140,6 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
                 interrupts();
         }
 
-        //printf("ISRbottom, usb_task_state: %x \r\n", (uint8_t)UHS_USB_HOST_STATE_INITIALIZE);
-
         switch(usb_task_state) {
                 case UHS_USB_HOST_STATE_INITIALIZE: // initial state
                         //printf("ISRbottom, UHS_USB_HOST_STATE_INITIALIZE\r\n");
@@ -159,11 +147,12 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
                         // update usb_task_state and check speed (so we replace busprobe and VBUS_changed funcs)
                         break;
                 case UHS_USB_HOST_STATE_DEBOUNCE:
+                        //settle time for just attached device
                         //printf("ISRbottom, UHS_USB_HOST_STATE_DEBOUNCE\r\n");
                         sof_countdown = UHS_HOST_DEBOUNCE_DELAY_MS;
                         usb_task_state = UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE;
                         break;
-                case UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE://settle time for just attached device
+                case UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE:
                         //printf("ISRbottom, UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE\r\n");
                         usb_task_state = UHS_USB_HOST_STATE_RESET_DEVICE;
                         break;
@@ -182,6 +171,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
                         USB0_CTL &= ~USB_CTL_RESET; // stop bus reset
                         USB0_CTL |= USB_CTL_USBENSOFEN; // start SOF generation
                         usb_task_state = UHS_USB_HOST_STATE_WAIT_BUS_READY;
+                        sof_countdown = 1;
                         // We delay two extra ms to ensure that at least one SOF has been sent.
                         // This trick is performed by just moving to the next state.
                         break;
@@ -211,7 +201,6 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRbottom(void) {
                         usb_task_state = UHS_USB_HOST_STATE_RUNNING;
                         break;
                 case UHS_USB_HOST_STATE_CHECK:
-                        // Serial.println((uint32_t)__builtin_return_address(0),HEX);
                         break;
                 case UHS_USB_HOST_STATE_RUNNING:
                         //printf("ISRbottom, UHS_USB_HOST_STATE_RUNNING\r\n");
@@ -259,7 +248,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
         uint8_t otg_status = USB0_OTGISTAT; // otg interrupts
 
         if((status & USB_ISTAT_STALL)) { // stall
-                HOST_DUBUG("ISR: stall\r\n");
+                KINETIS_HOST_DEBUG("ISR: stall\r\n");
                 uint8_t err = USB0_ERRSTAT;
                 USB0_ERRSTAT = err; // clear errors that we don't care about
                 newError = true;
@@ -273,22 +262,26 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
                         //printf("\aISR: error: %2.2x \r\n", err);
                         isrError = 0;
                         if(err & USB_ERRSTAT_PIDERR) {
+                                KINETIS_HOST_DEBUG("PIDERR\r\n");
                                 isrError = UHS_HOST_ERROR_WRONGPID; // Received wrong Packet ID
                         } else if(err & USB_ERRSTAT_CRC16) {
+                                KINETIS_HOST_DEBUG("CRCERR\r\n");
                                 isrError = UHS_HOST_ERROR_CRC; // USB CRC was incorrect
                         } else if(err & (USB_ERRSTAT_DFN8 | USB_ERRSTAT_BTSERR)) {
-                                isrError = UHS_HOST_ERROR_BABBLE; // Line noise/unexpected data
+                                KINETIS_HOST_DEBUG("STUFFERR\r\n");
+                              isrError = UHS_HOST_ERROR_BABBLE; // Line noise/unexpected data
                         } else if(err & USB_ERRSTAT_DMAERR) {
+                                KINETIS_HOST_DEBUG("DMAERR\r\n");
                                 isrError = UHS_HOST_ERROR_DMA; // Data was truncated. Device sent too much.
                         } else if(err & USB_ERRSTAT_BTOERR) {
+                                KINETIS_HOST_DEBUG("BTOERR\r\n");
                                 // Device didn't respond in time. It is most likely unplugged.
-                                USBTRACE("\r\n\r\n*** ISR sees error 0x10, Device unplugged? ***\r\n\r\n");
+                                KINETIS_HOST_DEBUG("\r\n\r\n*** ISR sees error 0x10, Device unplugged? ***\r\n\r\n");
                                 isrError = UHS_HOST_ERROR_UNPLUGGED; //UHS_HOST_ERROR_NAK;
-#if 0
-                                // Ignore these, for now.
                         } else if(err & USB_ERRSTAT_CRC5EOF) {
-                                isrError =
-#endif
+                                // Not enough time alloted.
+                                KINETIS_HOST_DEBUG("CRC5EOF\r\n");
+                                isrError = UHS_HOST_ERROR_BABBLE;
                         }
 
                         // update to signal non-isr code what happened
@@ -304,30 +297,37 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
                 b_newToken.addr = p_newToken->addr;
                 uint32_t pid = UHS_KINETIS_FS_BDT_PID(b_newToken.desc);
                 isrPid = pid;
+
                 // update to signal non-isr code what happened
                 switch(pid & 0x0f) {
                         case 0x00:
+                                KINETIS_HOST_DEBUG("ERROR_TIMEOUT TX=%i\r\n", stat & USB_STAT_TX);
                                 isrError = UHS_HOST_ERROR_TIMEOUT;
                                 break;
                         case 0x0a:
                                 isrError = UHS_HOST_ERROR_NAK;
                                 break;
                         case 0x0e:
+                                KINETIS_HOST_DEBUG("ERROR_STALL TX=%i\r\n", stat & USB_STAT_TX);
                                 isrError = UHS_HOST_ERROR_STALL;
                                 break;
                         case 0x0f:
-                                if(isrError != UHS_HOST_ERROR_DMA) {
-#if defined(LOAD_UHS_PRINTF_HELPER)
-                                        printf("\r\nMEMORY LATENCY PROBLEM %i.\r\n", stat & 0x08);
-#endif
-                                        isrError = UHS_HOST_ERROR_MEM_LAT; // Error was due to memory latency.
+                                // Data Error
+                                KINETIS_HOST_DEBUG("Data Error TX=%i\r\n", stat & USB_STAT_TX);
+                                if(!isrError || isrError != UHS_HOST_ERROR_DMA) {
+                                        KINETIS_HOST_DEBUG("\r\nMEMORY LATENCY PROBLEM? %2.2x\r\n", isrError);
+                                        //isrError = UHS_HOST_ERROR_MEM_LAT; // Error was due to memory latency.
+                                        isrError = UHS_HOST_ERROR_NAK;
+                                } else {
+                                        KINETIS_HOST_DEBUG("Other Data Error %2.2x TX=%i\r\n", isrError, stat & USB_STAT_TX);
+                                        isrError = UHS_HOST_ERROR_NAK;
                                 }
                                 break;
+                        default:
+                                //case 0x02:
+                                //case 0x03:
+                                //case 0x0b:
                                 // Completed good packets
-                        case 0x03:
-                        case 0x0b:
-                        case 0x02:
-                                // isrError = UHS_HOST_ERROR_NONE;
                                 break;
                 }
 
@@ -477,7 +477,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpI
                 USB0_SOFTHLD = (74 + 16)*2; // 74;
         }
 
-        return 0;
+        return UHS_HOST_ERROR_NONE;
 }
 
 /**
@@ -496,20 +496,15 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
         // Short packets cause problems with bandwidth on a hub.
         // Limit the bandwidth to 2 125uS frames so we do not overload
         // the transaction translator on the hub, other devices could fail too.
-        //unsigned long timeout = millis() + UHS_HOST_TRANSFER_MAX_MS;
-        //uint8_t retry_count = 0;
+        // Better would be to find how many TT's are on the hub, though...
         uint8_t rcode;
-        //isrError = 0;
-        //newError = false;
-        //newToken = false;
 
         //HOST_DUBUG("dispatchPkt: token %x, ep: %i, nak_limit: %i \r\n", token, ep, nak_limit);
-        //printf("dispatchPkt: token %x, ep: %i, nak_limit: %i \r\n", token, ep, nak_limit);
 
         rcode = UHS_HOST_ERROR_TIMEOUT;
         newError = false;
         newToken = false;
-        isrError = 0;
+        isrError = UHS_HOST_ERROR_NONE;
 
         // Only do this if a hub is connected.
         // The code below this will eat some of the time.
@@ -517,10 +512,11 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
                 while((long)(last_mark + 205) >= (long)(micros()));
         }
         // SPEC: 12000 bits per 1mS frame +/- 16 bits
-        // that should make 12 bits per uS, but... we need to add how long until launch happens
+        // that should make 12 bits per uS, but...
+        // we need to add how long until launch happens, 2uS seems OK
         // We also are not checking if we are transmitting at low speed.
-        // TO-DO: Use a different multiplier if low speed.
-        uint32_t tft = ((USB0_SOFTHLD) / 12LU);
+        // TO-DO: Use a different divisor if low speed.
+        uint32_t tft = 2+((USB0_SOFTHLD) / 12LU);
         if((long)sof_mark <= (long)(micros() + tft)) {
                 // wait for SOF
                 noInterrupts();
@@ -534,9 +530,9 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
                 last_mark = micros(); // hopefully now in sync with the SOF
                 // need to find out what is hogging RAM access
                 USB0_TOKEN = token | ep; //  Dispatch to endpoint.
-                //wait for transfer completion
+                // wait for transfer completion
                 while(!condet) {
-                        __asm__ volatile ("wfi");
+                        //__asm__ volatile ("wfi");
                         if(newError || newToken) {
                                 if(newError) {
                                         newError = false;
@@ -566,20 +562,6 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint1
         if(condet) {
                 rcode = UHS_HOST_ERROR_UNPLUGGED;
         }
-        //if(rcode) printf("Final rcode: 0x%2.2x, isrPid: 0x%8.8x\r\n", rcode, isrPid);
-        //        if(rcode == UHS_HOST_ERROR_TIMEOUT) {
-        //                retry_count++;
-        //                if(retry_count == UHS_HOST_TRANSFER_RETRY_MAXIMUM) break;
-        //        } else break;
-        //}// while(true)
-        //uint32_t a = micros();
-        //printf("<.>");
-        //fflush(stdout);
-        //uint32_t b = micros();
-        //printf("\rDelay %d\r\n", (b-a));
-        //fflush(stdout);
-        //if(ep == 0 || nak_limit == 1)
-        //delayMicroseconds(100);
         return (rcode);
 }
 
@@ -674,7 +656,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_lim
                         // something we need to do here, but what?
                         // datasheet isn't clear, just says that these are transient
                         printf("\r\nInTransfer MEMLAT\r\n");
-                        rcode = UHS_HOST_ERROR_NAK;
+                        //rcode = UHS_HOST_ERROR_NAK;
                 }
                 if(rcode) {
                         // DMA error: we got more data than expected.
@@ -861,6 +843,57 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         pinMode(UHS_USB_VBUS, OUTPUT);
         digitalWriteFast(UHS_USB_VBUS, LOW);
 #endif
+        /*
+         * Nybble       Master
+         * 0            Core ICODE
+         * 1            Core ISYS
+         * 2            DMA
+         * 3            USB OTG
+         *
+         * Register     Slave
+         * 0            Flash
+         * 1            SRAM
+         * 2            Preph bridge 0
+         * 3            Preph bridge 1
+         * 4            ??????? Undocumented, but present.
+         */
+
+
+        // Optimize AXBS
+        //AXBS_PRS0 = 0x00000321U; // Flash
+        //AXBS_PRS1 = 0x00000321U; // SRAM
+        //AXBS_PRS2 = 0x00000321U; // br0
+        //AXBS_PRS3 = 0x00000321U; // br1
+        //AXBS_PRS4 = 0x00000321U; // ???
+        //AXBS_PRS5 = 0x76543210U;
+        //AXBS_PRS6 = 0x76543210U;
+        //AXBS_PRS7 = 0x76543210U;
+
+        //AXBS_CRS0 = 0x00000003U; // Flash
+        //AXBS_CRS1 = 0x00000003U; // SRAM
+        //AXBS_CRS2 = 0x00000003U; // br0
+        //AXBS_CRS3 = 0x00000003U; // br1
+        //AXBS_CRS4 = 0x00000003U; // ???
+        //AXBS_CRS5 = 0x00U;
+        //AXBS_CRS6 = 0x00U;
+        //AXBS_CRS7 = 0x00U;
+
+        // Access to these cause fault.
+        // Why? Not available?
+        //AXBS_MGPCR0 = 0x00U;
+        //AXBS_MGPCR1 = 0x00U;
+        //AXBS_MGPCR2 = 0x00U;
+        //AXBS_MGPCR3 = 0x00U;
+        //AXBS_MGPCR4 = 0x00U;
+        //AXBS_MGPCR5 = 0x00U;
+        //AXBS_MGPCR6 = 0x00U;
+        //AXBS_MGPCR7 = 0x00U;
+
+        // Change SRAM[LU] priority to prefer backdoor (DMA/USB) over CPU.
+        // 0=RR, 1=SRR, 2=CPU, 3=DMA
+        //MCM_CR = MCM_CR_SRAMLAP(1) | MCM_CR_SRAMUAP(1);
+
+
         Init_dyn_SWI();
         //UHS_printf_HELPER_init();
         _UHS_KINETIS_THIS_ = this;
@@ -931,9 +964,6 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         USB0_OTGICR = USB_OTGICR_ONEMSECEN; // activate 1ms timer interrupt
         USB0_ERREN = 0xFF; // enable all error interrupts
 
-        // Change SRAM[LU] priority to prefer backdoor (DMA/USB) over CPU.
-        // 0=RR, 1=favor DMA, 2=CPU, 3=DMA
-        //MCM_CR |= MCM_CR_SRAMLAP(3) | MCM_CR_SRAMUAP(3);
         // switch isr for USB
         NVIC_DISABLE_IRQ(IRQ_USBOTG);
         NVIC_SET_PRIORITY(IRQ_USBOTG, 112);

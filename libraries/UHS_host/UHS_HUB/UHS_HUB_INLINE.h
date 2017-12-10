@@ -147,20 +147,11 @@ void UHS_NI UHS_USBHub::CheckHubStatus(void) {
 
         rcode = pUsb->inTransfer(bAddress, 1, &read, buf);
 
-        if(rcode)
+        if(rcode) {
+                HUB_DUBUG("UHS_USBHub::CheckHubStatus %2.2x\r\n", rcode);
                 return;
+        }
 
-        //if (buf[0] & 0x01) // Hub Status Change
-        //{
-        //        pUsb->PrintHubStatus(addr);
-        //        rcode = GetHubStatus(1, 0, 1, 4, buf);
-        //        if (rcode)
-        //        {
-        //              USB_HOST_SERIAL.print("GetHubStatus Error");
-        //              USB_HOST_SERIAL.println(rcode, HEX);
-        //              return rcode;
-        //        }
-        //}
         for(uint8_t port = 1, mask = 0x02; port < 8; mask <<= 1, port++) {
                 if(buf[0] & mask) {
                         UHS_HubEvent evt;
@@ -179,8 +170,7 @@ void UHS_NI UHS_USBHub::CheckHubStatus(void) {
                         if(rcode)
                                 return;
                 }
-        } // for                        UHS_SLEEP_MS(20);
-
+        }
 
         for(uint8_t port = 1; port <= bNbrPorts; port++) {
                 UHS_HubEvent evt;

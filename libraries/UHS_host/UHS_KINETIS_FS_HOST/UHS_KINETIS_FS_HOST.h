@@ -23,6 +23,15 @@ e-mail   :  support@circuitsathome.com
 #if !defined(SWI_IRQ_NUM)
 #error include dyn_swi.h first
 #endif
+#if DEBUG_PRINTF_EXTRA_HUGE
+#ifdef DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_KINETIS
+#define KINETIS_HOST_DEBUG(...) printf(__VA_ARGS__)
+#else
+#define KINETIS_HOST_DEBUG(...) VOID0
+#endif
+#else
+#define KINETIS_HOST_DEBUG(...) VOID0
+#endif
 
 // define some stuff
 #define UHS_KINETIS_FS_bmKSTATUS     0x00  // full speed
@@ -121,7 +130,6 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         uint8_t ep0_tx0_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
         uint8_t ep0_tx1_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
         uint8_t data_in_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to receive data in as host
-
         // mark that a token was done and store its pid while inside the isr
         volatile bool newToken;
         volatile uint8_t isrPid;
