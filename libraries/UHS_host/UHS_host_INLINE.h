@@ -143,7 +143,7 @@ uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t add
                 HOST_DUBUG("%i retries.\r\n", retries);
         } else {
 #if DEBUG_PRINTF_EXTRA_HUGE
-                printf("\r\ndoSoftReset called with address == 0!\r\n");
+                printf("\r\ndoSoftReset called with address == 0.\r\n");
 #endif
         }
         return rcode;
