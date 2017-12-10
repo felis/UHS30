@@ -10,9 +10,9 @@ the GPL2 ("Copyleft").
  */
 
 /* USB MIDI interface support header */
-/* 
+/*
  * Note: This driver is support for MIDI Streaming class only.
- *       If your MIDI Controler is not work, probably you needs its vendor specific driver.
+ *       If your MIDI Controller is not work, probably you needs its vendor specific driver.
  */
 #if !defined(__UHS_MIDI_H__)
 #define __UHS_MIDI_H__
@@ -51,13 +51,13 @@ public:
 
         UHS_MIDI(UHS_USB_HOST_BASE *p);
 
-        // Methods for recieving and sending data
+        // Methods for receiving and sending data
         uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
-        uint8_t RecvData(uint8_t *outBuf, bool isRaw=false);
+        uint8_t RecvData(uint8_t *outBuf, bool isRaw = false);
         uint8_t RecvRawData(uint8_t *outBuf);
-        uint8_t SendData(uint8_t *dataptr, uint8_t nCable=0);
-        uint8_t lookupMsgSize(uint8_t midiMsg, uint8_t cin=0);
-        uint8_t SendSysEx(uint8_t *dataptr, uint16_t datasize, uint8_t nCable=0);
+        uint8_t SendData(uint8_t *dataptr, uint8_t nCable = 0);
+        uint8_t lookupMsgSize(uint8_t midiMsg, uint8_t cin = 0);
+        uint8_t SendSysEx(uint8_t *dataptr, uint16_t datasize, uint8_t nCable = 0);
         uint8_t extractSysExData(uint8_t *p, uint8_t *buf);
         uint8_t SendRawData(uint16_t bytes_send, uint8_t *dataptr);
 
