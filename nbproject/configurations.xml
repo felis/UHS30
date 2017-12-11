@@ -144,6 +144,15 @@
               </df>
             </df>
           </df>
+          <df name="UHS_MIDI">
+            <df name="examples">
+              <df name="USB_HOST_SHIELD">
+                <df name="USB_MIDI_Converter">
+                  <in>USB_MIDI_Converter.ino</in>
+                </df>
+              </df>
+            </df>
+          </df>
           <df name="USB_HOST_SHIELD">
             <df name="examples">
               <df name="board_qc">
@@ -499,20 +508,15 @@
             tool="1"
             flavor2="0">
       </item>
-      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/UHS_KINETIS_FS_HOST/acm_terminal/acm_terminal.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/UHS_KINETIS_FS_HOST/buffered_acm_terminal/buffered_acm_terminal.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
       <item path="libraries/UHS_host/UHS_KINETIS_EHCI/examples/KINETIS_EHCI_TEST/KINETIS_EHCI_TEST.ino"
             ex="false"
             tool="1"
             flavor2="9">
+      </item>
+      <item path="libraries/UHS_host/UHS_MIDI/examples/USB_HOST_SHIELD/USB_MIDI_Converter/USB_MIDI_Converter.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="libraries/UHS_host/malloc.c" ex="false" tool="0" flavor2="2">
       </item>
