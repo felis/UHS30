@@ -9,28 +9,27 @@
         added the init() method, and had the constructor call it automagically.
         protected certain sections of the code with cli()/sei() calls, for safe use by interrupts.
         Also made the capacity, position, length, and fillError variables volatile, for safe use by interrupts.
+ Updated by Andrew J. Kroll
+        Renamed library and removed the AVR bits and ISR protection,
+        because this will only be used in ISR safe code.
+        Might kill methods ither than standard ones if they prove to be useless.
  */
 
-#ifndef ByteBuffer_h
-#define ByteBuffer_h
+#ifndef UHS_ByteBuffer_h
+#define UHS_ByteBuffer_h
 
-#if defined(ARDUINO) && ARDUINO >= 100
 #include <Arduino.h>
-#else
-#include <WProgram.h>
-#endif
-//#include <util/atomic.h>
 
 #define DEFAULTBUFSIZE 32
 
-class ByteBuffer {
+class UHS_ByteBuffer {
 public:
 
-        ByteBuffer() {
+        UHS_ByteBuffer() {
                 init();
         };
 
-        ByteBuffer(unsigned int buf_size) {
+        UHS_ByteBuffer(unsigned int buf_size) {
                 init(buf_size);
         };
 
@@ -55,6 +54,9 @@ public:
 
         // Returns how much space is used in the buffer
         int getSize();
+
+        // Returns how much space is available
+        int AvailableForPut();
 
         // Returns the maximum capacity of the buffer
         int getCapacity();
@@ -108,4 +110,3 @@ private:
 };
 
 #endif
-
