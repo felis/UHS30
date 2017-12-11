@@ -201,6 +201,7 @@
               <pElem>.</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/variants/mega</pElem>
+              <pElem>libraries/UHS_ByteBuffer</pElem>
               <pElem>../libraries/RTClib</pElem>
               <pElem>../libraries/UHS_host</pElem>
               <pElem>../libraries/USB_HOST_SHIELD</pElem>
@@ -209,6 +210,7 @@
               <pElem>../libraries/UHS_FS</pElem>
               <pElem>libraries/UHS_CDC</pElem>
               <pElem>libraries/UHS_CDC_ACM</pElem>
+              <pElem>libraries/UHS_host/UHS_MIDI</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI/src</pElem>
@@ -234,6 +236,8 @@
               <pElem>../libraries/UHS_FS</pElem>
               <pElem>libraries/UHS_CDC</pElem>
               <pElem>libraries/UHS_CDC_ACM</pElem>
+              <pElem>libraries/UHS_ByteBuffer</pElem>
+              <pElem>libraries/UHS_host/UHS_MIDI</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI/src</pElem>
@@ -371,6 +375,7 @@
               <pElem>libraries/UHS_host</pElem>
               <pElem>libraries/UHS_host/UHS_KINETIS_EHCI</pElem>
               <pElem>libraries/dyn_SWI</pElem>
+              <pElem>libraries/UHS_ByteBuffer</pElem>
               <pElem>/opt/Arduino/hardware/teensy/avr/libraries/Wire</pElem>
               <pElem>/opt/Arduino/hardware/teensy/avr/libraries/SPI</pElem>
             </incDir>
@@ -382,6 +387,7 @@
               <pElem>libraries/UHS_host</pElem>
               <pElem>libraries/UHS_host/UHS_KINETIS_EHCI</pElem>
               <pElem>libraries/dyn_SWI</pElem>
+              <pElem>libraries/UHS_ByteBuffer</pElem>
               <pElem>/opt/Arduino/hardware/teensy/avr/libraries/Wire</pElem>
               <pElem>/opt/Arduino/hardware/teensy/avr/libraries/SPI</pElem>
             </incDir>
