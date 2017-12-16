@@ -17,42 +17,46 @@ the GPL2 ("Copyleft").
 #if !defined(__UHS_MIDI_H__)
 #define __UHS_MIDI_H__
 
-#include <UHS_host.h>
+#define UHS_MIDI_MAX_ENDPOINTS 3 //endpoint 0, bulk_IN(MIDI), bulk_OUT(MIDI)
+#define UHS_MIDI_EVENT_PACKET_SIZE 64
+#define UHS_MIDI_MAX_SYSEX_SIZE   256
 
-#define MIDI_MAX_ENDPOINTS 3 //endpoint 0, bulk_IN(MIDI), bulk_OUT(MIDI)
-#define MIDI_EVENT_PACKET_SIZE 64
-#define MIDI_MAX_SYSEX_SIZE   256
+#define UHS_MIDI_POLL_RATE    8
 
 #if DEBUG_PRINTF_EXTRA_HUGE
 #ifdef DEBUG_PRINTF_EXTRA_HUGE_MIDI_HOST
-#define MIDI_HOST_DEBUG(...) printf(__VA_ARGS__)
+#define UHS_MIDI_HOST_DEBUG(...) printf(__VA_ARGS__)
 #else
-#define MIDI_HOST_DEBUG(...) VOID0
+#define UHS_MIDI_HOST_DEBUG(...) VOID0
 #endif
 #else
-#define MIDI_HOST_DEBUG(...) VOID0
+#define UHS_MIDI_HOST_DEBUG(...) VOID0
 #endif
 
 class UHS_MIDI : public UHS_USBInterface {
 protected:
         uint16_t countSysExDataSize(uint8_t *dataptr);
+        uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
 
 public:
         static const uint8_t epDataInIndex = 1; // DataIn endpoint index(MIDI)
         static const uint8_t epDataOutIndex = 2; // DataOUT endpoint index(MIDI)
-        volatile UHS_EpInfo epInfo[MIDI_MAX_ENDPOINTS];
+        volatile UHS_EpInfo epInfo[UHS_MIDI_MAX_ENDPOINTS];
         volatile bool ready; // device ready indicator
         uint8_t qPollRate; // How fast to poll maximum
         uint16_t pid, vid;
 
         /* MIDI Event packet buffer */
-        uint8_t recvBuf[MIDI_EVENT_PACKET_SIZE];
-        uint8_t readPtr;
+        //uint8_t recvBuf[UHS_MIDI_EVENT_PACKET_SIZE];
+        //uint8_t readPtr;
+
+        uint8_t *pktbuf;
+
+        UHS_ByteBuffer midibuf;
 
         UHS_MIDI(UHS_USB_HOST_BASE *p);
 
         // Methods for receiving and sending data
-        uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
         uint8_t RecvData(uint8_t *outBuf, bool isRaw = false);
         uint8_t RecvRawData(uint8_t *outBuf);
         uint8_t SendData(uint8_t *dataptr, uint8_t nCable = 0);

@@ -144,15 +144,6 @@
               </df>
             </df>
           </df>
-          <df name="UHS_MIDI">
-            <df name="examples">
-              <df name="USB_HOST_SHIELD">
-                <df name="USB_MIDI_Converter">
-                  <in>USB_MIDI_Converter.ino</in>
-                </df>
-              </df>
-            </df>
-          </df>
           <df name="USB_HOST_SHIELD">
             <df name="examples">
               <df name="board_qc">
@@ -519,7 +510,7 @@
             tool="1"
             flavor2="9">
       </item>
-      <item path="libraries/UHS_host/UHS_MIDI/examples/USB_HOST_SHIELD/USB_MIDI_Converter/USB_MIDI_Converter.ino"
+      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/KINETIS_DEV_DESC/KINETIS_DEV_DESC.ino"
             ex="false"
             tool="1"
             flavor2="0">

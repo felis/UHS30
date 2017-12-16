@@ -213,6 +213,7 @@ e-mail   :  support@circuitsathome.com
 #define            UHS_HOST_ERROR_BAD_MAX_PACKET_SIZE 0xDAU // The maximum packet size was exceeded. Try again with smaller size.
 #define           UHS_HOST_ERROR_NO_ENDPOINT_IN_TABLE 0xDBU // The endpoint could not be found in the endpoint table.
 #define                      UHS_HOST_ERROR_UNPLUGGED 0xDEU // Someone removed the USB device, or Vbus was turned off.
+#define                          UHS_HOST_ERROR_NOMEM 0xDFU // Out Of Memory.
 
 // Control request stream errors
 #define                UHS_HOST_ERROR_FailGetDevDescr 0xE1U

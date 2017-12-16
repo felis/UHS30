@@ -16,33 +16,20 @@
 #define LOAD_UHS_PRINTF_HELPER
 // Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
-// Load USB Host Shield
-#define LOAD_USB_HOST_SHIELD
+// Load the Kinetis core
+#define LOAD_UHS_KINETIS_FS_HOST
 // Load MIDI class driver
 #define LOAD_UHS_MIDI
 
 //#define ENABLE_UHS_DEBUGGING 1
 //#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
-//#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD 1
+//#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_KINETIS 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_MIDI_HOST 1
 //#define UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE 1
 
-
-// Note: useless check!
-// Should really be checking:
-// SERIAL_PORT_MONITOR
-// SERIAL_PORT_USBVIRTUAL
-// SERIAL_PORT_HARDWARE_OPEN
-// not USBCON (OR USBCON ONLY) PLEASE FIX THIS!
-
-#ifdef USBCON
-#define _MIDI_SERIAL_PORT Serial1
-#define USB_HOST_SERIAL Serial
-#else
-#define _MIDI_SERIAL_PORT Serial
+#define _MIDI_SERIAL_PORT Serial2
 #define USB_HOST_SERIAL Serial1
-#endif
 
 #include <Arduino.h>
 #ifdef true
@@ -54,9 +41,12 @@
 
 #include <UHS_host.h>
 
-MAX3421E_HOST *UsbHost;
+UHS_KINETIS_FS_HOST *UsbHost;
 UHS_MIDI *Midi;
 bool connected;
+
+uint32_t Next_time;
+bool led_state = false;
 
 // Poll USB MIDI Controller and send to serial MIDI
 
@@ -78,19 +68,28 @@ void MIDI_poll() {
         } while(size > 0);
 }
 
-
 void setup() {
+        // USB data switcher, PC -> device. (test jig, this can be ignored for regular use)
+        pinMode(5, OUTPUT);
+        digitalWriteFast(5, HIGH);
+
+        // Activity LED. Lets us know we are alive.
+        pinMode(LED_BUILTIN, OUTPUT);
+        digitalWriteFast(LED_BUILTIN, HIGH);
+
         connected = false;
         while(!USB_HOST_SERIAL) {
                 yield();
         }
-        _MIDI_SERIAL_PORT.begin(230400);
         USB_HOST_SERIAL.begin(115200);
-        delay(100);
-        printf_P(PSTR("\r\n\r\n\r\n\r\n\r\n\r\nUSB MIDI Converter example.\r\n\r\n"));
-        UsbHost = new MAX3421E_HOST();
+        _MIDI_SERIAL_PORT.begin(230400);
+        UsbHost = new UHS_KINETIS_FS_HOST();
         Midi = new UHS_MIDI(UsbHost);
         while(UsbHost->Init(1000) != 0);
+        delay(100);
+        printf_P(PSTR("\r\n\r\n\r\n\r\n\r\n\r\nUSB MIDI Converter example.\r\n\r\n"));
+        digitalWriteFast(LED_BUILTIN, LOW);
+        Next_time = (int32_t)millis() + 250UL;
 }
 
 void loop() {
@@ -104,6 +103,17 @@ void loop() {
                 if(connected) {
                         connected = false;
                         printf_P(PSTR("\r\nDisconnected from MIDI\r\n"));
+                }
+        }
+
+
+        if((int32_t)((uint32_t)millis() - Next_time) >= 0L) {
+                led_state = !led_state;
+                digitalWriteFast(LED_BUILTIN, led_state);
+                if(connected) {
+                        Next_time = (int32_t)millis() + 250UL;
+                } else {
+                        Next_time = (int32_t)millis() + 100UL;
                 }
         }
 }

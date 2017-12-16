@@ -871,7 +871,8 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
                 uint8_t HIRQ_sendback = 0x00;
 
                 if((HIRQ & bmCONDETIRQ) || (HIRQ & bmBUSEVENTIRQ)) {
-                        MAX_HOST_DEBUG("\r\nBEFORE CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n",
+                        //MAX_HOST_DEBUG
+                                printf("\r\nBEFORE CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n",
                                 (HIRQ & bmCONDETIRQ) ? "T" : "F",
                                 (HIRQ & bmBUSEVENTIRQ) ? "T" : "F",
                                 doingreset ? "T" : "F",
@@ -892,16 +893,17 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
                         busprobe();
                 }
 
-
-                //if((HIRQ & bmCONDETIRQ) || (HIRQ & bmBUSEVENTIRQ)) {
-                //        MAX_HOST_DEBUG("\r\nAFTER CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n",
-                //                (HIRQ & bmCONDETIRQ) ? "T" : "F",
-                //                (HIRQ & bmBUSEVENTIRQ) ? "T" : "F",
-                //                doingreset ? "T" : "F",
-                //                usb_task_state
-                //                );
-                //}
-
+#if 1
+                if((HIRQ & bmCONDETIRQ) || (HIRQ & bmBUSEVENTIRQ)) {
+                        //MAX_HOST_DEBUG
+                                printf("\r\nAFTER CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n",
+                                (HIRQ & bmCONDETIRQ) ? "T" : "F",
+                                (HIRQ & bmBUSEVENTIRQ) ? "T" : "F",
+                                doingreset ? "T" : "F",
+                                usb_task_state
+                                );
+                }
+#endif
 
                 if(HIRQ & bmFRAMEIRQ) {
                         HIRQ_sendback |= bmFRAMEIRQ;

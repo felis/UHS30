@@ -6,7 +6,7 @@
 #define LOAD_UHS_HUB
 
 // Patch printf so we can use it.
-#define LOAD_UHS_PRINTF_HELPER
+#define LOAD_UHS_PRINTF_HELPER 1
 //#define ENABLE_UHS_DEBUGGING 1
 //#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
