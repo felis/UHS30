@@ -65,18 +65,18 @@
 typedef struct _uhs_kehci_qh {
         uint32_t horizontalLinkPointer; /* queue head horizontal link pointer */
         uint32_t staticEndpointStates[2]; /* static endpoint state and configuration information */
-        uint32_t currentQtdPointer; /* current qTD pointer */
-        uint32_t nextQtdPointer; /* next qTD pointer */
-        uint32_t alternateNextQtdPointer; /* alternate next qTD pointer */
-        uint32_t transferOverlayResults[6]; /* transfer overlay configuration and transfer results */
+        volatile uint32_t currentQtdPointer; /* current qTD pointer */
+        volatile uint32_t nextQtdPointer; /* next qTD pointer */
+        volatile uint32_t alternateNextQtdPointer; /* alternate next qTD pointer */
+        volatile uint32_t transferOverlayResults[6]; /* transfer overlay configuration and transfer results */
         uint32_t rspace[4]; // reserved space
 } uhs_kehci_qh_t;
 
 typedef struct _uhs_kehci_qtd {
-        uint32_t nextQtdPointer; /* QTD specification filed, the next QTD pointer */
-        uint32_t alternateNextQtdPointer; /* QTD specification filed, alternate next QTD pointer */
-        uint32_t transferResults[2]; /* QTD specification filed, transfer results fields */
-        uint32_t bufferPointers[4]; /* QTD specification filed, transfer buffer fields */
+        volatile uint32_t nextQtdPointer; /* QTD specification filed, the next QTD pointer */
+        volatile uint32_t alternateNextQtdPointer; /* QTD specification filed, alternate next QTD pointer */
+        volatile uint32_t transferResults; /* QTD specification filed, transfer results fields */
+        volatile uint32_t bufferPointers[5]; /* QTD specification filed, transfer buffer fields */
 } uhs_kehci_qtd_t;
 
 #if defined(UHS_FUTURE)
@@ -142,7 +142,10 @@ class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
         // Still needed???
         volatile uint32_t frame[UHS_KEHCI_MAX_FRAMES] __attribute__((aligned(4096)));
 
-        volatile Qs_t Q;
+        //volatile Qs_t Q;
+	uhs_kehci_qh_t QH __attribute__((aligned(64)));
+	uhs_kehci_qtd_t qTD __attribute__((aligned(32)));
+	uhs_kehci_qtd_t qHalt __attribute__((aligned(32)));
 
         //volatile uint32_t qh[12] __attribute__((aligned(64)));
         //uint32_t qtd_dummy[8] __attribute__((aligned(32)));
@@ -197,6 +200,7 @@ public:
         void UHS_NI poopOutStatus();
         void ISRTask(void);
         void ISRbottom(void);
+	void init_qTD(void *buf, uint32_t len, uint32_t pid, uint32_t data01, bool irq);
 
         void busprobe(void);
 
@@ -222,13 +226,13 @@ public:
 
         virtual void Task(void); // {};
 
-        //        virtual uint8_t SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t &nak_limit);
+        virtual uint8_t SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t &nak_limit);
         //        virtual uint8_t OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data);
         //        virtual uint8_t InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data);
-        //        virtual UHS_EpInfo *ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr);
+        virtual UHS_EpInfo *ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr);
         //        virtual uint8_t ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr);
         //        virtual uint8_t ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t *dataptr);
-        //        virtual uint8_t dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit);
+        virtual uint8_t dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit);
 
         bool UHS_NI IsHub(uint8_t klass) {
                 if(klass == UHS_USB_CLASS_HUB) {
