@@ -392,7 +392,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
 	memset(&qHalt, 0, sizeof(qHalt));
 	qHalt.transferResults = 0x40;
 
-#if 0
+#if defined(UHS_FUTURE)
 #if defined(EHCI_TEST_DEV)
         printf("*Q = %p\r\n", &Q);
         printf("*Q.qh = %p\r\n", (Q.qh));
@@ -460,16 +460,19 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         }
         Q.sitd[UHS_KEHCI_MAX_SITD - 1].nextLinkPointer = (uint32_t)NULL;
 #endif
-#endif
+#endif // UHS_FUTURE
 
 
 
 #if defined(EHCI_TEST_DEV)
         printf("\r\n");
 #endif
+
+#if defined(UHS_FUTURE)
         for(int i = 0; i < UHS_KEHCI_MAX_FRAMES; i++) {
                 frame[i] = 1;
         }
+#endif
 
 #ifdef HAS_KINETIS_MPU
         MPU_RGDAAC0 |= 0x30000000;
@@ -645,19 +648,40 @@ void UHS_KINETIS_EHCI::init_qTD(void *buf, uint32_t len, uint32_t pid, uint32_t 
         qTD.bufferPointers[4] = addr + 0x4000;
 }
 
+
 /*
-struct UHS_EpInfo {
-  uint8_t epAddr;     // Endpoint address
-  uint8_t maxPktSize; // Maximum packet size
-  union {
-  uint8_t epAttribs;
-    struct {
-    uint8_t bmSndToggle : 1; // Send toggle, when zero bmSNDTOG0, bmSNDTOG1 otherwise
-    uint8_t bmRcvToggle : 1; // Send toggle, when zero bmRCVTOG0, bmRCVTOG1 otherwise
-    uint8_t bmNakPower : 6; // Binary order for NAK_LIMIT value
-    } __attribute__((packed));
-  };
-} */
+This is a simplification & small subset of EHCI adapted for UHS.  If you read the
+EHCI spec, normally a driver would dynamically allocate one QH structure for each
+endpoint in every device.  The many QH structures would be placed into a circular
+linked list for the asychronous schedule or an inverted binary tree for the
+periodic schedule.  For actual data transfer, qTD structures would be dynamically
+allocated and hot-inserted to the linked list from the QH representing the
+desired endpoint.  Additional list structures outside the scope of EHCI would
+normally be used to manage qTD structures after EHCI completes their work
+requirements.  As USB devices & hubs connect and disconnect, special rules need
+to be followed to dynamically change the QH lists while EHCI is actively using
+them.  The normal EHCI usage model is very complex!
+
+UHS uses a much simpler model, where SetAddress() is first called to configure
+the hardware to communicate with one endpoint on a particular device.  Then the
+functions below are called to perform the USB communication.  To meet this usage
+model, a single QH structure is connected to EHCI's asynchronous schedule.  The
+periodic schedule is not used.  When SetAddress() requests a different device or
+endpoint, this one QH is reconfigured.
+
+Data transfer is accomplished using two qTD structures.  qHalt is reserved for
+placing the QH into its halted state.  When no data transfer is needed, the
+QH.nextQtdPointer field must always have the address of qHalt.  This is how
+the QH "knows" no more data transfers are to be attempted.  When data transfer
+is needed, the main qTD structure is initialized with the details and a pointer
+to the actual buffer which sources or sinks USB data.  This main qTD structure
+must have its nextQtdPointer field set to the address of qHalt *before* it is
+used.  Then to cause EHCI to perform the data transfer, the QH.nextQtdPointer
+is written to the address of the main qTD.  When the transfer completes, EHCI
+automatically updates the QH.nextQtdPointer field to the qTD.nextQtdPointer.
+The QH returns to its halted state because the main qTD points to the qHalt
+structure.
+*/
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t & nak_limit)
 {
