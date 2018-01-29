@@ -119,7 +119,7 @@ void UHS_NI UHS_KINETIS_EHCI::busprobe(void) {
                         speed = 15;
                         break;
         }
-        printf("USB host speed now %1.1x\r\n", speed);
+        HOST_DUBUG("USB host speed now %1.1x\r\n", speed);
         usb_host_speed = speed;
         if(speed == 2) {
                 UHS_KIO_SETBIT_ATOMIC(USBPHY_CTRL,USBPHY_CTRL_ENHOSTDISCONDETECT);
@@ -165,7 +165,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                 interrupts();
         }
 
-        printf("ISRbottom, usb_task_state: 0x%0X \r\n", (uint8_t)usb_task_state);
+        HOST_DUBUG("ISRbottom, usb_task_state: 0x%0X \r\n", (uint8_t)usb_task_state);
 
         switch(usb_task_state) {
                 case UHS_USB_HOST_STATE_INITIALIZE: /* 0x10 */ // initial state
@@ -290,7 +290,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
                 // port change
                 vbusState = ((Pstat & 0x04000000U) ? 1 : 0) | ((Pstat & 0x08000000U) ? 2 : 0);
 #if defined(EHCI_TEST_DEV)
-                printf("PCI Vbus state changed to %1.1x\r\n", vbusState);
+                HOST_DUBUG("PCI Vbus state changed to %1.1x\r\n", vbusState);
 #endif
                 busprobe();
                 if(!doingreset) condet = true;
@@ -661,7 +661,7 @@ struct UHS_EpInfo {
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t & nak_limit)
 {
-	printf("SetAddress, addr=%d, ep=%x\n", addr, ep);
+	HOST_DUBUG("SetAddress, addr=%d, ep=%x\n", addr, ep);
 
 	UHS_Device *p = addrPool.GetUsbDevicePtr(addr);
 	if (!p) return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
@@ -677,7 +677,9 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 
 	uint32_t type=0; // 0=control, 2=bulk, 3=interrupt
 	if ((ep & 0x7F) > 0) {
-		// TODO: how to tell non-zero endpoint is bulk or control (or iso yikes!)
+		// From Andrew:
+		//   There are currently only bulk packets.
+		//   Interrupt variety can be added to the structure, but this won't be used yet.
 		type = 2; // assume bulk ep != 0
 	}
 	uint32_t speed;
@@ -688,18 +690,16 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 	} else {
 		speed = 1; // 1.5 Mbit/sec
 	}
-	printf("SetAddress, speed=%ld\n", speed);
-	//uint32_t c=0, dtc=0;
+	HOST_DUBUG("SetAddress, speed=%ld\n", speed);
 	uint32_t c=0;
-	uint32_t maxlen=64;
+	uint32_t maxlen=64; // TODO: need to get this from endpoint info
 
 	// TODO, bmParent & bmAddress do not seem to always work
-	printf("SetAddress, hub=%d, port=%x\n", p->address.bmParent, p->address.bmAddress);
+	HOST_DUBUG("SetAddress, hub=%d, port=%x\n", p->address.bmParent, p->address.bmAddress);
 	uint32_t hub_addr=0, hub_port=1;
 
-	if (type == 0) {
-		//dtc = 1;
-		if (speed < 2) c = 1;
+	if (type == 0 && speed != 2) {
+		c = 1;
 	}
 	qHalt.nextQtdPointer = 1;
 	qHalt.alternateNextQtdPointer = 1;
@@ -719,30 +719,23 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit)
 {
-	// sending ACK after IN isn't working... print lots of info
-	poopOutStatus();
-	printf("dispatchPkt, qTD %lx\n", (uint32_t)&qTD);
-	printf("dispatchPkt, qHalt %lx\n", (uint32_t)&qHalt);
-	printf("dispatchPkt, QH.curr  %lx\n", QH.currentQtdPointer);
-	printf("dispatchPkt, QH.next  %lx\n", QH.nextQtdPointer);
-	printf("dispatchPkt, QH.token %lx\n", QH.transferOverlayResults[0]);
-
-	printf("dispatchPkt, qTD.next  %lx\n", qTD.nextQtdPointer);
-	printf("dispatchPkt, qTD.alt   %lx\n", qTD.alternateNextQtdPointer);
-	printf("dispatchPkt, qTD.token %lx\n", qTD.transferResults);
-	printf("dispatchPkt, qTD.buf   %lx\n", qTD.bufferPointers[0]);
-
+	QH.transferOverlayResults[0] = 0;
 	QH.nextQtdPointer = (uint32_t)&qTD;
 
 	uint32_t usec_timeout = 1200; // TODO: use data length & speed
 	elapsedMicros usec=0;
 	while (!condet && usec < usec_timeout) {
 		uint32_t status = qTD.transferResults;
-		printf("dispatchPkt %lx\n", status);
+		//HOST_DUBUG("dispatchPkt %lx\n", status);
 		if (!(status & 0x80)) {
-			// no longer active
-			if ((status & 0x7F) == 0) return UHS_HOST_ERROR_NONE; // ok
-			return UHS_HOST_ERROR_NAK; // one of many possible errors
+			if ((status & 0x7F) == 0) {
+				// no longer active, not halted, no errors... so ok
+				return UHS_HOST_ERROR_NONE;
+			}
+			// one of many possible errors
+			// TODO: do we need to clear halt condition or
+			// do anything else special here to deal with errors?
+			return UHS_HOST_ERROR_NAK;
 		}
 	}
 	if (condet) return UHS_HOST_ERROR_UNPLUGGED;
@@ -752,7 +745,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data)
 {
-	printf("InTransfer %d\n", *nbytesptr);
+	HOST_DUBUG("InTransfer %d\n", *nbytesptr);
 	init_qTD(data, *nbytesptr, 1, pep->bmRcvToggle, false);
 	uint8_t rcode = dispatchPkt(0, 0, nak_limit);
 	uint32_t status = qTD.transferResults;
@@ -764,7 +757,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
 
 UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr)
 {
-	printf("ctrlReqOpen\n");
+	HOST_DUBUG("ctrlReqOpen\n");
 
 	UHS_EpInfo *pep = NULL;
 	uint16_t nak_limit = 0;
@@ -795,9 +788,10 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, ui
 	*read = 0;
 	uint8_t rcode = 0;
 	uint16_t nak_limit = 0;
-	HOST_DUBUG("ctrlReqRead left: %i\r\n", *left);
+	HOST_DUBUG("ctrlReqRead left: %i, read: %i\r\n", *left, *read);
 	if(*left) {
 		*read = nbytes;
+		//*read = 16;
 		rcode = InTransfer(pep, nak_limit, read, dataptr);
 		if(rcode) {
 			HOST_DUBUG("ctrlReqRead ERROR: %2.2x, left: %i, read %i\r\n", rcode, *left, *read);
@@ -818,7 +812,6 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType
 		// TODO: is this needed?
 	}
 
-	// TODO: this is not sending the zero-length ACK, but why?
 	if (((bmReqType & 0x80) == 0x80)) {
 		init_qTD(NULL, 0, 0, 1, false);
 		rcode = dispatchPkt(0, 0, 0);
