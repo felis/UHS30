@@ -42,10 +42,11 @@
 
 
 #include <wiring.h>
+
+#if defined(UHS_FUTURE)
 #ifndef UHS_KEHCI_MAX_FRAMES
 #define UHS_KEHCI_MAX_FRAMES (1024)
 #endif
-
 #ifndef UHS_KEHCI_MAX_QH
 #define UHS_KEHCI_MAX_QH (8)
 #endif
@@ -61,6 +62,7 @@
 #ifndef UHS_KEHCI_MAX_ISO
 #define UHS_KEHCI_MAX_ISO UHS_KEHCI_MAX_ITD
 #endif
+#endif // UHS_FUTURE
 
 typedef struct _uhs_kehci_qh {
         uint32_t horizontalLinkPointer; /* queue head horizontal link pointer */
@@ -127,8 +129,6 @@ typedef struct _usb_host_ehci_iso {
 
 //(sizeof(usb_host_ehci_pipe_t) * USB_HOST_CONFIG_MAX_PIPES);
 
-#endif
-
 typedef struct _Qs {
         uhs_kehci_qh_t qh[UHS_KEHCI_MAX_QH] __attribute__((aligned(64))) ;
         uhs_kehci_qtd_t qtd[UHS_KEHCI_MAX_QTD] __attribute__((aligned(32)));
@@ -138,22 +138,28 @@ typedef struct _Qs {
 #endif
 } Qs_t;
 
+#endif // UHS_FUTURE
+
 class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
+#if defined(UHS_FUTURE)
         // Still needed???
         volatile uint32_t frame[UHS_KEHCI_MAX_FRAMES] __attribute__((aligned(4096)));
+#endif
 
         //volatile Qs_t Q;
 	uhs_kehci_qh_t QH __attribute__((aligned(64)));
 	uhs_kehci_qtd_t qTD __attribute__((aligned(32)));
 	uhs_kehci_qtd_t qHalt __attribute__((aligned(32)));
 
-        //volatile uint32_t qh[12] __attribute__((aligned(64)));
-        //uint32_t qtd_dummy[8] __attribute__((aligned(32)));
-        //uint32_t qtd_setup[8] __attribute__((aligned(32)));
-        //uint32_t qtd_in[8] __attribute__((aligned(32)));
-        //uint32_t qtd_outack[8] __attribute__((aligned(32)));
-        //uint32_t setupbuf[2] __attribute__((aligned(8)));
-        //uint32_t inbuf[16] __attribute__((aligned(64)));
+#if defined(UHS_FUTURE)
+        volatile uint32_t qh[12] __attribute__((aligned(64)));
+        uint32_t qtd_dummy[8] __attribute__((aligned(32)));
+        uint32_t qtd_setup[8] __attribute__((aligned(32)));
+        uint32_t qtd_in[8] __attribute__((aligned(32)));
+        uint32_t qtd_outack[8] __attribute__((aligned(32)));
+        uint32_t setupbuf[2] __attribute__((aligned(8)));
+        uint32_t inbuf[16] __attribute__((aligned(64)));
+#endif
 
         volatile uint8_t hub_present;
         volatile uint8_t vbusState;
@@ -228,10 +234,10 @@ public:
 
         virtual uint8_t SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t &nak_limit);
         //        virtual uint8_t OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data);
-        //        virtual uint8_t InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data);
+        virtual uint8_t InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data);
         virtual UHS_EpInfo *ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr);
-        //        virtual uint8_t ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr);
-        //        virtual uint8_t ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t *dataptr);
+        virtual uint8_t ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr);
+        virtual uint8_t ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t *dataptr);
         virtual uint8_t dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit);
 
         bool UHS_NI IsHub(uint8_t klass) {

@@ -119,7 +119,7 @@ void UHS_NI UHS_KINETIS_EHCI::busprobe(void) {
                         speed = 15;
                         break;
         }
-        printf("USB host speed now %1.1x\r\n", speed);
+        HOST_DUBUG("USB host speed now %1.1x\r\n", speed);
         usb_host_speed = speed;
         if(speed == 2) {
                 UHS_KIO_SETBIT_ATOMIC(USBPHY_CTRL,USBPHY_CTRL_ENHOSTDISCONDETECT);
@@ -165,7 +165,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                 interrupts();
         }
 
-        printf("ISRbottom, usb_task_state: 0x%0X \r\n", (uint8_t)usb_task_state);
+        HOST_DUBUG("ISRbottom, usb_task_state: 0x%0X \r\n", (uint8_t)usb_task_state);
 
         switch(usb_task_state) {
                 case UHS_USB_HOST_STATE_INITIALIZE: /* 0x10 */ // initial state
@@ -290,7 +290,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
                 // port change
                 vbusState = ((Pstat & 0x04000000U) ? 1 : 0) | ((Pstat & 0x08000000U) ? 2 : 0);
 #if defined(EHCI_TEST_DEV)
-                printf("PCI Vbus state changed to %1.1x\r\n", vbusState);
+                HOST_DUBUG("PCI Vbus state changed to %1.1x\r\n", vbusState);
 #endif
                 busprobe();
                 if(!doingreset) condet = true;
@@ -392,7 +392,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
 	memset(&qHalt, 0, sizeof(qHalt));
 	qHalt.transferResults = 0x40;
 
-#if 0
+#if defined(UHS_FUTURE)
 #if defined(EHCI_TEST_DEV)
         printf("*Q = %p\r\n", &Q);
         printf("*Q.qh = %p\r\n", (Q.qh));
@@ -460,16 +460,19 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         }
         Q.sitd[UHS_KEHCI_MAX_SITD - 1].nextLinkPointer = (uint32_t)NULL;
 #endif
-#endif
+#endif // UHS_FUTURE
 
 
 
 #if defined(EHCI_TEST_DEV)
         printf("\r\n");
 #endif
+
+#if defined(UHS_FUTURE)
         for(int i = 0; i < UHS_KEHCI_MAX_FRAMES; i++) {
                 frame[i] = 1;
         }
+#endif
 
 #ifdef HAS_KINETIS_MPU
         MPU_RGDAAC0 |= 0x30000000;
@@ -625,7 +628,7 @@ static uint32_t QH_capabilities2(uint32_t high_bw_mult, uint32_t hub_port_number
 // Fill in the qTD fields (token & data)
 //   t       the Transfer qTD to initialize
 //   buf     data to transfer
-//   len     length of data
+//   len     length of data  (up to 16K for any address, or up to 20K if 4K aligned)
 //   pid     type of packet: 0=OUT, 1=IN, 2=SETUP
 //   data01  value of DATA0/DATA1 toggle on 1st packet
 //   irq     whether to generate an interrupt when transfer complete
@@ -645,23 +648,44 @@ void UHS_KINETIS_EHCI::init_qTD(void *buf, uint32_t len, uint32_t pid, uint32_t 
         qTD.bufferPointers[4] = addr + 0x4000;
 }
 
+
 /*
-struct UHS_EpInfo {
-  uint8_t epAddr;     // Endpoint address
-  uint8_t maxPktSize; // Maximum packet size
-  union {
-  uint8_t epAttribs;
-    struct {
-    uint8_t bmSndToggle : 1; // Send toggle, when zero bmSNDTOG0, bmSNDTOG1 otherwise
-    uint8_t bmRcvToggle : 1; // Send toggle, when zero bmRCVTOG0, bmRCVTOG1 otherwise
-    uint8_t bmNakPower : 6; // Binary order for NAK_LIMIT value
-    } __attribute__((packed));
-  };
-} */
+This is a simplification & small subset of EHCI adapted for UHS.  If you read the
+EHCI spec, normally a driver would dynamically allocate one QH structure for each
+endpoint in every device.  The many QH structures would be placed into a circular
+linked list for the asychronous schedule or an inverted binary tree for the
+periodic schedule.  For actual data transfer, qTD structures would be dynamically
+allocated and hot-inserted to the linked list from the QH representing the
+desired endpoint.  Additional list structures outside the scope of EHCI would
+normally be used to manage qTD structures after EHCI completes their work
+requirements.  As USB devices & hubs connect and disconnect, special rules need
+to be followed to dynamically change the QH lists while EHCI is actively using
+them.  The normal EHCI usage model is very complex!
+
+UHS uses a much simpler model, where SetAddress() is first called to configure
+the hardware to communicate with one endpoint on a particular device.  Then the
+functions below are called to perform the USB communication.  To meet this usage
+model, a single QH structure is connected to EHCI's asynchronous schedule.  The
+periodic schedule is not used.  When SetAddress() requests a different device or
+endpoint, this one QH is reconfigured.
+
+Data transfer is accomplished using two qTD structures.  qHalt is reserved for
+placing the QH into its halted state.  When no data transfer is needed, the
+QH.nextQtdPointer field must always have the address of qHalt.  This is how
+the QH "knows" no more data transfers are to be attempted.  When data transfer
+is needed, the main qTD structure is initialized with the details and a pointer
+to the actual buffer which sources or sinks USB data.  This main qTD structure
+must have its nextQtdPointer field set to the address of qHalt *before* it is
+used.  Then to cause EHCI to perform the data transfer, the QH.nextQtdPointer
+is written to the address of the main qTD.  When the transfer completes, EHCI
+automatically updates the QH.nextQtdPointer field to the qTD.nextQtdPointer.
+The QH returns to its halted state because the main qTD points to the qHalt
+structure.
+*/
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t & nak_limit)
 {
-	printf("SetAddress, addr=%d, ep=%x\n", addr, ep);
+	HOST_DUBUG("SetAddress, addr=%d, ep=%x\n", addr, ep);
 
 	UHS_Device *p = addrPool.GetUsbDevicePtr(addr);
 	if (!p) return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
@@ -677,7 +701,9 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 
 	uint32_t type=0; // 0=control, 2=bulk, 3=interrupt
 	if ((ep & 0x7F) > 0) {
-		// TODO: how to tell non-zero endpoint is bulk or control (or iso yikes!)
+		// From Andrew:
+		//   There are currently only bulk packets.
+		//   Interrupt variety can be added to the structure, but this won't be used yet.
 		type = 2; // assume bulk ep != 0
 	}
 	uint32_t speed;
@@ -688,24 +714,23 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 	} else {
 		speed = 1; // 1.5 Mbit/sec
 	}
-	printf("SetAddress, speed=%ld\n", speed);
-	uint32_t c=0, dtc=0;
-	uint32_t maxlen=64;
+	HOST_DUBUG("SetAddress, speed=%ld\n", speed);
+	uint32_t c=0;
+	uint32_t maxlen=64; // TODO: need to get this from endpoint info
 
 	// TODO, bmParent & bmAddress do not seem to always work
-	printf("SetAddress, hub=%d, port=%x\n", p->address.bmParent, p->address.bmAddress);
+	HOST_DUBUG("SetAddress, hub=%d, port=%x\n", p->address.bmParent, p->address.bmAddress);
 	uint32_t hub_addr=0, hub_port=1;
 
-	if (type == 0) {
-		dtc = 1;
-		if (speed < 2) c = 1;
+	if (type == 0 && speed != 2) {
+		c = 1;
 	}
 	qHalt.nextQtdPointer = 1;
 	qHalt.alternateNextQtdPointer = 1;
 	qHalt.transferResults = 0x40;
 	memset(&QH, 0, sizeof(QH));
 	QH.horizontalLinkPointer = (uint32_t)&QH | 2;
-	QH.staticEndpointStates[0] = QH_capabilities1(15, c, maxlen, 1, dtc, speed, ep, 0, addr);
+	QH.staticEndpointStates[0] = QH_capabilities1(15, c, maxlen, 1, 1, speed, ep, 0, addr);
 	QH.staticEndpointStates[1] = QH_capabilities2(1, hub_port, hub_addr, 0, 0);
 	QH.nextQtdPointer = (uint32_t)&qHalt;
 	QH.alternateNextQtdPointer = (uint32_t)&qHalt;
@@ -718,16 +743,23 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit)
 {
+	QH.transferOverlayResults[0] = 0;
 	QH.nextQtdPointer = (uint32_t)&qTD;
 
-	uint32_t usec_timeout = 100; // TODO: use data length & speed
+	uint32_t usec_timeout = 1200; // TODO: use data length & speed
 	elapsedMicros usec=0;
 	while (!condet && usec < usec_timeout) {
 		uint32_t status = qTD.transferResults;
+		//HOST_DUBUG("dispatchPkt %lx\n", status);
 		if (!(status & 0x80)) {
-			// no longer active
-			if ((status & 0x7F) == 0) return UHS_HOST_ERROR_NONE; // ok
-			return UHS_HOST_ERROR_NAK; // one of many possible errors
+			if ((status & 0x7F) == 0) {
+				// no longer active, not halted, no errors... so ok
+				return UHS_HOST_ERROR_NONE;
+			}
+			// one of many possible errors
+			// TODO: do we need to clear halt condition or
+			// do anything else special here to deal with errors?
+			return UHS_HOST_ERROR_NAK;
 		}
 	}
 	if (condet) return UHS_HOST_ERROR_UNPLUGGED;
@@ -735,9 +767,21 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
 }
 
 
+uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data)
+{
+	HOST_DUBUG("InTransfer %d\n", *nbytesptr);
+	init_qTD(data, *nbytesptr, 1, pep->bmRcvToggle, false);
+	uint8_t rcode = dispatchPkt(0, 0, nak_limit);
+	uint32_t status = qTD.transferResults;
+	*nbytesptr -= (status >> 16) & 0x7FFF;
+	pep->bmRcvToggle = status >> 31;
+	return rcode;
+}
+
+
 UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr)
 {
-	printf("ctrlReqOpen\n");
+	HOST_DUBUG("ctrlReqOpen\n");
 
 	UHS_EpInfo *pep = NULL;
 	uint16_t nak_limit = 0;
@@ -762,6 +806,48 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
 	}
 	return pep;
 }
+
+uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t * dataptr)
+{
+	*read = 0;
+	uint8_t rcode = 0;
+	uint16_t nak_limit = 0;
+	HOST_DUBUG("ctrlReqRead left: %i, read: %i\r\n", *left, *read);
+	if(*left) {
+		*read = nbytes;
+		//*read = 16;
+		rcode = InTransfer(pep, nak_limit, read, dataptr);
+		if(rcode) {
+			HOST_DUBUG("ctrlReqRead ERROR: %2.2x, left: %i, read %i\r\n", rcode, *left, *read);
+		} else {
+			*left -= *read;
+			HOST_DUBUG("ctrlReqRead left: %i, read %i\r\n", *left, *read);
+		}
+	}
+	return rcode;
+}
+
+uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr)
+{
+	uint8_t rcode;
+
+	if(((bmReqType & 0x80) == 0x80) && pep && left && dataptr) {
+		HOST_DUBUG("ctrlReqClose Sinking %i\r\n", left);
+		// TODO: is this needed?
+	}
+
+	if (((bmReqType & 0x80) == 0x80)) {
+		init_qTD(NULL, 0, 0, 1, false);
+		rcode = dispatchPkt(0, 0, 0);
+	} else {
+		init_qTD(NULL, 0, 1, 1, false);
+		rcode = dispatchPkt(0, 0, 0);
+	}
+	return rcode;
+}
+
+
+
 
 
 
