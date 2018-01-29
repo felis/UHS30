@@ -235,7 +235,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                         // Serial.println((uint32_t)__builtin_return_address(0),HEX);
                         break;
 		case UHS_USB_HOST_STATE_ERROR: /* 0xF0 */
-			Serial.println("ISRbottom, error state, die here\r\n");
+			HOST_DUBUG("ISRbottom, error state, die here\r\n");
 			while (1) ;
 			break;
                 case UHS_USB_HOST_STATE_RUNNING: /* 0x60 */
@@ -714,13 +714,21 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 	} else {
 		speed = 1; // 1.5 Mbit/sec
 	}
-	HOST_DUBUG("SetAddress, speed=%ld\n", speed);
 	uint32_t c=0;
-	uint32_t maxlen=64; // TODO: need to get this from endpoint info
+
+	// TODO: May be a problem with maxPktSize.  When enumerating a device with
+	// less than 64, the enumeration process correctly reads and learns the
+	// endpoint 0 max packet size, using it to read the device descriptor.
+	// But then after a bus reset and setting the address, reading the
+	// config descriptor seems to give maxPktSize=64, rather than the correct
+	// maxPktSize detected as the first step.
+	uint32_t maxlen=(*ppep)->maxPktSize;
+	HOST_DUBUG("SetAddress, speed=%ld, maxlen=%ld\n", speed, maxlen);
+	// maxlen = 16; // uncomment for testing with device having ep0 maxlen=16
 
 	// TODO, bmParent & bmAddress do not seem to always work
 	HOST_DUBUG("SetAddress, hub=%d, port=%x\n", p->address.bmParent, p->address.bmAddress);
-	uint32_t hub_addr=0, hub_port=1;
+	uint32_t hub_addr=0, hub_port=1; // TODO: fix this for 12 & 1.5 speed devices on hubs
 
 	if (type == 0 && speed != 2) {
 		c = 1;
@@ -734,7 +742,16 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 	QH.staticEndpointStates[1] = QH_capabilities2(1, hub_port, hub_addr, 0, 0);
 	QH.nextQtdPointer = (uint32_t)&qHalt;
 	QH.alternateNextQtdPointer = (uint32_t)&qHalt;
-
+#if 0
+	// this can stop at specific locations in the enumeration process
+	// helpful if things go awry, spewing endless data that scrolls
+	// the important stuff off the window.
+	static int diecount=0;
+	if (++diecount > 5) {
+		printf("DIE HERE\n");
+		while (1);
+	}
+#endif
 	USBHS_ASYNCLISTADDR = (uint32_t)&QH;
 	USBHS_USBCMD |= USBHS_USBCMD_ASE;
 
@@ -809,22 +826,24 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t * dataptr)
 {
-	*read = 0;
-	uint8_t rcode = 0;
-	uint16_t nak_limit = 0;
-	HOST_DUBUG("ctrlReqRead left: %i, read: %i\r\n", *left, *read);
-	if(*left) {
-		*read = nbytes;
-		//*read = 16;
-		rcode = InTransfer(pep, nak_limit, read, dataptr);
-		if(rcode) {
-			HOST_DUBUG("ctrlReqRead ERROR: %2.2x, left: %i, read %i\r\n", rcode, *left, *read);
+	printf("ctrlReqRead left: %i, nbytes: %i, dataptr: %lx\r\n",
+		*left, nbytes, (uint32_t)dataptr);
+
+	if (*left > 0) {
+		uint16_t n = *left;
+		uint8_t *ptr = dataptr + nbytes - n; // really?!
+		uint8_t rcode = InTransfer(pep, 0, &n, ptr);
+		if (rcode == 0) {
+			*left -= n;
+			*read = n;
 		} else {
-			*left -= *read;
-			HOST_DUBUG("ctrlReqRead left: %i, read %i\r\n", *left, *read);
+			*read = 0;
 		}
+		return rcode;
+	} else {
+		*read = 0;
+		return 0;
 	}
-	return rcode;
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr)
