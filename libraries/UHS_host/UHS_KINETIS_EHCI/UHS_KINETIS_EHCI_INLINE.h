@@ -625,7 +625,7 @@ static uint32_t QH_capabilities2(uint32_t high_bw_mult, uint32_t hub_port_number
 // Fill in the qTD fields (token & data)
 //   t       the Transfer qTD to initialize
 //   buf     data to transfer
-//   len     length of data
+//   len     length of data  (up to 16K for any address, or up to 20K if 4K aligned)
 //   pid     type of packet: 0=OUT, 1=IN, 2=SETUP
 //   data01  value of DATA0/DATA1 toggle on 1st packet
 //   irq     whether to generate an interrupt when transfer complete
@@ -689,7 +689,8 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 		speed = 1; // 1.5 Mbit/sec
 	}
 	printf("SetAddress, speed=%ld\n", speed);
-	uint32_t c=0, dtc=0;
+	//uint32_t c=0, dtc=0;
+	uint32_t c=0;
 	uint32_t maxlen=64;
 
 	// TODO, bmParent & bmAddress do not seem to always work
@@ -697,7 +698,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 	uint32_t hub_addr=0, hub_port=1;
 
 	if (type == 0) {
-		dtc = 1;
+		//dtc = 1;
 		if (speed < 2) c = 1;
 	}
 	qHalt.nextQtdPointer = 1;
@@ -705,7 +706,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 	qHalt.transferResults = 0x40;
 	memset(&QH, 0, sizeof(QH));
 	QH.horizontalLinkPointer = (uint32_t)&QH | 2;
-	QH.staticEndpointStates[0] = QH_capabilities1(15, c, maxlen, 1, dtc, speed, ep, 0, addr);
+	QH.staticEndpointStates[0] = QH_capabilities1(15, c, maxlen, 1, 1, speed, ep, 0, addr);
 	QH.staticEndpointStates[1] = QH_capabilities2(1, hub_port, hub_addr, 0, 0);
 	QH.nextQtdPointer = (uint32_t)&qHalt;
 	QH.alternateNextQtdPointer = (uint32_t)&qHalt;
@@ -718,12 +719,26 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit)
 {
+	// sending ACK after IN isn't working... print lots of info
+	poopOutStatus();
+	printf("dispatchPkt, qTD %lx\n", (uint32_t)&qTD);
+	printf("dispatchPkt, qHalt %lx\n", (uint32_t)&qHalt);
+	printf("dispatchPkt, QH.curr  %lx\n", QH.currentQtdPointer);
+	printf("dispatchPkt, QH.next  %lx\n", QH.nextQtdPointer);
+	printf("dispatchPkt, QH.token %lx\n", QH.transferOverlayResults[0]);
+
+	printf("dispatchPkt, qTD.next  %lx\n", qTD.nextQtdPointer);
+	printf("dispatchPkt, qTD.alt   %lx\n", qTD.alternateNextQtdPointer);
+	printf("dispatchPkt, qTD.token %lx\n", qTD.transferResults);
+	printf("dispatchPkt, qTD.buf   %lx\n", qTD.bufferPointers[0]);
+
 	QH.nextQtdPointer = (uint32_t)&qTD;
 
-	uint32_t usec_timeout = 100; // TODO: use data length & speed
+	uint32_t usec_timeout = 1200; // TODO: use data length & speed
 	elapsedMicros usec=0;
 	while (!condet && usec < usec_timeout) {
 		uint32_t status = qTD.transferResults;
+		printf("dispatchPkt %lx\n", status);
 		if (!(status & 0x80)) {
 			// no longer active
 			if ((status & 0x7F) == 0) return UHS_HOST_ERROR_NONE; // ok
@@ -732,6 +747,18 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
 	}
 	if (condet) return UHS_HOST_ERROR_UNPLUGGED;
 	return UHS_HOST_ERROR_TIMEOUT;
+}
+
+
+uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data)
+{
+	printf("InTransfer %d\n", *nbytesptr);
+	init_qTD(data, *nbytesptr, 1, pep->bmRcvToggle, false);
+	uint8_t rcode = dispatchPkt(0, 0, nak_limit);
+	uint32_t status = qTD.transferResults;
+	*nbytesptr -= (status >> 16) & 0x7FFF;
+	pep->bmRcvToggle = status >> 31;
+	return rcode;
 }
 
 
@@ -762,6 +789,48 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
 	}
 	return pep;
 }
+
+uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t * dataptr)
+{
+	*read = 0;
+	uint8_t rcode = 0;
+	uint16_t nak_limit = 0;
+	HOST_DUBUG("ctrlReqRead left: %i\r\n", *left);
+	if(*left) {
+		*read = nbytes;
+		rcode = InTransfer(pep, nak_limit, read, dataptr);
+		if(rcode) {
+			HOST_DUBUG("ctrlReqRead ERROR: %2.2x, left: %i, read %i\r\n", rcode, *left, *read);
+		} else {
+			*left -= *read;
+			HOST_DUBUG("ctrlReqRead left: %i, read %i\r\n", *left, *read);
+		}
+	}
+	return rcode;
+}
+
+uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr)
+{
+	uint8_t rcode;
+
+	if(((bmReqType & 0x80) == 0x80) && pep && left && dataptr) {
+		HOST_DUBUG("ctrlReqClose Sinking %i\r\n", left);
+		// TODO: is this needed?
+	}
+
+	// TODO: this is not sending the zero-length ACK, but why?
+	if (((bmReqType & 0x80) == 0x80)) {
+		init_qTD(NULL, 0, 0, 1, false);
+		rcode = dispatchPkt(0, 0, 0);
+	} else {
+		init_qTD(NULL, 0, 1, 1, false);
+		rcode = dispatchPkt(0, 0, 0);
+	}
+	return rcode;
+}
+
+
+
 
 
 
