@@ -7,9 +7,8 @@
 
 // Patch printf so we can use it.
 #define LOAD_UHS_PRINTF_HELPER
-//#define DEBUG_PRINTF_EXTRA_HUGE 1
-//#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
-//#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD 1
+#define DEBUG_PRINTF_EXTRA_HUGE 1
+#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
 
 // Redirect debugging and printf
 //#define USB_HOST_SERIAL Serial1

@@ -82,6 +82,7 @@ typedef struct _uhs_kehci_qtd {
 } uhs_kehci_qtd_t;
 
 #if defined(UHS_FUTURE)
+
 typedef struct _uhs_kehci_itd {
         uint32_t nextLinkPointer; /* ITD specification filed, the next linker pointer */
         uint32_t transactions[8]; /* ITD specification filed, transactions information */
@@ -130,7 +131,7 @@ typedef struct _usb_host_ehci_iso {
 //(sizeof(usb_host_ehci_pipe_t) * USB_HOST_CONFIG_MAX_PIPES);
 
 typedef struct _Qs {
-        uhs_kehci_qh_t qh[UHS_KEHCI_MAX_QH] __attribute__((aligned(64))) ;
+        uhs_kehci_qh_t qh[UHS_KEHCI_MAX_QH] __attribute__((aligned(64)));
         uhs_kehci_qtd_t qtd[UHS_KEHCI_MAX_QTD] __attribute__((aligned(32)));
 #if defined(UHS_FUTURE)
         uhs_kehci_itd_t itd[UHS_KEHCI_MAX_ITD] __attribute__((aligned(32)));
@@ -147,9 +148,9 @@ class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
 #endif
 
         //volatile Qs_t Q;
-	uhs_kehci_qh_t QH __attribute__((aligned(64)));
-	uhs_kehci_qtd_t qTD __attribute__((aligned(32)));
-	uhs_kehci_qtd_t qHalt __attribute__((aligned(32)));
+        uhs_kehci_qh_t QH __attribute__((aligned(64)));
+        uhs_kehci_qtd_t qTD __attribute__((aligned(32)));
+        uhs_kehci_qtd_t qHalt __attribute__((aligned(32)));
 
 #if defined(UHS_FUTURE)
         volatile uint32_t qh[12] __attribute__((aligned(64)));
@@ -173,6 +174,9 @@ class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
         volatile bool counted;
         volatile bool condet;
         volatile bool doingreset;
+        volatile bool newError;
+        volatile uint8_t isrError;
+        volatile bool isrHappened;
 
         volatile uint32_t sof_mark; // Next time in MICROSECONDS that an SOF will be seen
         volatile uint32_t last_mark; // LAST time in MICROSECONDS that a packet was completely sent
@@ -197,6 +201,9 @@ public:
                 hub_present = 0;
                 last_mark = 0;
                 frame_counter = 0;
+                isrError = 0;
+                newError = false;
+                isrHappened = false;
 #if LED_STATUS
                 CL1 = false;
                 CL2 = true;
@@ -206,7 +213,7 @@ public:
         void UHS_NI poopOutStatus();
         void ISRTask(void);
         void ISRbottom(void);
-	void init_qTD(void *buf, uint32_t len, uint32_t pid, uint32_t data01, bool irq);
+        void init_qTD(void *buf, uint32_t len, uint32_t pid, uint32_t data01, bool irq);
 
         void busprobe(void);
 

@@ -313,10 +313,12 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
         if((Ustat & USBHS_USBSTS_UEI) || (Ustat & USBHS_USBSTS_UI)) {
                 // USB interrupt or USB error interrupt both end a transaction
                 if(Ustat & USBHS_USBSTS_UEI) {
-                        // nothing yet :-)
+                        newError = true;
+                        // set isrError to one of the named errors...
                 }
                 if(Ustat & USBHS_USBSTS_UI) {
-                        // nothing yet :-)
+                        isrHappened = true;
+                        // May, or may not be needed...
                 }
         }
 
@@ -329,6 +331,9 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
                         timer_countdown--;
                         counted = true;
                 }
+        }
+
+        if(Ustat & USBHS_USBINTR_SRE) {
                 if(sof_countdown) {
                         sof_countdown--;
                         counted = true;
@@ -586,7 +591,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
                 //        USBHS_USBINTR_UAIE | // Host Asynchronous
                 //        USBHS_USBINTR_NAKE | // NAK
                 //        USBHS_USBINTR_SLE  | // Sleep
-                //        USBHS_USBINTR_SRE  | // SOF
+                USBHS_USBINTR_SRE  | // SOF
                 //        USBHS_USBINTR_URE  | // Reset
                 //        USBHS_USBINTR_AAE  | // Async advance
                 USBHS_USBINTR_SEE | // System Error
@@ -727,8 +732,19 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 	// maxlen = 16; // uncomment for testing with device having ep0 maxlen=16
 
 	// TODO, bmParent & bmAddress do not seem to always work
-	HOST_DUBUG("SetAddress, hub=%d, port=%x\n", p->address.bmParent, p->address.bmAddress);
-	uint32_t hub_addr=0, hub_port=1; // TODO: fix this for 12 & 1.5 speed devices on hubs
+        // Paul: these are not what you think they are, that's why :-)
+        // bmParent (if non-zero) == the parent hub, zero == the host controller
+        // bmAddress == the actual address we want to talk to
+        // hubs are stupid devices normally.
+        // Since EHCI is twiddling TT's we'll have to note, or ask external hubs what port.
+        // This isn't implemented yet, so for now we are stuck and can't use hubs...
+
+        uint32_t hub_addr = p->address.bmParent;
+        uint32_t hub_port = 1; // hub ports start at zero
+        if(hub_addr) {
+                // get port number from hub, somehow... perhaps needs to be a new field... argh
+        }
+        printf("SetAddress, parent=%d, parent_port=%d\n", hub_addr, hub_port);
 
 	if (type == 0 && speed != 2) {
 		c = 1;
@@ -763,21 +779,34 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
 	QH.transferOverlayResults[0] = 0;
 	QH.nextQtdPointer = (uint32_t)&qTD;
 
-	uint32_t usec_timeout = 1200; // TODO: use data length & speed
-	elapsedMicros usec=0;
-	while (!condet && usec < usec_timeout) {
+        // Nope.... Signal really bad shit from ISR.
+	//uint32_t usec_timeout = 1200; // TODO: use data length & speed
+	//elapsedMicros usec=0;
+        newError = false;
+        isrHappened = false;
+
+	while (!condet ) {
 		uint32_t status = qTD.transferResults;
 		//HOST_DUBUG("dispatchPkt %lx\n", status);
 		if (!(status & 0x80)) {
-			if ((status & 0x7F) == 0) {
+			if(!(status & 0xffu)) {
 				// no longer active, not halted, no errors... so ok
 				return UHS_HOST_ERROR_NONE;
 			}
 			// one of many possible errors
 			// TODO: do we need to clear halt condition or
 			// do anything else special here to deal with errors?
+                        // no. NAK != real error though...
 			return UHS_HOST_ERROR_NAK;
 		}
+                if(newError) {
+                        // we need to get the actual translated error, for now, we'll say NAK here too
+                        return UHS_HOST_ERROR_NAK;
+                }
+                //if(isrHappened) {
+                        // ditto...
+                //        return UHS_HOST_ERROR_NAK;
+                //}
 	}
 	if (condet) return UHS_HOST_ERROR_UNPLUGGED;
 	return UHS_HOST_ERROR_TIMEOUT;

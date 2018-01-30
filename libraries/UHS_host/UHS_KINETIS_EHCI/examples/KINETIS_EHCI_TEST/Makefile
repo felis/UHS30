@@ -1,4 +1,4 @@
-BOARD=teensy:avr:teensy36:usb=serial,speed=96opt,keys=en-us
+BOARD=teensy:avr:teensy36:usb=serial,speed=96,opt=o1std,keys=en-us
 
 PORT=/dev/ttyACM0
 #PORT=/dev/ttyUSB0
