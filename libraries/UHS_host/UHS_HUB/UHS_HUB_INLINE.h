@@ -134,8 +134,9 @@ void UHS_NI UHS_USBHub::Release(void) {
 void UHS_NI UHS_USBHub::Poll(void) {
         if(bPollEnable) {
                 if(((long)(millis() - qNextPollTime) >= 0L)) {
+                        qNextPollTime = millis() + 100;
                         CheckHubStatus();
-                        if(((long)(millis() - qNextPollTime) >= 0L)) qNextPollTime = millis() + 100;
+                        // BUG! if(((long)(millis() - qNextPollTime) >= 0L)) qNextPollTime = millis() + 100;
                 }
         }
 }
