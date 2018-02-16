@@ -237,8 +237,9 @@ uint8_t UHS_NI UHS_ADK::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].maxPktSize = (uint8_t)(ei->interface.epInfo[ep].wMaxPacketSize);
                         epInfo[index].epAttribs = 0;
                         epInfo[index].bmNakPower = (index == epDataInIndex) ? UHS_USB_NAK_NOWAIT : UHS_USB_NAK_MAX_POWER;
-                        epInfo[index].bmSndToggle = 0;
-                        epInfo[index].bmRcvToggle = 0;
+                        // redundant!
+                        // epInfo[index].bmSndToggle = 0;
+                        // epInfo[index].bmRcvToggle = 0;
                         bNumEP++;
                 }
         }
