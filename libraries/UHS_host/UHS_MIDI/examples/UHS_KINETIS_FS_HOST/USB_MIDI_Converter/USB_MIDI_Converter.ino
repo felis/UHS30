@@ -69,10 +69,6 @@ void MIDI_poll() {
 }
 
 void setup() {
-        // USB data switcher, PC -> device. (test jig, this can be ignored for regular use)
-        pinMode(5, OUTPUT);
-        digitalWriteFast(5, HIGH);
-
         // Activity LED. Lets us know we are alive.
         pinMode(LED_BUILTIN, OUTPUT);
         digitalWriteFast(LED_BUILTIN, HIGH);
