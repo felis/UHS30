@@ -9,15 +9,16 @@
  * This is sample program. Do not expect perfect behavior.
  *
  * Note: This driver is support for MIDI Streaming class only.
- *       If your MIDI Controler is not work, probably you needs its vendor specific driver. *******************************************************************************
+ *       If your MIDI Controler is not work, probably you needs its vendor specific driver. 
+ *******************************************************************************
  */
 
 // Patch printf so we can use it.
 #define LOAD_UHS_PRINTF_HELPER
 // Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
-// Load USB Host Shield
-#define LOAD_USB_HOST_SHIELD
+// Load the Kinetis core
+#define LOAD_UHS_KINETIS_FS_HOST
 // Load MIDI class driver
 #define LOAD_UHS_MIDI
 
@@ -28,7 +29,7 @@
 //#define UHS_DEBUG_USB_ADDRESS 1
 // Redirect debugging and printf
 //#define UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE 1
-#define USB_HOST_SERIAL Serial
+#define USB_HOST_SERIAL Serial1
 
 #include <Arduino.h>
 #ifdef true
@@ -40,7 +41,7 @@
 
 #include <UHS_host.h>
 
-MAX3421E_HOST *UsbHost;
+UHS_KINETIS_FS_HOST *UsbHost;
 UHS_MIDI *Midi;
 bool connected;
 
@@ -49,7 +50,7 @@ void setup() {
   USB_HOST_SERIAL.begin(115200);
   delay(100);
 
-  UsbHost = new MAX3421E_HOST();
+  UsbHost = new UHS_KINETIS_FS_HOST();
   Midi = new UHS_MIDI(UsbHost);
 
   while (UsbHost->Init(1000) != 0);
@@ -62,7 +63,6 @@ void loop() {
       connected = true;
       printf_P(PSTR("Connected to MIDI\r\n"));
       printf_P(PSTR("VID:%04X, PID:%04X\r\n"), Midi->idVendor(), Midi->idProduct());
-
     }
     MIDI_poll();
   } else {

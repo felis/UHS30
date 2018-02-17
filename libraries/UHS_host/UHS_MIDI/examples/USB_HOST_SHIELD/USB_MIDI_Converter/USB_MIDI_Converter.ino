@@ -84,7 +84,7 @@ void setup() {
         while(!USB_HOST_SERIAL) {
                 yield();
         }
-        _MIDI_SERIAL_PORT.begin(230400);
+        _MIDI_SERIAL_PORT.begin(31250);
         USB_HOST_SERIAL.begin(115200);
         delay(100);
         printf_P(PSTR("\r\n\r\n\r\n\r\n\r\n\r\nUSB MIDI Converter example.\r\n\r\n"));
