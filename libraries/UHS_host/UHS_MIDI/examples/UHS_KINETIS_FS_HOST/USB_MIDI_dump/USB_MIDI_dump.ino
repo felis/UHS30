@@ -9,7 +9,7 @@
  * This is sample program. Do not expect perfect behavior.
  *
  * Note: This driver is support for MIDI Streaming class only.
- *       If your MIDI Controler is not work, probably you needs its vendor specific driver. 
+ *       If your MIDI Controler is not work, probably you needs its vendor specific driver.
  *******************************************************************************
  */
 
@@ -46,43 +46,47 @@ UHS_MIDI *Midi;
 bool connected;
 
 void setup() {
-  connected = false;
-  USB_HOST_SERIAL.begin(115200);
-  delay(100);
+        // USB data switcher, PC -> device. (test jig, this can be ignored for regular use)
+        pinMode(5, OUTPUT);
+        digitalWrite(5, HIGH);
 
-  UsbHost = new UHS_KINETIS_FS_HOST();
-  Midi = new UHS_MIDI(UsbHost);
+        connected = false;
+        USB_HOST_SERIAL.begin(115200);
+        delay(100);
 
-  while (UsbHost->Init(1000) != 0);
-  printf_P(PSTR("\r\nHost initialized.\r\n"));
+        UsbHost = new UHS_KINETIS_FS_HOST();
+        Midi = new UHS_MIDI(UsbHost);
+
+        while(UsbHost->Init(1000) != 0);
+        printf_P(PSTR("\r\nHost initialized.\r\n"));
 }
 
 void loop() {
-  if (Midi->isReady()) {
-    if (!connected) {
-      connected = true;
-      printf_P(PSTR("Connected to MIDI\r\n"));
-      printf_P(PSTR("VID:%04X, PID:%04X\r\n"), Midi->idVendor(), Midi->idProduct());
-    }
-    MIDI_poll();
-  } else {
-    if (connected) {
-      connected = false;
-      printf_P(PSTR("\r\nDisconnected from MIDI\r\n"));
-    }
-  }
+        if(Midi->isReady()) {
+                if(!connected) {
+                        connected = true;
+                        printf_P(PSTR("Connected to MIDI\r\n"));
+                        printf_P(PSTR("VID:%04X, PID:%04X\r\n"), Midi->idVendor(), Midi->idProduct());
+                }
+                MIDI_poll();
+        } else {
+                if(connected) {
+                        connected = false;
+                        printf_P(PSTR("\r\nDisconnected from MIDI\r\n"));
+                }
+        }
 }
 
 // Poll USB MIDI Controler and send to serial MIDI
-void MIDI_poll()
-{
-  uint8_t bufMidi[64];
-  uint16_t  rcvd;
-  if (Midi->RecvData( &rcvd,  bufMidi) == 0 ) {
-    printf_P(PSTR("%08lX:%d:"),  (uint32_t)millis(), rcvd);
-    for (int i = 0; i < 64; i++) {
-      printf_P(PSTR(" %02X"), bufMidi[i]);
-    }
-    printf_P(PSTR("\r\n"));
-  }
+
+void MIDI_poll() {
+        uint8_t bufMidi[64];
+        uint16_t rcvd;
+        if(Midi->RecvData(&rcvd, bufMidi) == 0) {
+                printf_P(PSTR("%08lX:%d:"), (uint32_t)millis(), rcvd);
+                for(int i = 0; i < 64; i++) {
+                        printf_P(PSTR(" %02X"), bufMidi[i]);
+                }
+                printf_P(PSTR("\r\n"));
+        }
 }
