@@ -35,28 +35,27 @@ the GPL2 ("Copyleft").
 
 class UHS_MIDI : public UHS_USBInterface {
 protected:
+        volatile bool ready; // device ready indicator
+        uint8_t qPollRate; // How fast to poll maximum
+        uint16_t vid; //Vendor ID
+        uint16_t pid; //Product ID
+
+        /* MIDI Event packet buffer */
+        uint8_t *pktbuf;
+        UHS_ByteBuffer midibuf;
+
         uint16_t countSysExDataSize(uint8_t *dataptr);
-        uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
+        uint8_t _RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
 
 public:
         static const uint8_t epDataInIndex = 1; // DataIn endpoint index(MIDI)
         static const uint8_t epDataOutIndex = 2; // DataOUT endpoint index(MIDI)
         volatile UHS_EpInfo epInfo[UHS_MIDI_MAX_ENDPOINTS];
-        volatile bool ready; // device ready indicator
-        uint8_t qPollRate; // How fast to poll maximum
-        uint16_t pid, vid;
-
-        /* MIDI Event packet buffer */
-        //uint8_t recvBuf[UHS_MIDI_EVENT_PACKET_SIZE];
-        //uint8_t readPtr;
-
-        uint8_t *pktbuf;
-
-        UHS_ByteBuffer midibuf;
 
         UHS_MIDI(UHS_USB_HOST_BASE *p);
 
         // Methods for receiving and sending data
+        uint8_t RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr);
         uint8_t RecvData(uint8_t *outBuf, bool isRaw = false);
         uint8_t RecvRawData(uint8_t *outBuf);
         uint8_t SendData(uint8_t *dataptr, uint8_t nCable = 0);
@@ -64,6 +63,8 @@ public:
         uint8_t SendSysEx(uint8_t *dataptr, uint16_t datasize, uint8_t nCable = 0);
         uint8_t extractSysExData(uint8_t *p, uint8_t *buf);
         uint8_t SendRawData(uint16_t bytes_send, uint8_t *dataptr);
+        inline uint16_t idVendor() { return vid; }
+        inline uint16_t idProduct() { return pid; }
 
         uint8_t Start(void);
         bool OKtoEnumerate(ENUMERATION_INFO *ei);

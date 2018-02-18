@@ -102,28 +102,20 @@ uint8_t UHS_NI UHS_MIDI::Start(void) {
         rcode = pUsb->setEpInfoEntry(bAddress, bNumEP, epInfo);
         if(!rcode) {
                 UHS_MIDI_HOST_DEBUG("MIDI: EpInfoEntry OK\r\n");
-                // Set Configuration Value
-                rcode = pUsb->setConf(bAddress, bConfNum);
-                if(!rcode) {
-                        UHS_MIDI_HOST_DEBUG("MIDI: Configuration OK\r\n");
-                        pktbuf = new uint8_t(epInfo[epDataInIndex].maxPktSize);
-                        if(pktbuf) {
-                                rcode = OnStart();
-                                if(!rcode) {
-                                        UHS_MIDI_HOST_DEBUG("MIDI: OnStart OK\r\n");
-                                        qNextPollTime = millis() + qPollRate;
-                                        bPollEnable = true;
-                                        ready = true;
-                                } else {
-                                        UHS_MIDI_HOST_DEBUG("MIDI: OnStart FAIL\r\n");
-                                }
+                pktbuf = new uint8_t(epInfo[epDataInIndex].maxPktSize);
+                if(pktbuf) {
+                        rcode = OnStart();
+                        if(!rcode) {
+                                UHS_MIDI_HOST_DEBUG("MIDI: OnStart OK\r\n");
+                                qNextPollTime = millis() + qPollRate;
+                                bPollEnable = true;
+                                ready = true;
                         } else {
-                                rcode = UHS_HOST_ERROR_NOMEM;
-                                UHS_MIDI_HOST_DEBUG("MIDI: -ENOMEM FAIL\r\n");
+                                UHS_MIDI_HOST_DEBUG("MIDI: OnStart FAIL\r\n");
                         }
-
                 } else {
-                        UHS_MIDI_HOST_DEBUG("MIDI: Configuration FAIL\r\n");
+                        rcode = UHS_HOST_ERROR_NOMEM;
+                        UHS_MIDI_HOST_DEBUG("MIDI: -ENOMEM FAIL\r\n");
                 }
         } else {
                 UHS_MIDI_HOST_DEBUG("MIDI: EpInfoEntry FAIL\r\n");
@@ -139,7 +131,7 @@ uint8_t UHS_NI UHS_MIDI::Start(void) {
  * @param dataptr pointer to buffer
  * @return 0 for success
  */
-uint8_t UHS_NI UHS_MIDI::RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr) {
+uint8_t UHS_NI UHS_MIDI::_RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr) {
         if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         *bytes_rcvd = (uint16_t)epInfo[epDataInIndex].maxPktSize;
         uint8_t rv = pUsb->inTransfer(bAddress, epInfo[epDataInIndex].epAddr, bytes_rcvd, dataptr);
@@ -157,10 +149,33 @@ void UHS_NI UHS_MIDI::Poll(void) {
         if(midibuf.AvailableForPut() > 63) {
                 uint16_t bytes_rcvd;
                 uint16_t count = 0;
-                if(!RecvData(&bytes_rcvd, pktbuf)) {
+                if(!_RecvData(&bytes_rcvd, pktbuf)) {
+#if 1
                         while(bytes_rcvd--) {
                                 midibuf.put(pktbuf[count++]);
                         }
+#else
+                        //TODO: suppress padding data
+/*
+                        uint8_t tmpbuf[4];
+                        while(bytes_rcvd) {
+                                uint8_t sum = 0;
+                                //if all data is zero, no valid data received.
+                                sum |= (tmpbuf[0] = pktbuf[count++]);
+                                sum |= (tmpbuf[1] = pktbuf[count++]);
+                                sum |= (tmpbuf[2] = pktbuf[count++]);
+                                sum |= (tmpbuf[3] = pktbuf[count++]);
+                                if(sum == 0) {
+                                        break;
+                                }
+                                midibuf.put(tmpbuf[0]);
+                                midibuf.put(tmpbuf[1]);
+                                midibuf.put(tmpbuf[2]);
+                                midibuf.put(tmpbuf[3]);
+                                bytes_rcvd -= 4;
+                        }
+*/
+#endif
                 }
         }
         OnPoll(); // Do user stuff...
@@ -234,47 +249,9 @@ uint8_t UHS_NI UHS_MIDI::lookupMsgSize(uint8_t midiMsg, uint8_t cin) {
 uint8_t UHS_NI UHS_MIDI::RecvData(uint8_t *outBuf, bool isRaw) {
         if(!bAddress) return 0;
 
-        /*
-        This was a total misunderstanding of the UHS3 API...
-        uint16_t rcvd;
-        if(bPollEnable == false) return 0;
-
-
-        //Checking unprocessed message in buffer.
-        if(readPtr && readPtr < UHS_MIDI_EVENT_PACKET_SIZE) {
-                if(recvBuf[readPtr] == 0 && recvBuf[readPtr + 1] == 0) {
-                        //no unprocessed message left in the buffer.
-                } else {
-                        goto RecvData_return_from_buffer;
-                }
-        }
-
-        readPtr = 0;
-        rcode = RecvData(&rcvd, recvBuf);
-        if(rcode != 0) {
-                return 0;
-        }
-
-        //if all data is zero, no valid data received.
-        if(recvBuf[0] == 0 && recvBuf[1] == 0 && recvBuf[2] == 0 && recvBuf[3] == 0) {
-                return 0;
-        }
-
-RecvData_return_from_buffer:
-        uint8_t m;
-        uint8_t cin = recvBuf[readPtr];
-        if(isRaw == true) {
-         *(outBuf++) = cin;
-        }
-        readPtr++;
-         *(outBuf++) = m = recvBuf[readPtr++];
-         *(outBuf++) = recvBuf[readPtr++];
-         *(outBuf++) = recvBuf[readPtr++];
-       */
-
         uint8_t rcode = 0; //return code
         pUsb->DisablePoll();
-        if(midibuf.getSize() > 3) {
+        if(midibuf.getSize() >= 4) {
                 uint8_t cin = midibuf.get();
                 if(isRaw == true) {
                         *(outBuf++) = cin;
@@ -300,11 +277,30 @@ uint8_t UHS_NI UHS_MIDI::RecvRawData(uint8_t *outBuf) {
 }
 
 /**
+ * Receive raw packet from MIDI device
+ *
+ * @param bytes_rcvd pointer to counter
+ * @param dataptr pointer to buffer
+ * @return 0 for success
+ */
+uint8_t UHS_NI UHS_MIDI::RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr) {
+        *bytes_rcvd = midibuf.getSize();
+        if(*bytes_rcvd == 0) return 1;
+        if (*bytes_rcvd > UHS_MIDI_EVENT_PACKET_SIZE) {
+                *bytes_rcvd = UHS_MIDI_EVENT_PACKET_SIZE;
+        }
+        for(uint8_t i=0; i<*bytes_rcvd; i++){
+                *(dataptr++) = midibuf.get();
+        }
+        return 0;
+}
+
+/**
  * Send data to MIDI device
  *
  * @param dataptr
  * @param nCable
- * @return
+ * @return 0 for success
  */
 uint8_t UHS_NI UHS_MIDI::SendData(uint8_t *dataptr, uint8_t nCable) {
         if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
@@ -360,7 +356,7 @@ uint8_t UHS_NI UHS_MIDI::SendData(uint8_t *dataptr, uint8_t nCable) {
  * SysEx data size counter
  *
  * @param dataptr
- * @return
+ * @return SysEx data size
  */
 uint16_t UHS_NI UHS_MIDI::countSysExDataSize(uint8_t *dataptr) {
         unsigned int c = 1;
@@ -389,7 +385,7 @@ uint16_t UHS_NI UHS_MIDI::countSysExDataSize(uint8_t *dataptr) {
  * @param dataptr
  * @param datasize
  * @param nCable
- * @return
+ * @return 0 for success
  */
 uint8_t UHS_NI UHS_MIDI::SendSysEx(uint8_t *dataptr, uint16_t datasize, uint8_t nCable) {
         if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
@@ -402,8 +398,8 @@ uint8_t UHS_NI UHS_MIDI::SendSysEx(uint8_t *dataptr, uint16_t datasize, uint8_t 
         if(maxpkt > UHS_MIDI_EVENT_PACKET_SIZE) maxpkt = UHS_MIDI_EVENT_PACKET_SIZE;
 
         UHS_MIDI_HOST_DEBUG("SendSysEx:\r\t");
-        UHS_MIDI_HOST_DEBUG(" Length:\t", datasize);
-        UHS_MIDI_HOST_DEBUG(" Total pktSize:\t", (n * 10 / 3 + 7) / 10 * 4);
+        UHS_MIDI_HOST_DEBUG(" Length:\t%i", datasize);
+        UHS_MIDI_HOST_DEBUG(" Total pktSize:\t%i", (n * 10 / 3 + 7) / 10 * 4);
 
         while(n > 0) {
                 //Byte 0
@@ -455,7 +451,7 @@ uint8_t UHS_NI UHS_MIDI::SendSysEx(uint8_t *dataptr, uint16_t datasize, uint8_t 
  *
  * @param bytes_send
  * @param dataptr
- * @return
+ * @return 0 for success
  */
 uint8_t UHS_NI UHS_MIDI::SendRawData(uint16_t bytes_send, uint8_t *dataptr) {
         if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
@@ -466,6 +462,13 @@ uint8_t UHS_NI UHS_MIDI::SendRawData(uint16_t bytes_send, uint8_t *dataptr) {
         return rv;
 }
 
+/**
+ * Extract SysEx data from buffer
+ *
+ * @param p   input data
+ * @param buf pointer to data
+ * @return 0 no SysEx message, else size of valid message (1-3)
+ */
 uint8_t UHS_NI UHS_MIDI::extractSysExData(uint8_t *p, uint8_t *buf) {
         uint8_t rc = 0;
         uint8_t cin = *(p) & 0x0f;

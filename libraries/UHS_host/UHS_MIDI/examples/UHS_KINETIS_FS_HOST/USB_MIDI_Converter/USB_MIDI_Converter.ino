@@ -69,10 +69,6 @@ void MIDI_poll() {
 }
 
 void setup() {
-        // USB data switcher, PC -> device. (test jig, this can be ignored for regular use)
-        pinMode(5, OUTPUT);
-        digitalWriteFast(5, HIGH);
-
         // Activity LED. Lets us know we are alive.
         pinMode(LED_BUILTIN, OUTPUT);
         digitalWriteFast(LED_BUILTIN, HIGH);
@@ -82,7 +78,7 @@ void setup() {
                 yield();
         }
         USB_HOST_SERIAL.begin(115200);
-        _MIDI_SERIAL_PORT.begin(230400);
+        _MIDI_SERIAL_PORT.begin(31250);
         UsbHost = new UHS_KINETIS_FS_HOST();
         Midi = new UHS_MIDI(UsbHost);
         while(UsbHost->Init(1000) != 0);
