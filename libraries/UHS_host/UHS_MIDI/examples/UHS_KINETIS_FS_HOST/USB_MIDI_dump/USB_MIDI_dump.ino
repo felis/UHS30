@@ -77,7 +77,7 @@ void loop() {
         }
 }
 
-// Poll USB MIDI Controler and send to serial MIDI
+// Poll USB MIDI Controller and send to serial MIDI
 
 void MIDI_poll() {
         uint8_t bufMidi[64];
