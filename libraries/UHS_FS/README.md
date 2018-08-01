@@ -10,7 +10,7 @@ Generic partition and filesystem hooks for Arduino
 
 Currently supports FAT 16/32, and long filenames.
 
-Built-in support for USB shield from <A HREF="http://www.circuitsathome.com">Circuits at Home</A>
+Built-in support for USB shield from <A HREF="https://www.circuitsathome.com/category/mcu/arduino/usb-shield/">Circuits at Home</A>
 
 NOTE: The USB host driver SHOULD BE 100% compatable with all devices supporting BULK STORAGE.
       USB thumb drives, card readers, ATA bridges, and SATA bridges are all known to work.
