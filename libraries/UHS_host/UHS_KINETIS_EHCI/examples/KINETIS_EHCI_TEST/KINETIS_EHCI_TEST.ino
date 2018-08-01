@@ -31,7 +31,7 @@
 // Bring in all the libraries that we requested above.
 #include <UHS_host.h>
 
-UHS_KINETIS_EHCI KINETIS_EHCI_Usb;
+UHS_KINETIS_EHCI UHS_Usb;
 uint8_t current_state = 128;
 uint8_t last_state = 255;
 
@@ -45,8 +45,8 @@ void setup() {
         delay(5000); //wait 5 seconds for user to bring up a terminal
         USB_HOST_SERIAL.begin(115200);
         USB_HOST_SERIAL.println("Start.");
-        while(KINETIS_EHCI_Usb.Init(1000) != 0);
-        KINETIS_EHCI_Usb.vbusPower(vbus_on);
+        while(UHS_Usb.Init(1000) != 0);
+        UHS_Usb.vbusPower(vbus_on);
         // printf may be used after at least 1 host init
         printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
         printf("\r\n\r\nUSB HOST READY.\r\n");
@@ -58,7 +58,7 @@ void loop() {
         // "I'm Alive" signal for Oscilloscope/logic probe.
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 
-        current_state = KINETIS_EHCI_Usb.getUsbTaskState();
+        current_state = UHS_Usb.getUsbTaskState();
         if(current_state != last_state) {
                 last_state = current_state;
                 printf("USB HOST state %2.2x\r\n", current_state);
@@ -71,7 +71,7 @@ void loop() {
                         printf("USB0_INTEN: 0x%x ", USB0_INTEN);
                         printf("USB0_CTL: 0x%x\r\n", USB0_CTL);
                 } else if(d=='p') {
-                        KINETIS_EHCI_Usb.poopOutStatus();
+                        UHS_Usb.poopOutStatus();
                 }
         }
 

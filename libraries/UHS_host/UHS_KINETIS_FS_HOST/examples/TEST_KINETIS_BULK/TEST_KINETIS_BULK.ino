@@ -22,8 +22,8 @@
 // Bring in all the libraries that we requested above.
 #include <UHS_host.h>
 
-UHS_KINETIS_FS_HOST KINETIS_Usb;
-UHS_Bulk_Storage Storage_KINETIS(&KINETIS_Usb);
+UHS_KINETIS_FS_HOST UHS_Usb;
+UHS_Bulk_Storage Storage_1(&UHS_Usb);
 
 uint8_t usbstate;
 uint8_t laststate;
@@ -46,7 +46,7 @@ void test_bulk(uint8_t lun) {
         uint32_t xnow = millis();
         while(!rcode && loops < 2048) {
                 loops++;
-                rcode = Storage_KINETIS.Read(lun, loops, 512, 1, buf);
+                rcode = Storage_1.Read(lun, loops, 512, 1, buf);
         }
         uint32_t finish = millis();
         if(!rcode) {
@@ -68,7 +68,7 @@ void setup() {
         delay(10000);
         Serial1.println("Start.");
 
-        while(KINETIS_Usb.Init(1000) != 0);
+        while(UHS_Usb.Init(1000) != 0);
         // printf may be used after atleast 1 host init
         printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
         printf("\r\n\r\nUSB HOST READY.\r\n");
@@ -97,7 +97,7 @@ void loop() {
                 }
         }
 
-        usbstate = KINETIS_Usb.getUsbTaskState();
+        usbstate = UHS_Usb.getUsbTaskState();
         if(usbstate != laststate) {
                 printf("USB HOST state %2.2x\r\n", usbstate);
                 laststate = usbstate;
@@ -107,21 +107,16 @@ void loop() {
                                 break;
                         case UHS_USB_HOST_STATE_ERROR:
                                 E_Notify(PSTR("\r\nUSB state machine reached error state 0x"),0);
-                                USB_HOST_SERIAL.print(KINETIS_Usb.usb_error, HEX);
+                                USB_HOST_SERIAL.print(UHS_Usb.usb_error, HEX);
                         break;
                         case UHS_USB_HOST_STATE_RUNNING:
-                                /*if(hub_MAX3421E.bPollEnable) {
-                                        E_Notify(PSTR("\r\nHub Connected..."),0);
-                                        E_Notify(PSTR("\r\nPlug in a storage device now..."), 0);
-                                }*/
                                 break;
                         default:
-                                //E_Notify(PSTR("."),0);
                                 break;
 
                 }
         }
-        boolean pbe = Storage_KINETIS.bPollEnable;
+        boolean pbe = Storage_1.bPollEnable;
         boolean en = (pbe == lastEnable);
         if(!en) {
                 lastEnable = pbe;
@@ -131,20 +126,20 @@ void loop() {
                         E_Notify(PSTR("\r\nStorage is not polling..."),0);
                 }
         }
-        if((usbstate == UHS_USB_HOST_STATE_RUNNING) && Storage_KINETIS.bPollEnable && !tested) {
+        if((usbstate == UHS_USB_HOST_STATE_RUNNING) && Storage_1.bPollEnable && !tested) {
                 if(!notified) {
                         E_Notify(PSTR("\r\nWaiting for device to become ready..."),0);
                         notified = true;
                 }
                 for(uint8_t i = 0; i < MASS_MAX_SUPPORTED_LUN; i++) {
-                        if(Storage_KINETIS.LUNIsGood(i)) {
+                        if(Storage_1.LUNIsGood(i)) {
                                 test_bulk(i);
                         }
                 }
-                //if(tested) Storage_KINETIS.bPollEnable = false;
+                //if(tested) Storage_1.bPollEnable = false;
         }
 
-        if(!Storage_KINETIS.bPollEnable && tested) {
+        if(!Storage_1.bPollEnable && tested) {
                            tested = false;
                            notified = false;
                            E_Notify(PSTR("\r\nPlug in a storage device now..."), 0);

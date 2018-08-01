@@ -34,8 +34,8 @@
 
 #include <UHS_host.h>
 
-MAX3421E_HOST MAX3421E_Usb;
-UHS_USBHub hub_MAX3421E(&MAX3421E_Usb);
+MAX3421E_HOST UHS_Usb;
+UHS_USBHub hub_1(&UHS_Usb);
 
 class MY_ACM : public UHS_CDC_ACM {
 public:
@@ -78,14 +78,14 @@ uint8_t MY_ACM::OnStart(void) {
         return 0;
 }
 
-MY_ACM Acm(&MAX3421E_Usb);
+MY_ACM Acm(&UHS_Usb);
 
 void setup() {
         while(!USB_HOST_SERIAL);
         USB_HOST_SERIAL.begin(115200);
 
         printf_P(PSTR("\r\n\r\nStarting CDC-ACM test program...\r\n"));
-        while(MAX3421E_Usb.Init(1000) != 0);
+        while(UHS_Usb.Init(1000) != 0);
         printf_P(PSTR("\r\n\r\nWaiting for Connection...\r\n"));
 }
 

@@ -44,8 +44,8 @@ char BlinkLED_VERSION[] = "1.0";
 char BlinkLED_URI[] = "http://www.tkjelectronics.dk/uploads/ArduinoBlinkLED.apk";
 char BlinkLED_SERIAL[] = "123456789";
 
-UHS_KINETIS_FS_HOST UsbHost;
-UHS_ADK adk(&UsbHost);
+UHS_KINETIS_FS_HOST UHS_Usb;
+UHS_ADK adk(&UHS_Usb);
 uint32_t timer;
 bool connected;
 
@@ -61,7 +61,7 @@ void setup() {
         // This must be executed before host init.
         adk.SetHints(BlinkLED_MANUFACTURER, BlinkLED_MODEL, BlinkLED_DESCRIPTION, BlinkLED_VERSION, BlinkLED_URI, BlinkLED_SERIAL);
 
-        while(UsbHost.Init(1000) != 0);
+        while(UHS_Usb.Init(1000) != 0);
         printf_P(PSTR("\r\nHost initialized.\r\n"));
 }
 

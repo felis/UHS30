@@ -262,20 +262,20 @@ uint8_t MY_ACM::OnStart(void) {
 }
 
 
-MAX3421E_HOST *MAX3421E_Usb;
-UHS_USBHub *hub_MAX3421E1;
+MAX3421E_HOST *UHS_Usb;
+UHS_USBHub *hub_1;
 MY_ACM *Acm;
 
 void setup() {
         while(!USB_HOST_SERIAL);
         USB_HOST_SERIAL.begin(HOST_SERIAL_SPEED);
-        MAX3421E_Usb = new MAX3421E_HOST();
-        hub_MAX3421E1 = new UHS_USBHub(MAX3421E_Usb);
-        Acm = new MY_ACM(MAX3421E_Usb);
+        UHS_Usb = new MAX3421E_HOST();
+        hub_1 = new UHS_USBHub(UHS_Usb);
+        Acm = new MY_ACM(UHS_Usb);
 
         USB_HOST_SERIAL.print("\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nStarting buffered CDC-ACM test program...\r\n");
         delay(2000);
-        while(MAX3421E_Usb->Init(1000) != 0);
+        while(UHS_Usb->Init(1000) != 0);
         printf_P(PSTR("\r\n\r\nWaiting for Connection...\r\n"));
 }
 

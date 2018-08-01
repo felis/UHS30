@@ -13,18 +13,18 @@
 
 #include <UHS_host.h>
 
-MAX3421E_HOST MAX3421E_Usb_A;
-UHS_USBHub hub_MAX3421E_A(&MAX3421E_Usb_A);
-UHS_Bulk_Storage Storage_MAX3421E_A(&MAX3421E_Usb_A);
+MAX3421E_HOST UHS_Usb_A;
+UHS_USBHub hub_A(&UHS_Usb_A);
+UHS_Bulk_Storage Storage_A(&UHS_Usb_A);
 
 uint8_t laststate_A;
 boolean tested_A;
 boolean notified_A;
 boolean lastEnable_A = false;
 
-MAX3421E_HOST MAX3421E_Usb_B(4, 2); // SS on pin 4, IRQ on pin 2
-UHS_USBHub hub_MAX3421E_B(&MAX3421E_Usb_B);
-UHS_Bulk_Storage Storage_MAX3421E_B(&MAX3421E_Usb_B);
+MAX3421E_HOST UHS_Usb_B(4, 2); // SS on pin 4, IRQ on pin 2
+UHS_USBHub hub_B(&UHS_Usb_B);
+UHS_Bulk_Storage Storage_B(&UHS_Usb_B);
 
 uint8_t laststate_B;
 boolean tested_B;
@@ -61,8 +61,8 @@ void setup() {
         while(!Serial);
         USB_HOST_SERIAL.begin(115200);
 
-        while(MAX3421E_Usb_A.Init(1000) !=0);
-        while(MAX3421E_Usb_B.Init(1000) !=0);
+        while(UHS_Usb_A.Init(1000) !=0);
+        while(UHS_Usb_B.Init(1000) !=0);
         E_Notify(PSTR("\r\n\r\ngo!\r\n"), 0);
         laststate_A = 0xff;
         tested_A = false;
@@ -71,7 +71,7 @@ void setup() {
 }
 
 void loop() {
-        usbstate = MAX3421E_Usb_A.getUsbTaskState();
+        usbstate = UHS_Usb_A.getUsbTaskState();
         if(usbstate != laststate_A) {
                 USB_HOST_SERIAL.print("\r\nHOST_A FSM state: 0x");
                 if(usbstate < 0x10) USB_HOST_SERIAL.print("0");
@@ -83,10 +83,10 @@ void loop() {
                                 break;
                         case UHS_USB_HOST_STATE_ERROR:
                                 E_Notify(PSTR("\r\nHOST_A USB state machine reached error state 0x"),0);
-                                USB_HOST_SERIAL.print(MAX3421E_Usb_A.usb_error, HEX);
+                                USB_HOST_SERIAL.print(UHS_Usb_A.usb_error, HEX);
                         break;
                         case UHS_USB_HOST_STATE_RUNNING:
-                                if(hub_MAX3421E_A.bPollEnable) {
+                                if(hub_A.bPollEnable) {
                                         E_Notify(PSTR("\r\nHOST_A Hub Connected..."),0);
                                         E_Notify(PSTR("\r\nHOST_A Plug in a storage device now..."), 0);
                                 }
@@ -97,7 +97,7 @@ void loop() {
 
                 }
         }
-        boolean pbe = Storage_MAX3421E_A.bPollEnable;
+        boolean pbe = Storage_A.bPollEnable;
         boolean en = (pbe == lastEnable_A);
         if(!en) {
                 lastEnable_A = pbe;
@@ -107,19 +107,19 @@ void loop() {
                         E_Notify(PSTR("\r\nHOST_A Storage is not polling..."),0);
                 }
         }
-        if((usbstate == UHS_USB_HOST_STATE_RUNNING) && Storage_MAX3421E_A.bPollEnable && !tested_A) {
+        if((usbstate == UHS_USB_HOST_STATE_RUNNING) && Storage_A.bPollEnable && !tested_A) {
                 if(!notified_A) {
                         E_Notify(PSTR("\r\nHOST_A Waiting for device to become ready..."),0);
                         notified_A = true;
                 }
                 for(uint8_t i = 0; i < MASS_MAX_SUPPORTED_LUN; i++) {
-                        if(Storage_MAX3421E_A.LUNIsGood(i)) {
-                                test_bulk(&Storage_MAX3421E_A, i, &tested_A);
+                        if(Storage_A.LUNIsGood(i)) {
+                                test_bulk(&Storage_A, i, &tested_A);
                         }
                 }
         }
 
-        if(!Storage_MAX3421E_A.bPollEnable && tested_A) {
+        if(!Storage_A.bPollEnable && tested_A) {
                            tested_A = false;
                            notified_A = false;
                            E_Notify(PSTR("\r\nHOST_A Plug in a storage device now..."), 0);
@@ -127,7 +127,7 @@ void loop() {
 
 
 
-        usbstate = MAX3421E_Usb_B.getUsbTaskState();
+        usbstate = UHS_Usb_B.getUsbTaskState();
         if(usbstate != laststate_B) {
                 USB_HOST_SERIAL.print("\r\nHOST_B FSM state: 0x");
                 if(usbstate < 0x10) USB_HOST_SERIAL.print("0");
@@ -139,10 +139,10 @@ void loop() {
                                 break;
                         case UHS_USB_HOST_STATE_ERROR:
                                 E_Notify(PSTR("\r\nHOST_B USB state machine reached error state 0x"),0);
-                                USB_HOST_SERIAL.print(MAX3421E_Usb_B.usb_error, HEX);
+                                USB_HOST_SERIAL.print(UHS_Usb_B.usb_error, HEX);
                         break;
                         case UHS_USB_HOST_STATE_RUNNING:
-                                if(hub_MAX3421E_B.bPollEnable) {
+                                if(hub_B.bPollEnable) {
                                         E_Notify(PSTR("\r\nHOST_B Hub Connected..."),0);
                                         E_Notify(PSTR("\r\nHOST_B Plug in a storage device now..."), 0);
                                 }
@@ -154,7 +154,7 @@ void loop() {
                 }
         }
 
-        pbe = Storage_MAX3421E_B.bPollEnable;
+        pbe = Storage_B.bPollEnable;
         en = (pbe == lastEnable_B);
         if(!en) {
                 lastEnable_B = pbe;
@@ -164,19 +164,19 @@ void loop() {
                         E_Notify(PSTR("\r\nHOST_B Storage is not polling..."),0);
                 }
         }
-        if((usbstate == UHS_USB_HOST_STATE_RUNNING) && Storage_MAX3421E_B.bPollEnable && !tested_B) {
+        if((usbstate == UHS_USB_HOST_STATE_RUNNING) && Storage_B.bPollEnable && !tested_B) {
                 if(!notified_B) {
                         E_Notify(PSTR("\r\nHOST_B Waiting for device to become ready..."),0);
                         notified_B = true;
                 }
                 for(uint8_t i = 0; i < MASS_MAX_SUPPORTED_LUN; i++) {
-                        if(Storage_MAX3421E_B.LUNIsGood(i)) {
-                                test_bulk(&Storage_MAX3421E_B, i, &tested_B);
+                        if(Storage_B.LUNIsGood(i)) {
+                                test_bulk(&Storage_B, i, &tested_B);
                         }
                 }
         }
 
-        if(!Storage_MAX3421E_B.bPollEnable && tested_B) {
+        if(!Storage_B.bPollEnable && tested_B) {
                            tested_B = false;
                            notified_B = false;
                            E_Notify(PSTR("\r\nHOST_B Plug in a storage device now..."), 0);

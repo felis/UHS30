@@ -39,9 +39,9 @@
 
 #include <UHS_host.h>
 
-UHS_KINETIS_FS_HOST KINETIS_Usb;
-UHS_USBHub hub_KINETIS(&KINETIS_Usb);
-UHS_Bulk_Storage Storage_KINETIS(&KINETIS_Usb);
+UHS_KINETIS_FS_HOST UHS_Usb;
+UHS_USBHub hub_1(&UHS_Usb);
+UHS_Bulk_Storage Storage_1(&UHS_Usb);
 uint8_t usbstate;
 uint8_t laststate;
 boolean tested;
@@ -58,7 +58,7 @@ void test_bulk(uint8_t lun) {
         uint32_t xnow = millis();
         while(!rcode && loops < 2048) {
                 loops++;
-                rcode = Storage_KINETIS.Read(lun, loops, 512, 1, buf);
+                rcode = Storage_1.Read(lun, loops, 512, 1, buf);
         }
         uint32_t finish = millis();
         if(!rcode) {
@@ -74,7 +74,7 @@ void setup() {
         pinMode(5,OUTPUT),
         digitalWriteFast(5, HIGH);
         USB_HOST_SERIAL.begin(115200);
-        while(KINETIS_Usb.Init(1000) !=0);
+        while(UHS_Usb.Init(1000) !=0);
         printf("\r\n\r\ngo!\r\n");
         laststate = 0xff;
         tested = false;
@@ -84,7 +84,7 @@ void setup() {
 }
 
 void loop() {
-        usbstate = KINETIS_Usb.getUsbTaskState();
+        usbstate = UHS_Usb.getUsbTaskState();
         if(usbstate != laststate) {
                 printf("\r\nFSM state: 0x%2.2x", usbstate);
                 laststate = usbstate;
@@ -92,10 +92,10 @@ void loop() {
                         case UHS_USB_HOST_STATE_IDLE:
                                 break;
                         case UHS_USB_HOST_STATE_ERROR:
-                                printf("\r\nUSB state machine reached error state 0x%2.2x", KINETIS_Usb.usb_error);
+                                printf("\r\nUSB state machine reached error state 0x%2.2x", UHS_Usb.usb_error);
                                 break;
                         case UHS_USB_HOST_STATE_RUNNING:
-                                if(hub_KINETIS.bPollEnable) {
+                                if(hub_1.bPollEnable) {
                                         printf("\r\nHub Connected...\r\nPlug in a storage device now...");
                                 }
                                 break;
@@ -105,7 +105,7 @@ void loop() {
                 }
                 fflush(stdout);
         }
-        boolean pbe = Storage_KINETIS.bPollEnable;
+        boolean pbe = Storage_1.bPollEnable;
         boolean en = (pbe == lastEnable);
         if(!en) {
                 lastEnable = pbe;
@@ -115,20 +115,20 @@ void loop() {
                         printf("\r\nStorage is not polling...");
                 }
         }
-        if((usbstate == UHS_USB_HOST_STATE_RUNNING) && Storage_KINETIS.bPollEnable && !tested) {
+        if((usbstate == UHS_USB_HOST_STATE_RUNNING) && Storage_1.bPollEnable && !tested) {
                 if(!notified) {
                         printf("\r\nWaiting for media to become ready...");
                         notified = true;
                 }
                 for(uint8_t i = 0; i < MASS_MAX_SUPPORTED_LUN; i++) {
-                        if(Storage_KINETIS.LUNIsGood(i)) {
+                        if(Storage_1.LUNIsGood(i)) {
                                 test_bulk(i);
                         }
                 }
                 if(tested) printf("\r\nDone, you may now unplug storage device...");
         }
 
-        if(!Storage_KINETIS.bPollEnable && tested) {
+        if(!Storage_1.bPollEnable && tested) {
                            tested = false;
                            notified = false;
                            printf("\r\nPlug in a storage device now...");

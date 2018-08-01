@@ -33,8 +33,8 @@ char demokit_SERIAL[] = "0000000012345678";
 
 #include <UHS_host.h>
 
-UHS_KINETIS_FS_HOST UsbHost;
-UHS_ADK adk(&UsbHost);
+UHS_KINETIS_FS_HOST USB_host;
+UHS_ADK adk(&USB_host);
 uint8_t b, b1;
 
 
@@ -64,7 +64,7 @@ void setup() {
         // This must be executed before host init.
         adk.SetHints(demokit_MANUFACTURER, demokit_MODEL, demokit_DESCRIPTION, demokit_VERSION, demokit_URI, demokit_SERIAL);
 
-        while(UsbHost.Init(1000) != 0);
+        while(USB_host.Init(1000) != 0);
         printf_P(PSTR("\r\nHost initialized.\r\n"));
 
         init_leds();

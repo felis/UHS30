@@ -1,5 +1,7 @@
 #if defined(__AVR__)
 
+// TO-DO: find out why newer avr-libc fails
+
 /* Copyright (C) 2015-2016 Andrew J. Kroll
    and
 Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.

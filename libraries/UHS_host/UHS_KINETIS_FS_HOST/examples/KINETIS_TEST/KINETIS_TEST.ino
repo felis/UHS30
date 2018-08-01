@@ -21,7 +21,7 @@
 // Bring in all the libraries that we requested above.
 #include <UHS_host.h>
 
-UHS_KINETIS_FS_HOST KINETIS_Usb;
+UHS_KINETIS_FS_HOST UHS_Usb;
 uint8_t current_state = 128;
 uint8_t last_state = 255;
 
@@ -36,7 +36,7 @@ void setup() {
         USB_HOST_SERIAL.begin(115200);
         delay(10000);
         USB_HOST_SERIAL.println("Start.");
-        while(KINETIS_Usb.Init(1000) != 0);
+        while(UHS_Usb.Init(1000) != 0);
         // printf may be used after atleast 1 host init
         printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
         printf("\r\n\r\nUSB HOST READY.\r\n");
@@ -47,7 +47,7 @@ void setup() {
 void loop() {
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 
-        current_state = KINETIS_Usb.getUsbTaskState();
+        current_state = UHS_Usb.getUsbTaskState();
         if(current_state != last_state) {
                 last_state = current_state;
                 printf("USB HOST state %2.2x\r\n", current_state);

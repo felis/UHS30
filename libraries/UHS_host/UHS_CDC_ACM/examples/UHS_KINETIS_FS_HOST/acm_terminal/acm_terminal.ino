@@ -82,9 +82,9 @@ uint8_t MY_ACM::OnStart(void) {
 }
 
 
-UHS_KINETIS_FS_HOST *KINETIS_Usb;
-UHS_USBHub *hub_KINETIS1;
-UHS_USBHub *hub_KINETIS2;
+UHS_KINETIS_FS_HOST *UHS_Usb;
+UHS_USBHub *hub_1;
+UHS_USBHub *hub_2;
 MY_ACM *Acm;
 
 void setup() {
@@ -104,14 +104,14 @@ void setup() {
         pinMode(5,OUTPUT),
         digitalWriteFast(5, HIGH);
 
-        KINETIS_Usb = new UHS_KINETIS_FS_HOST();
-        hub_KINETIS1 = new UHS_USBHub(KINETIS_Usb);
+        UHS_Usb = new UHS_KINETIS_FS_HOST();
+        hub_1 = new UHS_USBHub(UHS_Usb);
         digitalWriteFast(LED_BUILTIN, LOW);
         delay(250);
         digitalWriteFast(LED_BUILTIN, HIGH);
         delay(250);
-        hub_KINETIS2 = new UHS_USBHub(KINETIS_Usb);
-        Acm = new MY_ACM(KINETIS_Usb);
+        hub_2 = new UHS_USBHub(UHS_Usb);
+        Acm = new MY_ACM(UHS_Usb);
         digitalWriteFast(LED_BUILTIN, LOW);
         delay(250);
         digitalWriteFast(LED_BUILTIN, HIGH);
@@ -122,7 +122,7 @@ void setup() {
         USB_HOST_SERIAL.begin(115200);
 
         printf_P(PSTR("\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nStarting CDC-ACM test program...\r\n"));
-        while(KINETIS_Usb->Init(1000) != 0);
+        while(UHS_Usb->Init(1000) != 0);
         printf_P(PSTR("\r\n\r\nWaiting for Connection...\r\n"));
 }
 

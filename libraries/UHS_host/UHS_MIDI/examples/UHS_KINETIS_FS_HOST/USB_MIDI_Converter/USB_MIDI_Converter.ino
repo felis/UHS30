@@ -41,7 +41,7 @@
 
 #include <UHS_host.h>
 
-UHS_KINETIS_FS_HOST *UsbHost;
+UHS_KINETIS_FS_HOST *UHS_Usb;
 UHS_MIDI *Midi;
 bool connected;
 
@@ -83,9 +83,9 @@ void setup() {
         }
         USB_HOST_SERIAL.begin(115200);
         _MIDI_SERIAL_PORT.begin(31250);
-        UsbHost = new UHS_KINETIS_FS_HOST();
-        Midi = new UHS_MIDI(UsbHost);
-        while(UsbHost->Init(1000) != 0);
+        UHS_Usb = new UHS_KINETIS_FS_HOST();
+        Midi = new UHS_MIDI(UHS_Usb);
+        while(UHS_Usb->Init(1000) != 0);
         delay(100);
         printf_P(PSTR("\r\n\r\n\r\n\r\n\r\n\r\nUSB MIDI Converter example.\r\n\r\n"));
         digitalWriteFast(LED_BUILTIN, LOW);

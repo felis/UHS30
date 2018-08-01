@@ -36,8 +36,8 @@ char demokit_SERIAL[] = "0000000012345678";
 
 #include <UHS_host.h>
 
-MAX3421E_HOST UsbHost;
-UHS_ADK adk(&UsbHost);
+MAX3421E_HOST UHS_Usb;
+UHS_ADK adk(&UHS_Usb);
 uint8_t b, b1;
 
 
@@ -67,7 +67,7 @@ void setup() {
         // This must be executed before host init.
         adk.SetHints(demokit_MANUFACTURER, demokit_MODEL, demokit_DESCRIPTION, demokit_VERSION, demokit_URI, demokit_SERIAL);
 
-        while(UsbHost.Init(1000) != 0);
+        while(UHS_Usb.Init(1000) != 0);
         printf_P(PSTR("\r\nHost initialized.\r\n"));
 
         init_leds();

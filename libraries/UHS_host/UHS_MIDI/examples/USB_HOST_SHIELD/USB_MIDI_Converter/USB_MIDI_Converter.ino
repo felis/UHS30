@@ -54,7 +54,7 @@
 
 #include <UHS_host.h>
 
-MAX3421E_HOST *UsbHost;
+MAX3421E_HOST *UHS_Usb;
 UHS_MIDI *Midi;
 bool connected;
 
@@ -88,9 +88,9 @@ void setup() {
         USB_HOST_SERIAL.begin(115200);
         delay(100);
         printf_P(PSTR("\r\n\r\n\r\n\r\n\r\n\r\nUSB MIDI Converter example.\r\n\r\n"));
-        UsbHost = new MAX3421E_HOST();
-        Midi = new UHS_MIDI(UsbHost);
-        while(UsbHost->Init(1000) != 0);
+        UHS_Usb = new MAX3421E_HOST();
+        Midi = new UHS_MIDI(UHS_Usb);
+        while(UHS_Usb->Init(1000) != 0);
 }
 
 void loop() {

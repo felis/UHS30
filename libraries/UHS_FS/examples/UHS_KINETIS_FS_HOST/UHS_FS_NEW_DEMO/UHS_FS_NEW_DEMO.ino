@@ -106,8 +106,8 @@
 #include <RTClib.h> // Clock functions
 #include <UHS_host.h> // UHS USB HOST base classes
 
-UHS_KINETIS_FS_HOST KINETIS_Usb;
-UHS_USBHub hub_KINETIS(&KINETIS_Usb);
+UHS_KINETIS_FS_HOST UHS_Usb;
+UHS_USBHub hub_1(&UHS_Usb);
 
 PFAT_DIRINFO *de;
 uint8_t *data;
@@ -191,9 +191,9 @@ void setup() {
         USB_HOST_SERIAL.begin(115200);
         printf("\r\n\r\nStart.");
         // Initialize generic storage. This must be done before USB starts.
-        Init_Generic_Storage(&KINETIS_Usb);
+        Init_Generic_Storage(&UHS_Usb);
         printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
-        while(KINETIS_Usb.Init(1000) != 0);
+        while(UHS_Usb.Init(1000) != 0);
         printf("\r\n\r\nUSB HOST READY.\r\n");
 }
 
@@ -203,7 +203,7 @@ uint8_t last_state = 255;
 void loop() {
 
 #if 0
-        current_state = KINETIS_Usb.getUsbTaskState();
+        current_state = UHS_Usb.getUsbTaskState();
         if(current_state != last_state) {
                 last_state = current_state;
                 printf("USB HOST state %2.2x\r\n", current_state);

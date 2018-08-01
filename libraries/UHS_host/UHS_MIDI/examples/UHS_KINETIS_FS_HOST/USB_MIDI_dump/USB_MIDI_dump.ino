@@ -41,7 +41,7 @@
 
 #include <UHS_host.h>
 
-UHS_KINETIS_FS_HOST *UsbHost;
+UHS_KINETIS_FS_HOST *UHS_Usb;
 UHS_MIDI *Midi;
 bool connected;
 
@@ -54,10 +54,10 @@ void setup() {
         USB_HOST_SERIAL.begin(115200);
         delay(100);
 
-        UsbHost = new UHS_KINETIS_FS_HOST();
-        Midi = new UHS_MIDI(UsbHost);
+        UHS_Usb = new UHS_KINETIS_FS_HOST();
+        Midi = new UHS_MIDI(UHS_Usb);
 
-        while(UsbHost->Init(1000) != 0);
+        while(UHS_Usb->Init(1000) != 0);
         printf_P(PSTR("\r\nHost initialized.\r\n"));
 }
 

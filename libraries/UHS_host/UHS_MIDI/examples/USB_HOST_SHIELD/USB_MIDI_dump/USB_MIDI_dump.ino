@@ -40,7 +40,7 @@
 
 #include <UHS_host.h>
 
-MAX3421E_HOST *UsbHost;
+MAX3421E_HOST *UHS_Usb;
 UHS_MIDI *Midi;
 bool connected;
 
@@ -49,10 +49,10 @@ void setup() {
   USB_HOST_SERIAL.begin(115200);
   delay(100);
 
-  UsbHost = new MAX3421E_HOST();
-  Midi = new UHS_MIDI(UsbHost);
+  UHS_Usb = new MAX3421E_HOST();
+  Midi = new UHS_MIDI(UHS_Usb);
 
-  while (UsbHost->Init(1000) != 0);
+  while (UHS_Usb->Init(1000) != 0);
   printf_P(PSTR("\r\nHost initialized.\r\n"));
 }
 
