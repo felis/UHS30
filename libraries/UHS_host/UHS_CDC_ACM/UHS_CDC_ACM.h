@@ -28,14 +28,27 @@ e-mail   :  support@circuitsathome.com
 // Types of adaptor
 #define UHS_USB_ACM_PLAIN 0
 #define TEST_ACM_PLAIN() (((ei->interface.klass == UHS_USB_CLASS_COM_AND_CDC_CTRL) && (ei->interface.subklass == UHS_CDC_SUBCLASS_ACM) && (ei->interface.protocol == UHS_CDC_PROTOCOL_ITU_T_V_250)) || (ei->interface.klass == UHS_USB_CLASS_CDC_DATA))
+
 #define UHS_USB_ACM_XR21B1411 1
+#if !defined(LOAD_UHS_CDC_ACM_XR21B1411)
+#define TEST_XR21B1411() false
+#else
 #define TEST_XR21B1411() (((ei->vid == 0x2890U) && (ei->pid == 0x0201U)) || ((ei->vid == UHS_VID_EXAR) && (ei->pid == 0x1411U)))
+#endif
 
 #define UHS_USB_ACM_FTDI 2
+#if !defined(LOAD_UHS_CDC_ACM_FTDI)
+#define TEST_ACM_FTDI() false
+#else
 #define TEST_ACM_FTDI() (ei->vid == UHS_VID_FUTURE_TECHNOLOGY_DEVICES_INTERNATIONAL)
+#endif
 
 #define UHS_USB_ACM_PROLIFIC 3
+#if !defined(LOAD_UHS_CDC_ACM_PROLIFIC)
+#define TEST_ACM_PROLIFIC() false
+#else
 #define TEST_ACM_PROLIFIC() (ei->vid == UHS_VID_PROLIFIC_TECHNOLOGY && (ei->pid == UHS_CDC_PROLIFIC_PID_1 || ei->pid == UHS_CDC_PROLIFIC_PID_2))
+#endif
 
 #if DEBUG_PRINTF_EXTRA_HUGE
 #ifdef DEBUG_PRINTF_EXTRA_HUGE_ACM_HOST

@@ -33,46 +33,13 @@ UHS_NI UHS_CDC_ACM::UHS_CDC_ACM(UHS_USB_HOST_BASE *p) {
  * @param ei Enumeration information
  * @return true if this interface driver can handle this interface description
  */
+
 bool UHS_NI UHS_CDC_ACM::OKtoEnumerate(ENUMERATION_INFO *ei) {
         ACM_HOST_DEBUG("ACM: checking numep %i, klass %2.2x, subklass %2.2x\r\n", ei->interface.numep, ei->klass, ei->subklass);
         ACM_HOST_DEBUG("ACM: checking protocol %2.2x, interface.klass %2.2x, interface.subklass %2.2x\r\n", ei->protocol, ei->interface.klass, ei->interface.subklass);
         ACM_HOST_DEBUG("ACM: checking interface.protocol %2.2x\r\n", ei->interface.protocol);
 
-        return (
-                (((
-#if !defined(LOAD_UHS_CDC_ACM_XR21B1411)
-                !
-#endif
-
-                TEST_XR21B1411())
-#if !defined(LOAD_UHS_CDC_ACM_XR21B1411)
-                &&
-#else
-                ||
-#endif
-                (
-#if !defined(LOAD_UHS_CDC_ACM_FTDI)
-                !
-#endif
-                TEST_ACM_FTDI()))
-#if !defined(LOAD_UHS_CDC_ACM_FTDI)
-                &&
-#else
-                ||
-#endif
-                (
-#if !defined(LOAD_UHS_CDC_ACM_PROLIFIC)
-                !
-#endif
-                TEST_ACM_PROLIFIC()))
-#if !defined(LOAD_UHS_CDC_ACM_PROLIFIC)
-                &&
-#else
-                ||
-#endif
-                TEST_ACM_PLAIN()
-                );
-
+        return (TEST_XR21B1411()||TEST_ACM_FTDI()||TEST_ACM_PROLIFIC()||TEST_ACM_PLAIN());
 }
 
 /**
