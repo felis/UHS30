@@ -11,6 +11,7 @@ __This set of libraries is EXTERMELY ALPHA!__
     * NOTE! To use the Teensy 3.0/3.1/3.2/3.4/3.5 and LC in host mode, select "No USB" from the tools menu for USB Type.
 
 # Current working interface drivers
+* MIDI
 * Hub
 * Mass storage
 * CDC-ACM serial
