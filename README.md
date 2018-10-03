@@ -67,7 +67,13 @@ Cut the INT solder bridge. Install right angle headers and use a female jumper w
 ### Installation
 Clone the repository:
 
-```git clone --recursive git@github.com:felis/UHS30.git```
+```
+With a github account:
+git clone --recursive git@github.com:felis/UHS30.git
+or
+Without a github account:
+git clone --recursive https://github.com/felis/UHS30.git
+```
 
 Then
 
