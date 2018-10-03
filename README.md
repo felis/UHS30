@@ -65,4 +65,12 @@ Cut the INT solder bridge. Install right angle headers and use a female jumper w
 
 
 ### Installation
+Clone the repository:
+
+```git clone --recursive git@github.com:felis/UHS30.git```
+
+Then
+
 Copy each of the directories in the libraries directory into your USER LIBRARIES directory. DO NOT copy these to your system-wide installation. (you should never do that anyway!)
+
+If you want to do development, see the wiki. https://github.com/felis/UHS30/wiki
