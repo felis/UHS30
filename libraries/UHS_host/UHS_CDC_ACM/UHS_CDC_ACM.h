@@ -258,7 +258,7 @@ public:
                 pUsb->DisablePoll();
                 uint16_t s = ((signal & 1) << 1) | ((signal & 2) >> 1);
                 ACM_HOST_DEBUG("FTDI_SetControlLineState bAddress: %x\r\n", bAddress);
-                uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_MODEM_CTRL, s, 0, 0, 0), 0, NULL);
+                uint8_t rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT8(bmREQ_VENDOR_OUT, FTDI_SIO_MODEM_CTRL, 0x03, s, 0, 0), 0, NULL);
                 ACM_HOST_DEBUG("FTDI_SetControlLineState rv %x\r\n", rv);
                 if(rv) Release();
                 pUsb->EnablePoll();
