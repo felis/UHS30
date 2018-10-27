@@ -385,6 +385,7 @@ public:
                 return;
         };
 
+#if 0
         /**
          *
          * @return true if this interface is Vendor Specific.
@@ -392,8 +393,10 @@ public:
         virtual bool IsVSI() {
                 return false;
         }
+#endif
 };
 
+#if 0
 /**
  *
  * Vendor Specific interface class.
@@ -427,6 +430,7 @@ public:
         }
 
 };
+#endif
 
 #endif //_USBHOST_H_
 #endif

@@ -55,8 +55,11 @@ void
 #endif
         softISR(void) {
 #else
-
+#if defined(ARDUINO_spresense_ast)
+unsigned int softISR(void) {
+#else
 void softISR(void) {
+#endif
 #endif
 
         //
@@ -93,6 +96,9 @@ void softISR(void) {
         if(!dyn_SWI_EXEC[0]) ifs->clr = swibit;
         interrupts();
 #endif
+#if defined(ARDUINO_spresense_ast)
+        return 0;
+#endif
 }
 
 #define DDSB() __DSB()
@@ -128,6 +134,7 @@ static void Init_dyn_SWI(void) {
                 DDSB();
                 interrupts();
 #endif
+#if !defined(ARDUINO_spresense_ast)
                 for(int i = 0; i < SWI_MAXIMUM_ALLOWED; i++) dyn_SWI_LIST[i] = NULL;
                 noInterrupts();
                 _VectorsRam[SWI_IRQ_NUM + 16] = reinterpret_cast<void (*)()>(softISR);
@@ -135,10 +142,12 @@ static void Init_dyn_SWI(void) {
                 interrupts();
                 NVIC_SET_PRIORITY(SWI_IRQ_NUM, 255);
                 NVIC_ENABLE_IRQ(SWI_IRQ_NUM);
+#endif
 #if defined(__DYN_SWI_DEBUG_LED__)
                 pinMode(__DYN_SWI_DEBUG_LED__, OUTPUT);
                 digitalWrite(__DYN_SWI_DEBUG_LED__, LOW);
 #endif
+                dyn_SWI_initied = 1;
         }
 }
 
@@ -149,6 +158,7 @@ static void Init_dyn_SWI(void) {
  */
 int exec_SWI(const dyn_SWI* klass) {
         int rc = 0;
+
         uint8_t irestore = interruptsStatus();
         // Allow use from inside a critical section...
         // ... and prevent races if also used inside an ISR
@@ -157,7 +167,14 @@ int exec_SWI(const dyn_SWI* klass) {
                 if(!dyn_SWI_LIST[i]) {
                         rc = 1 + i; // Success!
                         dyn_SWI_LIST[i] = (dyn_SWI*)klass;
+#if !defined(ARDUINO_spresense_ast)
                         if(!NVIC_GET_PENDING(SWI_IRQ_NUM)) NVIC_SET_PENDING(SWI_IRQ_NUM);
+#else
+                        // Launch 1-shot timer as an emulated SWI
+                        // Hopefully the value of Zero is legal.
+                        // 1 microsecond latency would suck!
+                        attachTimerInterrupt(softISR, 100);
+#endif
                         DDSB();
                         break;
                 }

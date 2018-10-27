@@ -110,6 +110,13 @@ e-mail   :  support@circuitsathome.com
 #define IRQ_IS_EDGE 0
 #endif
 
+// More stupidity from our friends @ Sony...
+#if defined(ARDUINO_spresense_ast)
+#if !defined(NOT_AN_INTERRUPT)
+#define NOT_AN_INTERRUPT -1
+#endif
+#endif
+
 // SAMD uses an enum for this instead of a define. Isn't that just dandy?
 #if !defined(NOT_AN_INTERRUPT) && !defined(ARDUINO_ARCH_SAMD)
 #warning NOT_AN_INTERRUPT not defined, possible problems ahead.
@@ -126,6 +133,11 @@ e-mail   :  support@circuitsathome.com
 #elif defined(ARDUINO_AVR_ADK)
 #define UHS_MAX3421E_SS_ 53
 #define UHS_MAX3421E_INT_ 54
+#elif defined(ARDUINO_spresense_ast)
+#define UHS_MAX3421E_SS_ 21
+#define UHS_MAX3421E_INT_ 20
+#define SPIklass SPI5
+//#define UHS_MAX3421E_SPD 100000
 #elif defined(CORE_TEENSY) && (defined(__AVR_AT90USB646__) || defined(__AVR_AT90USB1286__))
 
 // TO-DO!
@@ -211,7 +223,9 @@ e-mail   :  support@circuitsathome.com
 // Why not 26MHz? Because I have not found any MCU board that
 // can actually go that fast without problems.
 // Could be a shield limitation too.
+#if !defined(UHS_MAX3421E_SPD)
 #define UHS_MAX3421E_SPD 25000000
+#endif
 #endif
 
 #ifndef UHS_MAX3421E_INT
@@ -264,9 +278,15 @@ e-mail   :  support@circuitsathome.com
 #define bmIRQ_SENSE 0
 #endif
 #else
+#if !defined(IRQ_SENSE)
 #define IRQ_SENSE LOW
+#endif
+#if !defined(bmPULSEWIDTH)
 #define bmPULSEWIDTH 0
+#endif
+#if !defined(bmIRQ_SENSE)
 #define bmIRQ_SENSE bmINTLEVEL
+#endif
 #endif
 
 
@@ -449,6 +469,9 @@ public:
 
 
 };
+#if !defined(SPIklass)
+#define SPIklass SPI
+#endif
 #if !defined(USB_HOST_SHIELD_LOADED)
 #include "USB_HOST_SHIELD_INLINE.h"
 #endif

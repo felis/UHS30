@@ -9,9 +9,10 @@
 #BOARD=teensy:avr:teensy35:usb=serial,speed=96opt,keys=en-us
 #BOARD=teensy:avr:teensy36:usb=serial,speed=96opt,keys=en-us
 #BOARD=teensy:avr:teensypp2:usb=serial,speed=16,keys=en-us
-BOARD=arduino:avr:mega:cpu=atmega2560
+#BOARD=arduino:avr:mega:cpu=atmega2560
+BOARD=SPRESENSE:spresense:spresense:Debug=Disabled,UploadSpeed=115200
 
-PORT = /dev/ttyACM0
+PORT = /dev/ttyUSB0
 
 # And finally, the part that brings everything together for you.
 HOMEDIR =$(HOME)

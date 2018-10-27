@@ -17,7 +17,7 @@ Circuits At Home, LTD
 Web      :  http://www.circuitsathome.com
 e-mail   :  support@circuitsathome.com
  */
-
+#if !defined(ARDUINO_spresense_ast)
 #include <limits.h>
 #if defined(_NEWLIB_VERSION)
 #include <Arduino.h>
@@ -173,5 +173,6 @@ struct _reent *ptr;
 int mlock_null(void) {
   return 0;
 }
+#endif
 #endif
 #endif

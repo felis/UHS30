@@ -25,7 +25,9 @@
 
 #endif
 
-#if defined(ARDUINO_ARCH_PIC32)
+#if defined(ARDUINO_spresense_ast)
+#define SWI_IRQ_NUM 666 // because this board is totally evil.
+#elif defined(ARDUINO_ARCH_PIC32)
 #ifndef SWI_IRQ_NUM
 #if defined(_DSPI0_IPL_ISR)
 #define SWI_IPL _DSPI0_IPL_ISR
@@ -51,7 +53,6 @@ extern "C"
 #endif
 #endif
 #elif !defined(NVIC_NUM_INTERRUPTS)
-
 // Assume CMSIS
 #define __USE_CMSIS_VECTORS__
 #if defined(NUMBER_OF_INT_VECTORS)
@@ -113,10 +114,9 @@ extern "C"
 #error Do not know how to relocate IRQ vectors for this pjrc product
 #endif
 #endif
-
-#else // Not CMSIS or PJRC CORE_TEENSY or PIC32
-#error Do not know how to relocate IRQ vectors
 #endif
+#else // Not CMSIS or PJRC CORE_TEENSY or PIC32 or SPRESENSE
+#error Do not know how to relocate IRQ vectors or perform SWI
 #endif // SWI_IRQ_NUM
 
 
