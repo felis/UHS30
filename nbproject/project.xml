@@ -21,6 +21,10 @@
                     <name>Teensy-3.6</name>
                     <type>0</type>
                 </confElem>
+                <confElem>
+                    <name>Spresense</name>
+                    <type>0</type>
+                </confElem>
             </confList>
             <formatting>
                 <project-formatting-style>false</project-formatting-style>

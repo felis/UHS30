@@ -142,7 +142,7 @@ extern "C" {
                 return (fd < 3) ? 1 : 0;
         }
 }
-#elif defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAM_DUE)
+#elif defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAM_DUE) ||  defined(ARDUINO_spresense_ast)
 // Nothing to do, stdout/stderr is on programming port
 #else
 #error no STDOUT

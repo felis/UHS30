@@ -91,6 +91,9 @@ e-mail   :  support@circuitsathome.com
 
 #elif defined(__arm__) && defined(CORE_TEENSY)
 #define UHS_BIG_FLASH 1
+
+#elif defined(ARDUINO_spresense_ast)
+#define UHS_BIG_FLASH 1
 #else
 // safe default
 #warning Small flash?

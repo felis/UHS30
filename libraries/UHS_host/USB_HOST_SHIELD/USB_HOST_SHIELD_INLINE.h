@@ -43,19 +43,20 @@ static void UHS_NI call_ISReven(void) {
 }
 
 static void UHS_NI call_ISRodd(void) {
+        UHS_PIN_WRITE(LED_BUILTIN, HIGH);
         ISRodd->ISRTask();
-
 }
 #endif
 
 /* write single byte into MAX3421e register */
 void UHS_NI MAX3421E_HOST::regWr(uint8_t reg, uint8_t data) {
-        SPI.beginTransaction(MAX3421E_SPI_Settings);
+        SPIklass.beginTransaction(MAX3421E_SPI_Settings);
+
         UHS_PIN_WRITE(ss_pin, LOW);
-        SPI.transfer(reg | 0x02);
-        SPI.transfer(data);
+        SPIklass.transfer(reg | 0x02);
+        SPIklass.transfer(data);
         UHS_PIN_WRITE(ss_pin, HIGH);
-        SPI.endTransaction();
+        SPIklass.endTransaction();
 }
 
 
@@ -63,19 +64,19 @@ void UHS_NI MAX3421E_HOST::regWr(uint8_t reg, uint8_t data) {
 
 /* returns a pointer to memory position after last written */
 uint8_t* UHS_NI MAX3421E_HOST::bytesWr(uint8_t reg, uint8_t nbytes, uint8_t* data_p) {
-        SPI.beginTransaction(MAX3421E_SPI_Settings);
+        SPIklass.beginTransaction(MAX3421E_SPI_Settings);
         UHS_PIN_WRITE(ss_pin, LOW);
-        SPI.transfer(reg | 0x02);
+        SPIklass.transfer(reg | 0x02);
         //printf("%2.2x :", reg);
 
         while(nbytes) {
-                SPI.transfer(*data_p);
+                SPIklass.transfer(*data_p);
                 //printf("%2.2x ", *data_p);
                 nbytes--;
                 data_p++; // advance data pointer
         }
         UHS_PIN_WRITE(ss_pin, HIGH);
-        SPI.endTransaction();
+        SPIklass.endTransaction();
         //printf("\r\n");
         return (data_p);
 }
@@ -92,27 +93,27 @@ void UHS_NI MAX3421E_HOST::gpioWr(uint8_t data) {
 
 /* single host register read    */
 uint8_t UHS_NI MAX3421E_HOST::regRd(uint8_t reg) {
-        SPI.beginTransaction(MAX3421E_SPI_Settings);
+        SPIklass.beginTransaction(MAX3421E_SPI_Settings);
         UHS_PIN_WRITE(ss_pin, LOW);
-        SPI.transfer(reg);
-        uint8_t rv = SPI.transfer(0);
+        SPIklass.transfer(reg);
+        uint8_t rv = SPIklass.transfer(0);
         UHS_PIN_WRITE(ss_pin, HIGH);
-        SPI.endTransaction();
+        SPIklass.endTransaction();
         return (rv);
 }
 /* multiple-byte register read  */
 
 /* returns a pointer to a memory position after last read   */
 uint8_t* UHS_NI MAX3421E_HOST::bytesRd(uint8_t reg, uint8_t nbytes, uint8_t* data_p) {
-        SPI.beginTransaction(MAX3421E_SPI_Settings);
+        SPIklass.beginTransaction(MAX3421E_SPI_Settings);
         UHS_PIN_WRITE(ss_pin, LOW);
-        SPI.transfer(reg);
+        SPIklass.transfer(reg);
         while(nbytes) {
-                *data_p++ = SPI.transfer(0);
+                *data_p++ = SPIklass.transfer(0);
                 nbytes--;
         }
         UHS_PIN_WRITE(ss_pin, HIGH);
-        SPI.endTransaction();
+        SPIklass.endTransaction();
         return ( data_p);
 }
 
@@ -265,7 +266,7 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
                 PORTJ |= 0x04; // HIGH
         }
 #endif
-        SPI.begin();
+        SPIklass.begin();
 #ifdef ARDUINO_AVR_ADK
         if(irq_pin == 54) {
                 DDRE &= ~0x20; // input
@@ -295,16 +296,16 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
 #endif
                         return (-2);
         }
-        SPI.usingInterrupt(intr);
+        SPIklass.usingInterrupt(intr);
 #else
-        SPI.usingInterrupt(255);
+        SPIklass.usingInterrupt(255);
 #endif
 #if !defined(NO_AUTO_SPEED)
         // test to get to reset acceptance.
         uint32_t spd = UHS_MAX3421E_SPD;
 again:
         MAX3421E_SPI_Settings = SPISettings(spd, MSBFIRST, SPI_MODE0);
-        /* MAX3421E - full-duplex SPI, interrupt kind, vbus off */
+        /* MAX3421E - full-duplex SPIklass, interrupt kind, vbus off */
         regWr(rPINCTL, (bmFDUPSPI | bmIRQ_SENSE | GPX_VBDET));
         if(reset() == 0) {
                 MAX_HOST_DEBUG("Fail SPI speed %lu\r\n", spd);
