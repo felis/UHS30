@@ -98,7 +98,7 @@ Fail:
 uint8_t UHS_NI UHS_USBHub::Start(void) {
         uint8_t rcode;
 
-        rcode = pUsb->setEpInfoEntry(bAddress, 2, epInfo);
+        rcode = pUsb->setEpInfoEntry(bAddress, bIface, 2, epInfo);
 
         if(rcode)
                 goto Fail;

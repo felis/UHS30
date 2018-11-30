@@ -68,7 +68,11 @@ e-mail   :  support@circuitsathome.com
 ////////////////////////////////////////////////////////////////////////////////
 // HID
 #define                             UHS_USB_CLASS_HID 0x03U
-
+// Subclasses
+#define                         UHS_HID_BOOT_SUBCLASS 0x01U
+// Protocols
+#define             UHS_HID_PROTOCOL_HIDBOOT_KEYBOARD 0x01U
+#define                UHS_HID_PROTOCOL_HIDBOOT_MOUSE 0x02U
 ////////////////////////////////////////////////////////////////////////////////
 // Physical
 #define                        UHS_USB_CLASS_PHYSICAL 0x05U

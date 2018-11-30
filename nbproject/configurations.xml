@@ -122,6 +122,15 @@
               </df>
             </df>
           </df>
+          <df name="UHS_HID">
+            <df name="examples">
+              <df name="USB_HOST_SHIELD">
+                <df name="UHS_HID_KB_MOUSE">
+                  <in>UHS_HID_KB_MOUSE.ino</in>
+                </df>
+              </df>
+            </df>
+          </df>
           <df name="UHS_KINETIS_EHCI">
             <df name="examples">
               <df name="KINETIS_EHCI_TEST">
@@ -501,6 +510,11 @@
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_ADK/examples/USB_HOST_SHIELD/ArduinoBlinkLED/ArduinoBlinkLED.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HID/examples/USB_HOST_SHIELD/UHS_HID_KB_MOUSE/UHS_HID_KB_MOUSE.ino"
             ex="false"
             tool="1"
             flavor2="0">

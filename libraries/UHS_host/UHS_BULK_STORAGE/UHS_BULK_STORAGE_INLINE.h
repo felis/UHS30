@@ -379,7 +379,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
 
         BS_HOST_DEBUG("BS Start, speed: %i\r\n", pUsb->GetAddressPool()->GetUsbDevicePtr(bAddress)->usb_host_speed);
         USBTRACE("BS Start\r\n");
-        rcode = pUsb->setEpInfoEntry(bAddress, 3, epInfo);
+        rcode = pUsb->setEpInfoEntry(bAddress, bIface, 3, epInfo);
         //        Serial.println(rcode,HEX);
         if(rcode) goto FailOnInit;
 

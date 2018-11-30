@@ -264,7 +264,7 @@ uint8_t UHS_NI UHS_ADK::Start(void) {
 
         ADK_HOST_DEBUG("ADK: Acc.mode device detected\r\n");
         // Assign epInfo to epinfo pointer - this time all 3 endpoins
-        rcode = pUsb->setEpInfoEntry(bAddress, bNumEP, epInfo);
+        rcode = pUsb->setEpInfoEntry(bAddress, bIface, bNumEP, epInfo);
         if(!rcode) {
                 ADK_HOST_DEBUG("ADK: EpInfoEntry OK\r\n");
                 // Set Configuration Value

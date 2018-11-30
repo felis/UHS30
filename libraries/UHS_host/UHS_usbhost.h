@@ -193,7 +193,7 @@ public:
 
         uint8_t UHS_NI seekInterface(ENUMERATION_INFO *ei, uint16_t inf, USB_CONFIGURATION_DESCRIPTOR *ucd);
 
-        uint8_t UHS_NI setEpInfoEntry(uint8_t addr, uint8_t epcount, volatile UHS_EpInfo* eprecord_ptr);
+        uint8_t UHS_NI setEpInfoEntry(uint8_t addr, uint8_t iface, uint8_t epcount, volatile UHS_EpInfo* eprecord_ptr);
 
         uint8_t UHS_NI EPClearHalt(uint8_t addr, uint8_t ep);
 

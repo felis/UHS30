@@ -177,7 +177,7 @@ uint8_t UHS_NI UHS_CDC_ACM::Start(void) {
         uint8_t rcode;
         ACM_HOST_DEBUG("ACM: Start\r\n");
 
-        rcode = pUsb->setEpInfoEntry(bAddress, bNumEP, epInfo);
+        rcode = pUsb->setEpInfoEntry(bAddress, bIface, bNumEP, epInfo);
         if(!rcode) {
                 ACM_HOST_DEBUG("ACM: EpInfoEntry OK\r\n");
                 if(!rcode) {

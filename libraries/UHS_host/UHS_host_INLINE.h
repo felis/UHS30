@@ -40,13 +40,19 @@ UHS_EpInfo* UHS_USB_HOST_BASE::getEpInfoEntry(uint8_t addr, uint8_t ep) {
         if(!p || !p->epinfo)
                 return NULL;
 
-        UHS_EpInfo *pep = (UHS_EpInfo *)(p->epinfo);
 
-        for(uint8_t i = 0; i < p->epcount; i++) {
-                if((pep)->epAddr == ep)
-                        return pep;
+        UHS_EpInfo *pep;
+        for(uint8_t j = 0; j < UHS_HOST_MAX_INTERFACE_DRIVERS; j++) {
+                pep = (UHS_EpInfo *)(p->epinfo[j]);
 
-                pep++;
+                for(uint8_t i = 0; i < p->epcount; i++) {
+                        if((pep)->epAddr == ep) {
+                                HOST_DUBUG("ep entry for interface %d ep %d max packet size = %d\r\n", pep->bIface, ep, pep->maxPktSize);
+                                return pep;
+                        }
+
+                        pep++;
+                }
         }
         return NULL;
 }
@@ -61,7 +67,7 @@ UHS_EpInfo* UHS_USB_HOST_BASE::getEpInfoEntry(uint8_t addr, uint8_t ep) {
  * @param eprecord pointer to the endpoint structure
  * @return Zero for success, or error code
  */
-uint8_t UHS_USB_HOST_BASE::setEpInfoEntry(uint8_t addr, uint8_t epcount, volatile UHS_EpInfo* eprecord) {
+uint8_t UHS_USB_HOST_BASE::setEpInfoEntry(uint8_t addr, uint8_t iface, uint8_t epcount, volatile UHS_EpInfo* eprecord) {
         if(!eprecord)
                 return UHS_HOST_ERROR_BAD_ARGUMENT;
 
@@ -71,7 +77,7 @@ uint8_t UHS_USB_HOST_BASE::setEpInfoEntry(uint8_t addr, uint8_t epcount, volatil
                 return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
 
         p->address.devAddress = addr;
-        p->epinfo = eprecord;
+        p->epinfo[iface] = eprecord;
         p->epcount = epcount;
         return 0;
 }
@@ -253,7 +259,8 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
 
                 p->speed = speed;
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
-                p->epinfo[0].maxPktSize = 0x40; // Windows bug is expected.
+
+                p->epinfo[0][0].maxPktSize = 0x40; // Windows bug is expected.
                 // poison data
                 // udd->bMaxPacketSize0 = 0U;
 #else
@@ -261,7 +268,7 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
 #endif
 again:
                 memset((void *)buf, 0, biggest);
-                HOST_DUBUG("\r\n\r\nConfiguring PktSize 0x%2.2x,  rcode: 0x%2.2x, retries %i,\r\n", p->epinfo[0].maxPktSize, rcode, retries);
+                HOST_DUBUG("\r\n\r\nConfiguring PktSize 0x%2.2x,  rcode: 0x%2.2x, retries %i,\r\n", p->epinfo[0][0].maxPktSize, rcode, retries);
                 rcode = getDevDescr(0, biggest, (uint8_t*)buf);
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
                 if(rcode || udd->bMaxPacketSize0 < 8)
@@ -284,12 +291,12 @@ again:
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
                         } else if(((rcode == UHS_HOST_ERROR_DMA || rcode == UHS_HOST_ERROR_MEM_LAT) && retries < 4) || (udd->bMaxPacketSize0 < 8 && !rcode)) {
 
-                                if(p->epinfo[0].maxPktSize > 8 && rcode == UHS_HOST_ERROR_DMA) p->epinfo[0].maxPktSize = p->epinfo[0].maxPktSize >> 1;
+                                if(p->epinfo[0][0].maxPktSize > 8 && rcode == UHS_HOST_ERROR_DMA) p->epinfo[0][0].maxPktSize = p->epinfo[0][0].maxPktSize >> 1;
 #else
                         } else if((rcode == UHS_HOST_ERROR_DMA || rcode == UHS_HOST_ERROR_MEM_LAT) && retries < 4) {
-                                if(p->epinfo[0].maxPktSize < 32) p->epinfo[0].maxPktSize = p->epinfo[0].maxPktSize << 1;
+                                if(p->epinfo[0][0].maxPktSize < 32) p->epinfo[0][0].maxPktSize = p->epinfo[0][0].maxPktSize << 1;
 #endif
-                                HOST_DUBUG("Configuring error: 0x%2.2x UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", rcode, p->epinfo[0].maxPktSize);
+                                HOST_DUBUG("Configuring error: 0x%2.2x UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", rcode, p->epinfo[0][0].maxPktSize);
                                 doSoftReset(parent, port, 0);
                                 retries++;
                                 sof_delay(200);
@@ -334,7 +341,7 @@ again:
                         dev1ep.bmNakPower = UHS_USB_NAK_MAX_POWER;
                         p->address.devAddress = ei.address;
                         p->epcount = 1;
-                        p->epinfo = &dev1ep;
+                        p->epinfo[0] = &dev1ep;
 
                         sof_delay(10);
                         memset((void *)buf, 0, biggest);
@@ -542,7 +549,7 @@ again:
                                         HOST_DUBUG("Skipped\r\n");
                                 }
                         }
-#if defined(UHS_HID_LOADED)
+#if 0 // defined(UHS_HID_LOADED)
                         // Now do HID
 #endif
                 }
@@ -560,7 +567,7 @@ again:
  */
 void UHS_USB_HOST_BASE::ReleaseDevice(uint8_t addr) {
         if(addr) {
-#if defined(UHS_HID_LOADED)
+#if 0 // defined(UHS_HID_LOADED)
                 // Release any HID children
                 UHS_HID_Release(this, addr);
 #endif
@@ -1051,7 +1058,7 @@ uint8_t UHS_USB_HOST_BASE::TestInterface(ENUMERATION_INFO *ei) {
         }
         if(devConfigIndex == UHS_HOST_MAX_INTERFACE_DRIVERS) {
                 rcode = UHS_HOST_ERROR_DEVICE_NOT_SUPPORTED;
-#if defined(UHS_HID_LOADED)
+#if 0 // defined(UHS_HID_LOADED)
                 // Check HID here, if it is, then lie
                 if(ei->klass == UHS_USB_CLASS_HID) {
                         devConfigIndex = UHS_HID_INDEX; // for debugging, otherwise this has no use.
@@ -1069,7 +1076,7 @@ uint8_t UHS_USB_HOST_BASE::enumerateInterface(ENUMERATION_INFO *ei) {
 
         HOST_DUBUG("AttemptConfig: parent = %i, port = %i\r\n", ei->parent, ei->port);
 
-#if defined(UHS_HID_LOADED)
+#if 0 // defined(UHS_HID_LOADED)
         // Check HID here, if it is, then lie
         if(ei->klass == UHS_USB_CLASS_HID || ei->interface.klass == UHS_USB_CLASS_HID) {
                 UHS_HID_SetUSBInterface(this, ENUMERATION_INFO * ei);

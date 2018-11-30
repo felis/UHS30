@@ -99,7 +99,7 @@ uint8_t UHS_NI UHS_MIDI::Start(void) {
 
         UHS_MIDI_HOST_DEBUG("MIDI: device detected\r\n");
         // Assign epInfo to epinfo pointer - this time all 3 endpoints
-        rcode = pUsb->setEpInfoEntry(bAddress, bNumEP, epInfo);
+        rcode = pUsb->setEpInfoEntry(bAddress, bIface, bNumEP, epInfo);
         if(!rcode) {
                 UHS_MIDI_HOST_DEBUG("MIDI: EpInfoEntry OK\r\n");
                 pktbuf = new uint8_t(epInfo[epDataInIndex].maxPktSize);
