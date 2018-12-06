@@ -264,7 +264,7 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
                 // poison data
                 // udd->bMaxPacketSize0 = 0U;
 #else
-                p->epinfo[0].maxPktSize = 0x08; // USB Spec, start small, work your way up.
+                p->epinfo[0][0].maxPktSize = 0x08; // USB Spec, start small, work your way up.
 #endif
 again:
                 memset((void *)buf, 0, biggest);
