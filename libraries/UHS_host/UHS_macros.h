@@ -21,6 +21,7 @@ e-mail   :  support@circuitsathome.com
 #error "Never include UHS_macros.h directly; include UHS_Usb.h instead"
 #else
 #define MACROS_H
+#include "macro_logic.h"
 /*
  * Universal Arduino(tm) "IDE" fixups.
  */

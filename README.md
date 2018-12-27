@@ -9,8 +9,10 @@ __This set of libraries is EXTERMELY ALPHA!__
 * Circuitsathome USB Host Shield support (of course!)
 * Freescale Kinetis native full-speed host support!
     * NOTE! To use the Teensy 3.0/3.1/3.2/3.4/3.5 and LC in host mode, select "No USB" from the tools menu for USB Type.
+* SDcard on SPI due to popular demand!
 
-# Current working interface drivers
+# Current working USB interface drivers
+* HID RAW
 * MIDI
 * Hub
 * Mass storage
@@ -18,6 +20,10 @@ __This set of libraries is EXTERMELY ALPHA!__
 * XR21B1411 serial
 * PROLIFIC serial
 * FTDI serial
+
+# USB interface drivers works in-progress
+* HID-BOOT-MOUSE
+* HID-BOOT-KEYBOARD
 
 ## AVR MEGA ADK
 No special modifications are required!

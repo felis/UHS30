@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="100">
+<configurationDescriptor version="95">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="0">
       <df name="libraries">
         <df name="dyn_SWI">
           <in>SWI_INLINE.h</in>
           <in>dyn_SWI.h</in>
+        </df>
+        <df name="ISR_safe_memory">
+          <in>ISR_safe_memory.h</in>
+          <in>malloc.c</in>
+          <in>mlock.c</in>
+          <in>sectionname.h</in>
+          <in>stdlib_private.h</in>
         </df>
         <df name="RTClib">
           <df name="examples">
@@ -121,6 +128,7 @@
           <in>UHS_FS.h</in>
           <in>UHS_FS_INLINE.h</in>
           <in>fcntl.h</in>
+          <in>macro_logic.h</in>
         </df>
         <df name="UHS_host">
           <df name="UHS_ADK">
@@ -167,11 +175,6 @@
           </df>
           <df name="UHS_CDC_ACM">
             <df name="examples">
-              <df name="UHS_KINETIS_EHCI">
-                <df name="acm_terminal">
-                  <in>acm_terminal.ino</in>
-                </df>
-              </df>
               <df name="UHS_KINETIS_FS_HOST">
                 <df name="acm_terminal">
                   <in>acm_terminal.ino</in>
@@ -198,10 +201,17 @@
           <df name="UHS_HID">
             <df name="examples">
               <df name="USB_HOST_SHIELD">
-                <df name="UHS_HID">
-                  <in>UHS_HID.ino</in>
+                <df name="UHS_HID_KB_MOUSE">
+                  <in>UHS_HID_KB_MOUSE.ino</in>
+                </df>
+                <df name="UHS_HID_RAW">
+                  <in>UHS_HID_RAW.ino</in>
                 </df>
               </df>
+            </df>
+            <df name="HIDBOOT">
+              <in>UHS_HIDRAWBOOT_KEYBOARD.h</in>
+              <in>UHS_HIDRAWBOOT_MOUSE.h</in>
             </df>
             <in>UHS_HID.h</in>
             <in>UHS_HID_INLINE.h</in>
@@ -209,15 +219,6 @@
           <df name="UHS_HUB">
             <in>UHS_HUB.h</in>
             <in>UHS_HUB_INLINE.h</in>
-          </df>
-          <df name="UHS_HID">
-            <df name="examples">
-              <df name="USB_HOST_SHIELD">
-                <df name="UHS_HID_KB_MOUSE">
-                  <in>UHS_HID_KB_MOUSE.ino</in>
-                </df>
-              </df>
-            </df>
           </df>
           <df name="UHS_KINETIS_EHCI">
             <df name="examples">
@@ -293,10 +294,7 @@
           <in>UHS_usb_ch9.h</in>
           <in>UHS_usbhost.h</in>
           <in>UHS_util_INLINE.h</in>
-          <in>malloc.c</in>
-          <in>mlock.c</in>
-          <in>sectionname.h</in>
-          <in>stdlib_private.h</in>
+          <in>macro_logic.h</in>
         </df>
       </df>
     </df>
@@ -345,6 +343,7 @@
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI/src</pElem>
+              <pElem>libraries/ISR_safe_memory</pElem>
             </incDir>
             <preprocessorList>
               <Elem>ARDUINO=10609</Elem>
@@ -372,6 +371,7 @@
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI/src</pElem>
+              <pElem>libraries/ISR_safe_memory</pElem>
             </incDir>
             <preprocessorList>
               <Elem>ARDUINO=10609</Elem>
@@ -382,11 +382,16 @@
             </preprocessorList>
           </ccTool>
         </makeTool>
-        <preBuild>
-          <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>
-          <preBuildCommand></preBuildCommand>
-        </preBuild>
       </makefileType>
+      <item path="libraries/ISR_safe_memory/ISR_safe_memory.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/ISR_safe_memory/malloc.c" ex="false" tool="0" flavor2="2">
+      </item>
+      <item path="libraries/ISR_safe_memory/mlock.c" ex="false" tool="0" flavor2="2">
+      </item>
       <item path="libraries/UHS_FS/FAT/FAT.cpp" ex="false" tool="1" flavor2="4">
       </item>
       <item path="libraries/UHS_FS/FAT/FatFS/src/ff.c"
@@ -484,10 +489,6 @@
             tool="1"
             flavor2="4">
       </item>
-      <item path="libraries/UHS_host/malloc.c" ex="false" tool="0" flavor2="2">
-      </item>
-      <item path="libraries/UHS_host/mlock.c" ex="false" tool="0" flavor2="2">
-      </item>
     </conf>
     <conf name="Teensy-3.6" type="0">
       <toolsSet>
@@ -513,6 +514,7 @@
               <pElem>libraries/UHS_ByteBuffer</pElem>
               <pElem>/opt/Arduino/hardware/teensy/avr/libraries/Wire</pElem>
               <pElem>/opt/Arduino/hardware/teensy/avr/libraries/SPI</pElem>
+              <pElem>libraries/ISR_safe_memory</pElem>
             </incDir>
           </cTool>
           <ccTool>
@@ -525,14 +527,20 @@
               <pElem>libraries/UHS_ByteBuffer</pElem>
               <pElem>/opt/Arduino/hardware/teensy/avr/libraries/Wire</pElem>
               <pElem>/opt/Arduino/hardware/teensy/avr/libraries/SPI</pElem>
+              <pElem>libraries/ISR_safe_memory</pElem>
             </incDir>
           </ccTool>
         </makeTool>
-        <preBuild>
-          <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>
-          <preBuildCommand></preBuildCommand>
-        </preBuild>
       </makefileType>
+      <item path="libraries/ISR_safe_memory/ISR_safe_memory.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/ISR_safe_memory/malloc.c" ex="false" tool="0" flavor2="2">
+      </item>
+      <item path="libraries/ISR_safe_memory/mlock.c" ex="false" tool="0" flavor2="2">
+      </item>
       <item path="libraries/RTClib/RTClib.cpp" ex="false" tool="1" flavor2="4">
       </item>
       <item path="libraries/RTClib/asc_store.c" ex="false" tool="0" flavor2="2">
@@ -643,6 +651,8 @@
             tool="1"
             flavor2="4">
       </item>
+      <item path="libraries/UHS_FS/macro_logic.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="libraries/UHS_host/UHS_ADK/examples/UHS_KINETIS_FS_HOST/ArduinoBlinkLED/ArduinoBlinkLED.ino"
             ex="false"
             tool="1"
@@ -668,14 +678,12 @@
             tool="1"
             flavor2="0">
       </item>
-      <item path="libraries/UHS_host/malloc.c" ex="false" tool="0" flavor2="2">
-      </item>
-      <item path="libraries/UHS_host/mlock.c" ex="false" tool="0" flavor2="2">
+      <item path="libraries/UHS_host/macro_logic.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
-    <conf name="Spresense" type="0">
+    <conf name="KE1xF512" type="0">
       <toolsSet>
-        <compilerSet>Spresense_ARM|GNU</compilerSet>
+        <compilerSet>MKE16F512VLH16|GNU</compilerSet>
         <dependencyChecking>false</dependencyChecking>
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
@@ -688,35 +696,52 @@
           <cleanCommand>${MAKE} clean</cleanCommand>
           <executablePath></executablePath>
           <cTool>
-            <standard>2</standard>
             <incDir>
               <pElem>libraries/RTClib</pElem>
               <pElem>libraries/UHS_FS</pElem>
               <pElem>libraries/UHS_host</pElem>
               <pElem>libraries/dyn_SWI</pElem>
               <pElem>libraries/UHS_ByteBuffer</pElem>
-              <pElem>../../.arduino15/packages/SPRESENSE/hardware/spresense/1.0.2/libraries/SPI</pElem>
-              <pElem>../../.arduino15/packages/SPRESENSE/hardware/spresense/1.0.2/libraries/Wire</pElem>
+              <pElem>libraries/ISR_safe_memory</pElem>
+              <pElem>/root/Arduino/hardware/fs-core/arm/libraries/SPI</pElem>
+              <pElem>/root/Arduino/hardware/fs-core/arm/libraries/Wire</pElem>
+              <pElem>/root/Arduino/hardware/fs-core/arm/cores/arm</pElem>
             </incDir>
           </cTool>
           <ccTool>
-            <standard>8</standard>
             <incDir>
               <pElem>libraries/RTClib</pElem>
               <pElem>libraries/UHS_FS</pElem>
               <pElem>libraries/UHS_host</pElem>
               <pElem>libraries/dyn_SWI</pElem>
               <pElem>libraries/UHS_ByteBuffer</pElem>
-              <pElem>../../.arduino15/packages/SPRESENSE/hardware/spresense/1.0.2/libraries/SPI</pElem>
-              <pElem>../../.arduino15/packages/SPRESENSE/hardware/spresense/1.0.2/libraries/Wire</pElem>
+              <pElem>libraries/ISR_safe_memory</pElem>
+              <pElem>/root/Arduino/hardware/fs-core/arm/libraries/SPI</pElem>
+              <pElem>/root/Arduino/hardware/fs-core/arm/libraries/Wire</pElem>
+              <pElem>/root/Arduino/hardware/fs-core/arm/cores/arm</pElem>
             </incDir>
           </ccTool>
         </makeTool>
-        <preBuild>
-          <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>
-          <preBuildCommand></preBuildCommand>
-        </preBuild>
       </makefileType>
+      <item path="libraries/ISR_safe_memory/ISR_safe_memory.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/ISR_safe_memory/malloc.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/ISR_safe_memory/mlock.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/ISR_safe_memory/sectionname.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/ISR_safe_memory/stdlib_private.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
       <item path="libraries/RTClib/ARM_ATOMIC.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="libraries/RTClib/ATOMIC.h" ex="false" tool="3" flavor2="0">
@@ -940,17 +965,14 @@
       </item>
       <item path="libraries/UHS_FS/UHS_FS_INLINE.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="libraries/UHS_FS/examples/UHS_KINETIS_FS_HOST/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
       <item path="libraries/UHS_FS/examples/USB_HOST_SHIELD/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
             ex="false"
             tool="1"
             flavor2="0">
       </item>
       <item path="libraries/UHS_FS/fcntl.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/macro_logic.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_ADK/UHS_ADK.h"
             ex="false"
@@ -960,11 +982,6 @@
       <item path="libraries/UHS_host/UHS_ADK/UHS_ADK_INLINE.h"
             ex="false"
             tool="3"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_ADK/examples/UHS_KINETIS_FS_HOST/ArduinoBlinkLED/ArduinoBlinkLED.ino"
-            ex="false"
-            tool="1"
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_ADK/examples/UHS_KINETIS_FS_HOST/demokit_20/demokit_20.ino"
@@ -995,11 +1012,6 @@
       <item path="libraries/UHS_host/UHS_BULK_STORAGE/UHS_SCSI.h"
             ex="false"
             tool="3"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_BULK_STORAGE/examples/UHS_KINETIS_FS_HOST/TEST_BULK_K/TEST_BULK_K.ino"
-            ex="false"
-            tool="1"
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_BULK_STORAGE/examples/USB_HOST_SHIELD/TEST_BULK/TEST_BULK.ino"
@@ -1037,11 +1049,6 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/UHS_KINETIS_EHCI/acm_terminal/acm_terminal.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
       <item path="libraries/UHS_host/UHS_CDC_ACM/examples/UHS_KINETIS_FS_HOST/acm_terminal/acm_terminal.ino"
             ex="false"
             tool="1"
@@ -1062,6 +1069,16 @@
             tool="1"
             flavor2="0">
       </item>
+      <item path="libraries/UHS_host/UHS_HID/HIDBOOT/UHS_HIDRAWBOOT_KEYBOARD.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HID/HIDBOOT/UHS_HIDRAWBOOT_MOUSE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
       <item path="libraries/UHS_host/UHS_HID/UHS_HID.h"
             ex="false"
             tool="3"
@@ -1072,7 +1089,12 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="libraries/UHS_host/UHS_HID/examples/USB_HOST_SHIELD/UHS_HID/UHS_HID.ino"
+      <item path="libraries/UHS_host/UHS_HID/examples/USB_HOST_SHIELD/UHS_HID_KB_MOUSE/UHS_HID_KB_MOUSE.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HID/examples/USB_HOST_SHIELD/UHS_HID_RAW/UHS_HID_RAW.ino"
             ex="false"
             tool="1"
             flavor2="0">
@@ -1105,21 +1127,6 @@
       <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/UHS_KINETIS_FS_HOST_INLINE.h"
             ex="false"
             tool="3"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/KINETIS_DEV_DESC/KINETIS_DEV_DESC.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/KINETIS_TEST/KINETIS_TEST.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/TEST_KINETIS_BULK/TEST_KINETIS_BULK.ino"
-            ex="false"
-            tool="1"
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_MIDI/UHS_MIDI.h"
@@ -1219,16 +1226,7 @@
             tool="1"
             flavor2="0">
       </item>
-      <item path="libraries/UHS_host/malloc.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/mlock.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/sectionname.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/stdlib_private.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
+      <item path="libraries/UHS_host/macro_logic.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="libraries/dyn_SWI/SWI_INLINE.h" ex="false" tool="3" flavor2="0">
       </item>

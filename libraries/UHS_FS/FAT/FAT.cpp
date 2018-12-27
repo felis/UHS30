@@ -23,8 +23,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <FAT/FAT.h>
-#include <UHS_FS.h>
+#include "FAT/FAT.h"
+#include "UHS_FS.h"
 #include "FatFS/src/diskio.h"
 
 #ifndef RTC_LOADED
@@ -118,7 +118,9 @@ DSTATUS PFAT::disk_initialize(void) {
 
 DSTATUS PFAT::disk_status(void) {
         bool rc = storage->Status(storage);
-        if(rc) return STA_OK;
+        if(rc) {
+                return STA_OK;
+        }
         return STA_PROTECT;
 }
 

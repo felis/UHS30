@@ -29,8 +29,24 @@ e-mail   :  support@circuitsathome.com
 #undef false
 #endif
 
+#if !defined(STDIO_IS_OK_TO_USE_AS_IS)
+#if defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAM_DUE) || defined(ARDUINO_spresense_ast)
+// STDIO patching not required.
+#define STDIO_IS_OK_TO_USE_AS_IS
+#endif
+#endif
+
+#if !defined(STDIO_IS_OK_TO_USE_AS_IS)
+// We need to patch STDIO so it can be used.
+
 #ifndef SERIAL_PORT_MONITOR
+// Some don't define this.
 #define SERIAL_PORT_MONITOR Serial
+#endif
+
+#ifndef SERIAL_PORT_HARDWARE
+// Some don't define this.
+#define SERIAL_PORT_HARDWARE SERIAL_PORT_MONITOR
 #endif
 
 #ifndef USB_HOST_SERIAL
@@ -41,12 +57,9 @@ e-mail   :  support@circuitsathome.com
 #endif
 #endif
 
-
-
 #if !defined(NOTUSED)
 #define NOTUSED(...)  __VA_ARGS__ __attribute__((unused))
 #endif
-
 
 #ifndef __AVR__
 #ifndef printf_P
@@ -58,11 +71,12 @@ e-mail   :  support@circuitsathome.com
 /*
  * For printf() output with pic32 Arduino
  */
-extern "C"
-{
+extern "C" {
+
         void _mon_putc(char s) {
                 USB_HOST_SERIAL.write(s);
         }
+
         int _mon_getc() {
                 while(!USB_HOST_SERIAL.available());
                 return USB_HOST_SERIAL.read();
@@ -76,7 +90,7 @@ extern "C" {
         static FILE tty_stderr;
 
         static int NOTUSED(tty_stderr_putc(char c, NOTUSED(FILE *t)));
-        static int NOTUSED(tty_stderr_flush (NOTUSED(FILE *t)));
+        static int NOTUSED(tty_stderr_flush(NOTUSED(FILE *t)));
         static int NOTUSED(tty_std_putc(char c, NOTUSED(FILE *t)));
         static int NOTUSED(tty_std_getc(NOTUSED(FILE *t)));
         static int NOTUSED(tty_std_flush(NOTUSED(FILE *t)));
@@ -86,7 +100,7 @@ extern "C" {
                 return 0;
         }
 
-        static int tty_stderr_flush (NOTUSED(FILE *t)) {
+        static int tty_stderr_flush(NOTUSED(FILE *t)) {
                 USB_HOST_SERIAL.flush();
                 return 0;
         }
@@ -142,17 +156,15 @@ extern "C" {
                 return (fd < 3) ? 1 : 0;
         }
 }
-#elif defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAM_DUE) ||  defined(ARDUINO_spresense_ast)
-// Nothing to do, stdout/stderr is on programming port
 #else
-#error no STDOUT
+#error no STDIO
 #endif // defined(ARDUINO_ARCH_PIC32)
 
 
 
 #if defined(__AVR__)
 // The only wierdo in the bunch...
-void UHS_printf_HELPER_init(void) {
+void UHS_AVR_printf_HELPER_init(void) {
         // Set up stdio/stderr
         tty_stdio.put = tty_std_putc;
         tty_stdio.get = tty_std_getc;
@@ -169,13 +181,14 @@ void UHS_printf_HELPER_init(void) {
         stderr = &tty_stderr;
 
 }
-#else
-// Only AVR (so far) needs to init.
-#define UHS_printf_HELPER_init() (void(0))
+#define UHS_printf_HELPER_init() UHS_AVR_printf_HELPER_init()
 #endif
 
-#else
-#define UHS_printf_HELPER_init() (void(0))
+#endif /* STDIO_IS_OK_TO_USE_AS_IS */
 #endif  /* load.... */
+
+#if !defined(UHS_printf_HELPER_init)
+#define UHS_printf_HELPER_init() (void(0))
+#endif
 #endif	/* UHS_PRINTF_HELPER_H */
 
