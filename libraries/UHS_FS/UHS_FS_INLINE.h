@@ -1,3 +1,22 @@
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+   and
+Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
+
+This software may be distributed and modified under the terms of the GNU
+General Public License version 2 (GPL2) as published by the Free Software
+Foundation and appearing in the file GPL2.TXT included in the packaging of
+this file. Please note that GPL2 Section 2[b] requires that all works based
+on this software must also be made publicly available under the terms of
+the GPL2 ("Copyleft").
+
+Contact information
+-------------------
+
+Circuits At Home, LTD
+Web      :  http://www.circuitsathome.com
+e-mail   :  support@circuitsathome.com
+ */
+
 #if defined(UHS_FS_H) && !defined(GENERIC_STORAGE_LOADED)
 #define GENERIC_STORAGE_LOADED
 #ifndef AJK_NI
@@ -12,6 +31,8 @@ extern "C" {
         static DIR *dhandles[_FS_LOCK]; // Directory handles
         static PFAT *Fats[PFAT_VOLUMES];
         static storage_t *sto[PFAT_VOLUMES];
+
+#ifdef __UHS_BULK_STORAGE_H
         static bool last_ready[MAX_USB_MS_DRIVERS][MASS_MAX_SUPPORTED_LUN];
 
         static void none_ready(int idx) {
@@ -20,19 +41,128 @@ extern "C" {
                 }
         }
 
-        static void kill_mounts(int idx) {
+#endif
+
+#ifdef UHS_USE_SDCARD
+
+        MAKE_SD_ISR_REFS();
+
+        void (* UHS_FS_SD_ISR[UHS_MAX_SD_CARDS])(void) = {
+                AJK_MAKE_LIST(SD_ISR, UHS_MAX_SD_CARDS)
+        };
+
+        static bool SD_last_ready[UHS_MAX_SD_CARDS];
+
+        static void SD_none_ready(int idx) {
+                SD_last_ready[idx] = false;
+        }
+#endif
+
+#ifdef __UHS_BULK_STORAGE_H
+
+        static void kill_mounts(int idx, int drv) {
                 for(int f = 0; f < PFAT_VOLUMES; f++) {
                         if(Fats[f] != NULL) {
-                                if(((pvt_t *)sto[f]->private_data)->B == idx) {
-                                        delete Fats[f];
-                                        Fats[f] = NULL;
-                                        delete (pvt_t *)sto[f]->private_data;
-                                        sto[f]->private_data = NULL;
+                                if(sto[f]->driver_type == drv) {
+#ifdef __UHS_BULK_STORAGE_H
+                                        if(drv == 0) {
+                                                if(((pvt_t *)sto[f]->private_data)->B == idx) {
+                                                        delete Fats[f];
+                                                        Fats[f] = NULL;
+                                                        delete (pvt_t *)sto[f]->private_data;
+                                                        sto[f]->private_data = NULL;
+                                                        none_ready(idx);
+                                                }
+                                        }
+#endif
+
+#if 0
+                                                // Probably not needed
+                                                //you can't yank out a SDcard interface
+#ifdef UHS_USE_SDCARD
+#ifdef __UHS_BULK_STORAGE_H
+                                        else
+#endif
+                                                if(drv == 1) {
+                                                if(((SDpvt_t *)sto[f]->private_data)->B == idx) {
+                                                        delete Fats[f];
+                                                        Fats[f] = NULL;
+                                                        delete (SDpvt_t *)sto[f]->private_data;
+                                                        sto[f]->private_data = NULL;
+                                                        SD_none_ready(idx);
+                                                }
+                                        }
+#endif
+#endif
                                 }
                         }
                 }
-                none_ready(idx);
         }
+#endif
+
+#ifdef UHS_USE_SDCARD
+
+        DSTATUS UHS_SD_Initialize(storage_t *sto) {
+                if((UHS_SD_Storage[((SDpvt_t *)sto->private_data)->B]->WriteProtected())) {
+                        return STA_PROTECT;
+                } else {
+                        return STA_OK;
+                }
+        }
+
+        bool UHS_SD_Status(storage_t *sto) {
+                return (UHS_SD_Storage[((SDpvt_t *)sto->private_data)->B]->WriteProtected());
+        }
+
+        // TO-DO: cache?
+
+        int UHS_SD_Read(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count) {
+                uint8_t x = 0;
+                while(count) {
+                        int tries = FAT_MAX_ERROR_RETRIES;
+                        while(tries) {
+                                tries--;
+                                x = (UHS_SD_Storage[((SDpvt_t *)sto->private_data)->B]->Read(LBA, (sto->SectorSize), 1, buf));
+                                //if(x == UHS_BULK_ERR_DEVICE_DISCONNECTED) break;
+                                if(!x) break;
+                        }
+                        if(x) break;
+                        // TO-DO: READ caching?
+                        count--;
+                        buf += (sto->SectorSize);
+                        LBA++;
+                }
+                int y = x;
+                return y;
+        }
+
+        // TO-DO: cache?
+
+        int UHS_SD_Write(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count) {
+                uint8_t x = 0;
+                while(count && !x) {
+                        int tries = FAT_MAX_ERROR_RETRIES;
+                        while(tries) {
+                                tries--;
+                                x = (UHS_SD_Storage[((SDpvt_t *)sto->private_data)->B]->Write(LBA, (sto->SectorSize), 1, buf));
+                                //if(x == UHS_BULK_ERR_WRITE_PROTECTED) break;
+                                //if(x == UHS_BULK_ERR_DEVICE_DISCONNECTED) break;
+                                if(!x) break;
+                        }
+                        // TO-DO: WRITE caching?
+                        count--;
+                        buf += (sto->SectorSize);
+                        LBA++;
+                }
+                int y = x;
+                return y;
+        }
+
+        uint8_t UHS_SD_Commit(NOTUSED(storage_t *sto)) {
+                uint8_t x = 0;
+                return x;
+        }
+#endif
 
 #ifdef __UHS_BULK_STORAGE_H__
         // On mass storage, there is nothing to do. Just call the status function.
@@ -49,8 +179,7 @@ extern "C" {
                 return (UHS_USB_Storage[((pvt_t *)sto->private_data)->B]->WriteProtected(((pvt_t *)sto->private_data)->lun));
         }
 
-
-        // TO-DO: read cache?
+        // TO-DO: cache?
 
         int UHS_USB_BulkOnly_Read(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count) {
                 uint8_t x = 0;
@@ -72,6 +201,8 @@ extern "C" {
                 return y;
         }
 
+        // TO-DO: cache?
+
         int UHS_USB_BulkOnly_Write(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count) {
                 uint8_t x = 0;
                 while(count && !x) {
@@ -83,6 +214,7 @@ extern "C" {
                                 if(x == UHS_BULK_ERR_DEVICE_DISCONNECTED) break;
                                 if(!x) break;
                         }
+                        // TO-DO: WRITE caching?
                         count--;
                         buf += (sto->SectorSize);
                         LBA++;
@@ -91,18 +223,20 @@ extern "C" {
                 return y;
         }
 
-        uint8_t UHS_USB_BulkOnly_Commit(storage_t *sto) {
+        uint8_t UHS_USB_BulkOnly_Commit(NOTUSED(storage_t *sto)) {
                 uint8_t x = 0;
                 return x;
         }
-
-
+#endif
 }
+
+
+#ifdef __UHS_BULK_STORAGE_H__
 
 UHS_FS_BULK_DRIVER::UHS_FS_BULK_DRIVER(UHS_USB_HOST_BASE *p, int i) : UHS_Bulk_Storage(p) {
         sto_idx = i;
         none_ready(sto_idx);
-};
+}
 
 uint8_t UHS_FS_BULK_DRIVER::OnStart(void) {
         none_ready(sto_idx);
@@ -127,6 +261,7 @@ void UHS_FS_BULK_DRIVER::OnPoll(void) {
                                         sto[nm]->Commit = *UHS_USB_BulkOnly_Commit;
                                         sto[nm]->TotalSectors = GetCapacity(lun);
                                         sto[nm]->SectorSize = GetSectorSize(lun);
+                                        sto[nm]->driver_type = 0;
                                         PCPartition *PT = new PCPartition;
                                         if(!PT->Start(sto[nm])) {
                                                 delete (pvt_t *)sto[nm]->private_data;
@@ -141,13 +276,15 @@ void UHS_FS_BULK_DRIVER::OnPoll(void) {
                                                                         sto[nm]->private_data = new pvt_t;
                                                                         ((pvt_t *)sto[nm]->private_data)->lun = lun;
                                                                         ((pvt_t *)sto[nm]->private_data)->B = sto_idx;
+                                                                        sto[nm]->Initialize = *UHS_USB_BulkOnly_Initialize;
                                                                         sto[nm]->Reads = *UHS_USB_BulkOnly_Read;
                                                                         sto[nm]->Writes = *UHS_USB_BulkOnly_Write;
                                                                         sto[nm]->Status = *UHS_USB_BulkOnly_Status;
-                                                                        sto[nm]->Initialize = *UHS_USB_BulkOnly_Initialize;
                                                                         sto[nm]->Commit = *UHS_USB_BulkOnly_Commit;
                                                                         sto[nm]->TotalSectors = GetCapacity(lun);
                                                                         sto[nm]->SectorSize = GetSectorSize(lun);
+                                                                        sto[nm]->driver_type = 0;
+
                                                                         Fats[nm] = new PFAT(sto[nm], nm, apart->firstSector);
                                                                         if(Fats[nm]->MountStatus()) {
                                                                                 delete Fats[nm];
@@ -177,11 +314,13 @@ void UHS_FS_BULK_DRIVER::OnPoll(void) {
                                 // Forced unmount if media ejected
                                 for(int f = 0; f < PFAT_VOLUMES; f++) {
                                         if(Fats[f] != NULL) {
-                                                if((((pvt_t *)sto[f]->private_data)->B == sto_idx) && (((pvt_t *)sto[f]->private_data)->lun == lun)) {
-                                                        delete Fats[f];
-                                                        Fats[f] = NULL;
-                                                        delete (pvt_t *)sto[f]->private_data;
-                                                        sto[f]->private_data = NULL;
+                                                if(sto[f]->driver_type == 0) {
+                                                        if((((pvt_t *)sto[f]->private_data)->B == sto_idx) && (((pvt_t *)sto[f]->private_data)->lun == lun)) {
+                                                                delete Fats[f];
+                                                                Fats[f] = NULL;
+                                                                delete (pvt_t *)sto[f]->private_data;
+                                                                sto[f]->private_data = NULL;
+                                                        }
                                                 }
                                         }
                                 }
@@ -193,10 +332,8 @@ void UHS_FS_BULK_DRIVER::OnPoll(void) {
 
 void UHS_FS_BULK_DRIVER::OnRelease(void) {
         // Forced unmount of all luns
-        kill_mounts(sto_idx);
+        kill_mounts(sto_idx, 0);
 }
-
-//UHS_FS_BULK_DRIVER *UHS_USB_Storage[MAX_USB_MS_DRIVERS];
 
 /**
  * This must be called before using UHS USB Mass Storage. This works around a G++ bug.
@@ -211,18 +348,393 @@ static void UHS_USB_BulkOnly_Init(UHS_USB_HOST_BASE *hd) {
 
 #endif
 
+#ifdef UHS_USE_SDCARD
 
+UHS_SD::UHS_SD(int _present, int _cs) {
+        present = _present;
+        cs = _cs;
+        pinMode(cs, OUTPUT);
+        digitalWrite(cs, HIGH);
+        pinMode(present, INPUT_PULLUP);
+}
+
+bool UHS_SD::waitNotBusy(uint16_t timeoutMillis) {
+        uint16_t t0 = millis();
+        do {
+                if(SPI.transfer(0xFF) == 0XFF) return true;
+        } while(((uint16_t)millis() - t0) < timeoutMillis);
+        return false;
+
+}
+
+uint8_t UHS_SD::cardCommand(uint8_t cmd, uint32_t arg) {
+        //readEnd();
+        //chipSelectLow();
+
+        waitNotBusy(300);
+        SPI.transfer(cmd | 0x40);
+        for(int8_t s = 24; s >= 0; s -= 8) SPI.transfer(arg >> s);
+        uint8_t crc = 0XFF;
+        if(cmd == UHS_SD_CMD0) crc = 0X95; // correct crc for CMD0 with arg 0
+        if(cmd == UHS_SD_CMD8) crc = 0X87; // correct crc for CMD8 with arg 0X1AA
+        SPI.transfer(crc);
+        for(uint8_t i = 0; ((status_ = SPI.transfer(0xFF)) & 0X80) && i != 0XFF; i++);
+        return status_;
+}
+
+bool UHS_SD::readRegister(uint8_t cmd, void* buf) {
+        uint8_t* dst = reinterpret_cast<uint8_t*>(buf);
+        // Trans
+        SPI.beginTransaction(settings);
+        digitalWrite(cs, LOW);
+        if(cardCommand(cmd, 0)) {
+                error(UHS_SD_CARD_ERROR_READ_REG);
+                goto fail;
+        }
+        if(!waitStartBlock()) goto fail;
+        // transfer data
+        for(uint16_t i = 0; i < 16; i++) dst[i] = SPI.transfer(0xFF);
+        SPI.transfer(0xFF); // get first crc byte
+        SPI.transfer(0xFF); // get second crc byte
+        digitalWrite(cs, HIGH);
+        SPI.endTransaction();
+        return true;
+
+fail:
+        digitalWrite(cs, HIGH);
+        SPI.endTransaction();
+        return false;
+}
+
+bool UHS_SD::waitStartBlock(void) {
+        uint16_t t0 = millis();
+
+        while((status_ = SPI.transfer(0xFF)) == 0XFF) {
+                if(((uint16_t)millis() - t0) > UHS_SD_READ_TIMEOUT) {
+                        error(UHS_SD_CARD_ERROR_READ_TIMEOUT);
+                        goto fail;
+                }
+        }
+        if(status_ != UHS_SD_DATA_START_BLOCK) {
+                error(UHS_SD_CARD_ERROR_READ);
+                goto fail;
+        }
+        return true;
+
+fail:
+        digitalWrite(cs, HIGH);
+
+        return false;
+}
+
+uint32_t UHS_SD::cardSize(void) {
+        UHS_SD_csd_t csd;
+        if(!readCSD(&csd)) return 0;
+        if(csd.v1.csd_ver == 0) {
+                uint8_t read_bl_len = csd.v1.read_bl_len;
+                uint16_t c_size = (csd.v1.c_size_high << 10)
+                        | (csd.v1.c_size_mid << 2) | csd.v1.c_size_low;
+                uint8_t c_size_mult = (csd.v1.c_size_mult_high << 1)
+                        | csd.v1.c_size_mult_low;
+                return (uint32_t)(c_size + 1) << (c_size_mult + read_bl_len - 7);
+        } else if(csd.v2.csd_ver == 1) {
+                uint32_t c_size = ((uint32_t)csd.v2.c_size_high << 16)
+                        | (csd.v2.c_size_mid << 8) | csd.v2.c_size_low;
+                return (c_size + 1) << 10;
+        } else {
+                error(UHS_SD_CARD_ERROR_BAD_CSD);
+
+                return 0;
+        }
+}
+
+uint8_t UHS_SD::Read(uint32_t addr, uint16_t bsize, uint8_t blocks, uint8_t *buf) {
+        if(bsize != 512) return FR_DISK_ERR;
+        uint16_t j = 0;
+        uint32_t xaddr;
+        while(blocks--) {
+                xaddr = addr;
+                // use address if not SDHC card
+                if(type() != UHS_SD_CARD_TYPE_SDHC) xaddr <<= 9;
+                SPI.beginTransaction(settings);
+                digitalWrite(cs, LOW);
+                // Trans
+                if(cardCommand(UHS_SD_CMD17, xaddr)) {
+                        error(UHS_SD_CARD_ERROR_CMD17);
+                        goto fail;
+                }
+                if(!waitStartBlock()) {
+                        goto fail;
+                }
+                // transfer data
+                for(uint16_t i = 0; i < bsize; i++, j++) {
+                        buf[j] = SPI.transfer(0xFF);
+                }
+                addr++;
+                digitalWrite(cs, HIGH);
+                SPI.endTransaction();
+        }
+        return 0;
+
+fail:
+        digitalWrite(cs, HIGH);
+        SPI.endTransaction();
+        return FR_DISK_ERR;
+}
+
+bool UHS_SD::writeData(uint8_t token, const uint8_t* src) {
+        SPI.transfer(token);
+        for(uint16_t i = 0; i < 512; i++) {
+                SPI.transfer(src[i]);
+        }
+        SPI.transfer(0xff); // dummy crc
+        SPI.transfer(0xff); // dummy crc
+
+        status_ = SPI.transfer(0xff);
+        if((status_ & UHS_SD_DATA_RES_MASK) != UHS_SD_DATA_RES_ACCEPTED) {
+                error(UHS_SD_CARD_ERROR_WRITE);
+                digitalWrite(cs, HIGH);
+                return false;
+        }
+        return true;
+}
+
+bool UHS_SD::writeBlock(uint32_t blockNumber, const uint8_t* src) {
+
+        // use address if not SDHC card
+        if(type() != UHS_SD_CARD_TYPE_SDHC) blockNumber <<= 9;
+        // Trans
+        SPI.beginTransaction(settings);
+        digitalWrite(cs, LOW);
+        if(cardCommand(UHS_SD_CMD24, blockNumber)) {
+                error(UHS_SD_CARD_ERROR_CMD24);
+                goto fail;
+        }
+        if(!writeData(UHS_SD_DATA_START_BLOCK, src)) goto fail;
+
+        // wait for flash programming to complete
+        if(!waitNotBusy(UHS_SD_WRITE_TIMEOUT)) {
+                error(UHS_SD_CARD_ERROR_WRITE_TIMEOUT);
+                goto fail;
+        }
+        // response is r2 so get and check two bytes for nonzero
+        if(cardCommand(UHS_SD_CMD13, 0) || SPI.transfer(0xFF)) {
+                error(UHS_SD_CARD_ERROR_WRITE_PROGRAMMING);
+                goto fail;
+        }
+        digitalWrite(cs, HIGH);
+        SPI.endTransaction();
+        return true;
+
+fail:
+        digitalWrite(cs, HIGH);
+        SPI.endTransaction();
+        return false;
+}
+
+uint8_t UHS_SD::Write(uint32_t addr, uint16_t bsize, uint8_t blocks, const uint8_t *buf) {
+        if(bsize != 512) return true;
+        while(blocks--) {
+                if(!writeBlock(addr, buf)) return FR_DISK_ERR;
+                addr++;
+                buf += 512;
+        }
+        return 0;
+}
+
+UHS_FS_SD_DRIVER::UHS_FS_SD_DRIVER(int _present, int _cs, int i) : UHS_SD(_present, _cs) {
+
+        sto_idx = i;
+        SD_none_ready(sto_idx);
+        SD_last_ready[sto_idx] = !Present(); // Invert to force probe if SDcard is present.
+}
+
+/**
+ *  This is equal to mass storage OnPoll detect phase
+ */
+void UHS_FS_SD_DRIVER::IRQ(void) {
+        delay(100); // debounce...
+        bool sense = Present();
+        if(sense != SD_last_ready[sto_idx]) {
+                SD_last_ready[sto_idx] = sense;
+                if(sense) {
+                        uint16_t t0 = (uint16_t)millis();
+                        uint32_t arg;
+
+                        //printf("Card %d Inserted\r\n", sto_idx);
+                        bool ok = false;
+                        for(int j = 0; j < 10; j++) {
+                                // needs to retry for reliability.
+                                // Do card detection.
+                                // This equals USB connection check.
+                                settings = SPISettings(400000, MSBFIRST, SPI_MODE0);
+                                SPI.beginTransaction(settings);
+                                digitalWrite(cs, HIGH);
+                                for(uint8_t i = 0; i < 10; i++) SPI.transfer(0xff);
+                                digitalWrite(cs, LOW);
+                                while((status_ = cardCommand(UHS_SD_CMD0, 0)) != UHS_SD_R1_IDLE_STATE) {
+                                        if(((uint16_t)(millis() - t0)) > UHS_SD_INIT_TIMEOUT) {
+                                                error(UHS_SD_CARD_ERROR_CMD0);
+                                                goto fail;
+                                        }
+                                }
+                                //printf("CSDV\r\n");
+                                // check SD version
+                                if((cardCommand(UHS_SD_CMD8, 0x1AA) & UHS_SD_R1_ILLEGAL_COMMAND)) {
+                                        type(UHS_SD_CARD_TYPE_SD1);
+                                } else {
+                                        // only need last byte of r7 response
+                                        for(uint8_t i = 0; i < 4; i++) status_ = SPI.transfer(0xff);
+                                        if(status_ != 0XAA) {
+                                                error(UHS_SD_CARD_ERROR_CMD8);
+                                                goto fail;
+                                        }
+                                        type(UHS_SD_CARD_TYPE_SD2);
+                                }
+                                //printf("ACV %d\r\n",(type() == UHS_SD_CARD_TYPE_SD2 ? 1 : 0));
+                                // initialize card and send host supports SDHC if SD2
+                                arg = type() == UHS_SD_CARD_TYPE_SD2 ? 0X40000000 : 0;
+
+                                while((status_ = cardAcmd(UHS_SD_ACMD41, arg)) != UHS_SD_R1_READY_STATE) {
+                                        // check for timeout
+                                        if(((uint16_t)(millis() - t0)) > UHS_SD_INIT_TIMEOUT) {
+                                                error(UHS_SD_CARD_ERROR_ACMD41);
+                                                goto fail;
+                                        }
+                                }
+                                //printf("OCR\r\n");
+                                // if SD2 read OCR register to check for SDHC card
+                                if(type() == UHS_SD_CARD_TYPE_SD2) {
+                                        if(cardCommand(UHS_SD_CMD58, 0)) {
+                                                error(UHS_SD_CARD_ERROR_CMD58);
+                                                goto fail;
+                                        }
+                                        if((SPI.transfer(0xff) & 0XC0) == 0XC0) type(UHS_SD_CARD_TYPE_SDHC);
+                                        // discard rest of ocr - contains allowed voltage range
+                                        for(uint8_t i = 0; i < 3; i++) SPI.transfer(0xff);
+                                }
+
+                                digitalWrite(cs, HIGH);
+                                SPI.endTransaction();
+                                ok = true;
+                                break;
+                                fail:
+                                digitalWrite(cs, HIGH);
+                                SPI.endTransaction();
+                        }
+                        if(!ok) {
+                                //printf("Failed to init card\r\n");
+                                digitalWrite(cs, HIGH);
+                                SPI.endTransaction();
+                                return;
+                        }
+                        // card OK
+                        // Spec, 0 to 25MHz, try for top speed.
+                        settings = SPISettings(25000000, MSBFIRST, SPI_MODE0);
+                        CurrentCapacity = cardSize();
+                        //printf("Card sectors: %ld\r\n", GetCapacity());
+
+                        int nm = (int)f_next_mount();
+                        if(nm < PFAT_VOLUMES) {
+                                sto[nm]->private_data = new SDpvt_t;
+                                ((SDpvt_t *)sto[nm]->private_data)->B = sto_idx;
+                                sto[nm]->Initialize = *UHS_SD_Initialize;
+                                sto[nm]->Reads = *UHS_SD_Read;
+                                sto[nm]->Writes = *UHS_SD_Write;
+                                sto[nm]->Status = *UHS_SD_Status;
+                                sto[nm]->Commit = *UHS_SD_Commit;
+                                sto[nm]->TotalSectors = GetCapacity();
+                                sto[nm]->SectorSize = GetSectorSize();
+                                sto[nm]->driver_type = 1;
+                                PCPartition *PT = new PCPartition;
+                                if(!PT->Start(sto[nm])) {
+                                        delete (SDpvt_t *)sto[nm]->private_data;
+                                        sto[nm]->private_data = NULL;
+                                        // partitions exist
+                                        //printf("Partitions exist...\r\n");
+                                        part_t *apart;
+                                        for(int j = 0; j < 4; j++) {
+                                                nm = f_next_mount();
+                                                if(nm < PFAT_VOLUMES) {
+                                                        apart = PT->GetPart(j);
+                                                        if(apart != NULL && apart->type != 0x00) {
+                                                                sto[nm]->private_data = new SDpvt_t;
+                                                                ((SDpvt_t *)sto[nm]->private_data)->B = sto_idx;
+                                                                sto[nm]->Initialize = *UHS_SD_Initialize;
+                                                                sto[nm]->Reads = *UHS_SD_Read;
+                                                                sto[nm]->Writes = *UHS_SD_Write;
+                                                                sto[nm]->Status = *UHS_SD_Status;
+                                                                sto[nm]->Commit = *UHS_SD_Commit;
+                                                                sto[nm]->TotalSectors = GetCapacity();
+                                                                sto[nm]->SectorSize = GetSectorSize();
+                                                                sto[nm]->driver_type = 1;
+                                                                Fats[nm] = new PFAT(sto[nm], nm, apart->firstSector);
+                                                                if(Fats[nm]->MountStatus()) {
+                                                                        //printf("Killing %d\r\n", nm);
+                                                                        delete Fats[nm];
+                                                                        Fats[nm] = NULL;
+                                                                        delete (SDpvt_t *)sto[nm]->private_data;
+                                                                        sto[nm]->private_data = NULL;
+                                                                } else {
+                                                                        //printf("%d is ok\r\n", nm);
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                } else {
+                                        // try superblock
+                                        Fats[nm] = new PFAT(sto[nm], nm, 0);
+                                        if(Fats[nm]->MountStatus()) {
+                                                delete Fats[nm];
+                                                Fats[nm] = NULL;
+                                                delete (SDpvt_t *)sto[nm]->private_data;
+                                                sto[nm]->private_data = NULL;
+                                        }
+                                }
+                        }
+                } else {
+                        //printf("Card %d Removed\r\n", sto_idx);
+                        for(int f = 0; f < PFAT_VOLUMES; f++) {
+                                if(Fats[f] != NULL) {
+                                        if(sto[f]->driver_type == 1) {
+
+                                                if((((SDpvt_t *)sto[f]->private_data)->B == sto_idx)) {
+                                                        delete Fats[f];
+                                                        Fats[f] = NULL;
+                                                        delete (SDpvt_t *)sto[f]->private_data;
+                                                        sto[f]->private_data = NULL;
+                                                }
+                                        }
+                                }
+                        }
+                }
+        }
+        return;
+
+}
+
+#endif
 // YOUR DRIVERS HERE
-
 
 extern "C" {
         // Allow init to happen only once in the case of multiple external inits.
+
         static bool Init_Generic_Storage_inited = false;
 
         /**
          * This must be called before using generic_storage. Calling more than once is harmless.
          */
-        void Init_Generic_Storage(void *hd) {
+        void Init_Generic_Storage(
+#ifdef __UHS_BULK_STORAGE_H__
+                void *hd
+#endif
+#ifdef UHS_USE_SDCARD
+#ifdef __UHS_BULK_STORAGE_H__
+                ,
+#endif
+                int _pr[], int _cs[]
+#endif
+                ) {
                 if(!Init_Generic_Storage_inited) {
                         Init_Generic_Storage_inited = true;
 #ifdef __UHS_BULK_STORAGE_H__
@@ -230,7 +742,6 @@ extern "C" {
 
 #endif
 
-                        // YOUR INIT HERE
 
                         for(int i = 0; i < _FS_LOCK; i++) {
                                 fhandles[i] = new FIL;
@@ -238,18 +749,37 @@ extern "C" {
                                 fhandles[i]->fs = NULL;
                                 dhandles[i]->fs = NULL;
                         }
-
+#ifdef __UHS_BULK_STORAGE_H
                         for(int i = 0; i < MAX_USB_MS_DRIVERS; i++) {
                                 for(int j = 0; j < MASS_MAX_SUPPORTED_LUN; j++) {
                                         last_ready[i][j] = false;
                                 }
                         }
-
+#endif
                         for(int i = 0; i < PFAT_VOLUMES; i++) {
                                 sto[i] = new storage_t;
                                 sto[i]->private_data = NULL;
                                 Fats[i] = NULL;
                         }
+#ifdef UHS_USE_SDCARD
+                        SPI.begin();
+                        uint8_t intr;
+                        // Enumerate SDcards
+                        for(int i = 0; i < UHS_MAX_SD_CARDS; i++) {
+                                intr = digitalPinToInterrupt(_pr[i]);
+                                SD_last_ready[i] = false;
+                                // attach SDcard
+                                UHS_SD_Storage[i] = new UHS_FS_SD_DRIVER(_pr[i], _cs[i], i);
+                                //printf("usingInterrupt... pin %d, %d\r\n",_pr[i], intr);
+                                //delay(1000);
+                                SPI.usingInterrupt(intr);
+                                //printf("usingInterrupt OK\r\n");
+                                //delay(1000);
+                                UHS_SD_Storage[i]->IRQ(); // Initial SDcard Probe.
+                                attachInterrupt(intr, UHS_FS_SD_ISR[i], CHANGE);
+                        }
+#endif
+                // YOUR INIT HERE
                 }
         }
 
@@ -263,6 +793,7 @@ extern "C" {
                         strcpy(lbl, (char *)(Fats[vol]->label));
                 }
                 fs_err = rc;
+
                 return lbl;
         }
 
@@ -279,6 +810,7 @@ extern "C" {
                 const char *pathtrunc = path;
                 char *s = fs_mount_lbl(vol);
                 if(s != NULL) {
+
                         pathtrunc += strlen(s);
                         free(s);
                 }
@@ -302,6 +834,7 @@ extern "C" {
                                 if(!strcasecmp((char *)Fats[x]->label, path)) {
                                         fs_err = FR_OK;
                                         vol = Fats[x]->volmap; // should be equal to x
+
                                         break;
                                 }
                         }
@@ -342,6 +875,7 @@ extern "C" {
                         // Could be a sub-dir in the path, so try just the root.
                         if(vol == PFAT_VOLUMES) {
                                 // root of "/"
+
                                 vol = fs_ready("/");
                         }
                         free(fname);
@@ -366,6 +900,7 @@ extern "C" {
                 *ptr = 0;
                 strcat(FATpath, path);
                 const char *rv = FATpath;
+
                 return rv;
         }
 
@@ -397,6 +932,7 @@ extern "C" {
                         rc = f_opendir(dhandles[i], (TCHAR *)ptr);
                         free((void *)ptr);
                         if(rc != FR_OK) {
+
                                 dhandles[i]->fs = NULL;
                                 fd = 0;
                                 fs_err = FR_NO_PATH;
@@ -456,6 +992,7 @@ extern "C" {
                         }
                 }
                 fs_err = rc;
+
                 return fd;
         }
 
@@ -474,6 +1011,7 @@ extern "C" {
                         fhandles[fd]->fs = NULL;
                 } else rc = FR_INVALID_PARAMETER;
                 fs_err = rc;
+
                 return rc;
         }
 
@@ -492,6 +1030,7 @@ extern "C" {
                         rv = FR_INVALID_PARAMETER;
                 }
                 fs_err = rv;
+
                 return rv;
         }
 
@@ -521,6 +1060,7 @@ extern "C" {
                                         data->lfname[0] = 0x00;
 #if _USE_LFN
                                         if(finfo.lfsize) {
+
                                                 strcat((char *)data->lfname, (char *)finfo.lfname);
                                         }
 #endif
@@ -550,6 +1090,7 @@ extern "C" {
                 }
                 rc = FR_OK;
                 fs_err = rc;
+
                 return rc;
         }
 
@@ -568,6 +1109,7 @@ extern "C" {
                         f_sync(fhandles[fd]);
                 }
                 fs_err = rc;
+
                 return rc;
         }
 
@@ -585,6 +1127,7 @@ extern "C" {
                         rc = f_eof(fhandles[fd]);
                 }
                 fs_err = rc;
+
                 return rc;
         }
 
@@ -649,6 +1192,7 @@ extern "C" {
                         rc = f_clseek(fhandles[fd], offset, whence);
                 }
                 fs_err = rc;
+
                 return rc;
         }
 
@@ -690,12 +1234,12 @@ extern "C" {
          */
         int AJK_NI fs_write(uint8_t fd, const void *data, uint16_t amount) {
                 uint8_t rc;
+                UINT bc;
                 int count = 0;
                 fd--;
 
                 rc = FR_INVALID_PARAMETER;
                 if((fd < PFAT_VOLUMES) && (fhandles[fd]->fs != NULL)) {
-                        UINT bc;
                         rc = f_write(fhandles[fd], data, amount, &bc);
                         count = bc;
                         if(rc) {
@@ -703,7 +1247,6 @@ extern "C" {
                         }
                 }
                 fs_err = rc;
-
 
                 return count;
         }
@@ -754,6 +1297,7 @@ extern "C" {
                         free((void *)name);
                 }
                 fs_err = rc;
+
                 return rc;
         }
 
@@ -775,6 +1319,7 @@ extern "C" {
                         const char *name = _fs_util_FATpath(pathtrunc, vol);
                         rc = f_mkdir((TCHAR *)name);
                         if((rc == FR_OK) && mode) {
+
                                 rc = f_chmod((TCHAR *)name, mode, AM_RDO | AM_ARC | AM_SYS | AM_HID);
                         }
                         free((void *)name);
@@ -804,6 +1349,7 @@ extern "C" {
                         free((void *)name);
                 }
                 fs_err = rc;
+
                 return rc;
 
         }
@@ -827,6 +1373,7 @@ extern "C" {
                         free((void *)name);
                 }
                 fs_err = rc;
+
                 return rc;
         }
 
@@ -852,6 +1399,7 @@ extern "C" {
                         free((void *)oldname);
                 }
                 fs_err = rc;
+
                 return rc;
         }
 
@@ -867,7 +1415,7 @@ extern "C" {
                 uint64_t rv = 0llu;
                 if(vol != PFAT_VOLUMES) {
                         FATFS *fs;
-                        uint32_t tv;
+                        uint32_t tv = 0;
                         const char *name = _fs_util_FATpath("", vol);
                         rc = f_getfree((TCHAR *)name, &tv, &fs);
                         free((void *)name);
@@ -877,6 +1425,7 @@ extern "C" {
                         if(rc) rv = 0llu;
                 }
                 fs_err = rc;
+
                 return (uint64_t)rv;
         }
 
@@ -886,6 +1435,7 @@ extern "C" {
                 fs_err = FR_OK;
                 for(uint8_t x = 0; x < PFAT_VOLUMES; x++) {
                         if(Fats[x]) {
+
                                 message++;
                         }
                 }

@@ -1,26 +1,27 @@
-/*
- * (CopyLeft) 2013 Andrew J. Kroll
- *
- * This Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this Library.  If not, see
- * <http://www.gnu.org/licenses/>.
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+   and
+Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
+
+This software may be distributed and modified under the terms of the GNU
+General Public License version 2 (GPL2) as published by the Free Software
+Foundation and appearing in the file GPL2.TXT included in the packaging of
+this file. Please note that GPL2 Section 2[b] requires that all works based
+on this software must also be made publicly available under the terms of
+the GPL2 ("Copyleft").
+
+Contact information
+-------------------
+
+Circuits At Home, LTD
+Web      :  http://www.circuitsathome.com
+e-mail   :  support@circuitsathome.com
  */
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <PCpartition/PCPartition.h>
+#include "PCPartition.h"
 #include <FAT/FatFS/src/ffconf.h>
 
 PCPartition::PCPartition() {
@@ -54,7 +55,7 @@ int PCPartition::Start(storage_t *sto) {
                                 if (!st && buf[0x52] == 0x46 && buf[0x53] == 0x41 && buf[0x54] == 0x54) st = -1;
                                 if (!st) {
                                         for (int i = 0; i < 4; i++) {
-                                                part[i] = MBR->part[i]; // Wow! This acts like memcpy?!
+                                                part[i] = MBR->part[i];
                                                 if (part[i].type != 0x00) {
                                                         if (part[i].boot != 0x80 && part[i].boot != 0x00) st = -1;
                                                 }

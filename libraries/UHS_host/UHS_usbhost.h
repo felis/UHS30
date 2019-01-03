@@ -1,4 +1,6 @@
-/* Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+   and
+Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
 This software may be distributed and modified under the terms of the GNU
 General Public License version 2 (GPL2) as published by the Free Software
@@ -21,45 +23,23 @@ e-mail   :  support@circuitsathome.com
 #if !defined(_USBHOST_H_)
 #define _USBHOST_H_
 
-// Host SIE result codes.
-// The SIE result is stored in the low nybble.
-// Return these result codes from your host controller driver to match the error condition
-// ALL Non-zero values are errors that are not handled in the base class.
-// Values > 0x0F are driver or other internal error conditions.
-#define UHS_HOST_ERROR_NONE      0x00 // No error
-#define UHS_HOST_ERROR_BUSY      0x01 // transfer pending
-#define UHS_HOST_ERROR_NAK       0x04 // Peripheral returned NAK
-#define UHS_HOST_ERROR_STALL     0x05 // Peripheral returned STALL
-#define UHS_HOST_ERROR_TOGERR    0x06 // Toggle error/ISO over-underrun
-#define UHS_HOST_ERROR_JERR      0x0D // J-state instead of response
-#define UHS_HOST_ERROR_BADRQ     0x0A // Packet error. Increase max packet.
-#define UHS_HOST_ERROR_TIMEOUT   0x0E // Device did not respond in time
+// Very early prototypes
+#if defined(UHS_LOAD_BT)
+void UHS_BT_SetUSBInterface(UHS_USB_HOST_BASE *host, ENUMERATION_INFO *ei);
+void UHS_BT_ScanUninitialized(UHS_USB_HOST_BASE *host);
+void UHS_BT_Poll(UHS_USB_HOST_BASE *host);
+#endif
+#if defined(UHS_LOAD_HID)
+void UHS_HID_SetUSBInterface(UHS_USB_HOST_BASE *host, ENUMERATION_INFO *ei);
+void UHS_HID_ScanUninitialized(UHS_USB_HOST_BASE *host);
+void UHS_HID_Poll(UHS_USB_HOST_BASE *host);
+#endif
 
-// Addressing error codes
-#define ADDR_ERROR_INVALID_INDEX                        0xA0
-#define ADDR_ERROR_INVALID_ADDRESS                      0xA1
-
-// Driver error codes
-#define UHS_HOST_ERROR_DEVICE_NOT_SUPPORTED             0xD1
-#define UHS_HOST_ERROR_DEVICE_INIT_INCOMPLETE           0xD2
-#define UHS_HOST_ERROR_CANT_REGISTER_DEVICE_CLASS       0xD3
-#define UHS_HOST_ERROR_ADDRESS_POOL_FULL                0xD4
-#define UHS_HOST_ERROR_HUB_ADDRESS_OVERFLOW             0xD5
-#define UHS_HOST_ERROR_NO_ADDRESS_IN_POOL               0xD6
-#define UHS_HOST_ERROR_NULL_EPINFO                      0xD7
-#define UHS_HOST_ERROR_BAD_ARGUMENT                     0xD8
-#define UHS_HOST_ERROR_DEVICE_DRIVER_BUSY               0xD9
-#define UHS_HOST_ERROR_BAD_MAX_PACKET_SIZE              0xDA
-#define UHS_HOST_ERROR_NO_ENDPOINT_IN_TABLE             0xDB
-#define UHS_HOST_ERROR_UNPLUGGED                        0xDE
-#define UHS_HOST_ERROR_FailGetDevDescr                  0xE1
-#define UHS_HOST_ERROR_FailSetDevTblEntry               0xE2
-#define UHS_HOST_ERROR_FailGetConfDescr                 0xE3
-#define UHS_HOST_ERROR_END_OF_STREAM                    0xEF
-
-// Host base class specific Error codes
-#define UHS_HOST_ERROR_NOT_IMPLEMENTED                  0xFE
-#define UHS_HOST_ERROR_TRANSFER_TIMEOUT                 0xFF
+//#if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
+//void UHS_CDC_ACM_SetUSBInterface(UHS_USB_HOST_BASE *host, ENUMERATION_INFO *ei);
+//void UHS_CDC_ACM_ScanUninitialized(UHS_USB_HOST_BASE *host);
+//void UHS_CDC_ACM_Poll(UHS_USB_HOST_BASE *host);
+//#endif
 
 class UHS_USBInterface; // forward class declaration
 
@@ -83,7 +63,7 @@ public:
         volatile uint8_t hub_present;
 
         UHS_USB_HOST_BASE(void) {
-                for(int i = 0; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
+                for(uint16_t i = 0; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
                         devConfig[i] = NULL;
                 }
                 usb_task_polling_disabled = 0;
@@ -116,37 +96,37 @@ public:
                 return (current_state == usb_task_state);
         };
 
-        virtual UHS_EpInfo * UHS_NI ctrlReqOpen(uint8_t addr, uint8_t bmReqType, uint8_t bRequest, uint8_t wValLo, uint8_t wValHi, uint16_t wInd, uint16_t total, uint8_t* dataptr) {
+        virtual UHS_EpInfo * UHS_NI ctrlReqOpen(NOTUSED(uint8_t addr), NOTUSED(uint64_t Request), NOTUSED(uint8_t* dataptr)) {
                 return NULL;
         };
 
-        virtual void UHS_NI vbusPower(VBUS_t state) {
+        virtual void UHS_NI vbusPower(NOTUSED(VBUS_t state)) {
         };
 
         virtual void UHS_NI Task(void) {
         };
 
-        virtual uint8_t UHS_NI SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t &nak_limit) {
+        virtual uint8_t UHS_NI SetAddress(NOTUSED(uint8_t addr), NOTUSED(uint8_t ep), NOTUSED(UHS_EpInfo **ppep), NOTUSED(uint16_t &nak_limit)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual uint8_t UHS_NI OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data) {
+        virtual uint8_t UHS_NI OutTransfer(NOTUSED(UHS_EpInfo *pep), NOTUSED(uint16_t nak_limit), NOTUSED(uint16_t nbytes), NOTUSED(uint8_t *data)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual uint8_t UHS_NI InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data) {
+        virtual uint8_t UHS_NI InTransfer(NOTUSED(UHS_EpInfo *pep), NOTUSED(uint16_t nak_limit), NOTUSED(uint16_t *nbytesptr), NOTUSED(uint8_t *data)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual uint8_t UHS_NI ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr) {
+        virtual uint8_t UHS_NI ctrlReqClose(NOTUSED(UHS_EpInfo *pep), NOTUSED(uint8_t bmReqType), NOTUSED(uint16_t left), NOTUSED(uint16_t nbytes), NOTUSED(uint8_t *dataptr)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual uint8_t UHS_NI ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t *dataptr) {
+        virtual uint8_t UHS_NI ctrlReqRead(NOTUSED(UHS_EpInfo *pep), NOTUSED(uint16_t *left), NOTUSED(uint16_t *read), NOTUSED(uint16_t nbytes), NOTUSED(uint8_t *dataptr)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual uint8_t UHS_NI dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit) {
+        virtual uint8_t UHS_NI dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uint8_t ep), NOTUSED(uint16_t nak_limit)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
@@ -157,12 +137,22 @@ public:
         virtual void UHS_NI doHostReset(void) {
         };
 
-        virtual int16_t UHS_NI Init(int16_t mseconds) {
+        virtual int16_t UHS_NI Init(NOTUSED(int16_t mseconds)) {
                 return -1;
         };
 
         virtual int16_t UHS_NI Init(void) {
                 return Init(INT16_MIN);
+        };
+
+        virtual uint8_t hwlPowerUp(void) {
+                /* This is for machine specific support to enable/power up the USB HW to operate*/
+                return UHS_HOST_ERROR_NOT_IMPLEMENTED;
+        };
+
+        virtual uint8_t hwPowerDown(void) {
+                /* This is for machine specific support to disable/powerdown the USB Hw */
+                return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
         virtual bool IsHub(uint8_t klass) {
@@ -175,31 +165,39 @@ public:
         //
         /////////////////////////////////////////////
 
+        inline void Poll_Others(void) {
+#if defined(UHS_LOAD_BT)
+                UHS_BT_Poll(this);
+#endif
+#if defined(UHS_LOAD_HID)
+                UHS_HID_Poll(this);
+#endif
+                //#if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
+                //                UHS_CDC_ACM_Poll(this);
+                //#endif
+        }
+
         inline void DisablePoll(void) {
                 noInterrupts();
                 usb_task_polling_disabled++;
-#ifdef SWI_IRQ_NUM
-                __DSB();
-#endif
+                DDSB();
                 interrupts();
         }
 
         inline void EnablePoll(void) {
                 noInterrupts();
                 usb_task_polling_disabled--;
-#ifdef SWI_IRQ_NUM
-                __DSB();
-#endif
+                DDSB();
                 interrupts();
         }
 
         uint8_t UHS_NI seekInterface(ENUMERATION_INFO *ei, uint16_t inf, USB_CONFIGURATION_DESCRIPTOR *ucd);
 
-        uint8_t UHS_NI setEpInfoEntry(uint8_t addr, uint8_t epcount, volatile UHS_EpInfo* eprecord_ptr);
+        uint8_t UHS_NI setEpInfoEntry(uint8_t addr, uint8_t iface, uint8_t epcount, volatile UHS_EpInfo* eprecord_ptr);
 
         uint8_t UHS_NI EPClearHalt(uint8_t addr, uint8_t ep);
 
-        uint8_t UHS_NI ctrlReq(uint8_t addr, uint8_t bmReqType, uint8_t bRequest, uint8_t wValLo, uint8_t wValHi, uint16_t wInd, uint16_t total, uint16_t nbytes, uint8_t* dataptr);
+        uint8_t UHS_NI ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbytes, uint8_t* dataptr);
 
         uint8_t UHS_NI getDevDescr(uint8_t addr, uint16_t nbytes, uint8_t* dataptr);
 
@@ -211,11 +209,9 @@ public:
 
         uint8_t UHS_NI getStrDescr(uint8_t addr, uint16_t nbytes, uint8_t index, uint16_t langid, uint8_t* dataptr);
 
-        // uint8_t UHS_NI DefaultAddressing(uint8_t parent, uint8_t port, bool lowspeed);
-
         void UHS_NI ReleaseDevice(uint8_t addr);
 
-        uint8_t UHS_NI Configuring(uint8_t parent, uint8_t port, bool lowspeed);
+        uint8_t UHS_NI Configuring(uint8_t parent, uint8_t port, uint8_t speed);
 
         void UHS_NI DeviceDefaults(uint8_t maxep, UHS_USBInterface *device);
 
@@ -254,17 +250,18 @@ public:
         uint8_t inTransfer(uint8_t addr, uint8_t ep, uint16_t *nbytesptr, uint8_t* data);
         uint8_t doSoftReset(uint8_t parent, uint8_t port, uint8_t address);
         uint8_t getone(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint8_t *dataptr, uint8_t *offset);
-        uint8_t eat(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint8_t *dataptr, uint8_t *offset, uint16_t *eat);
+        uint8_t eat(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint8_t *dataptr, uint8_t *offset, uint16_t *yum);
 
 };
 
 // All device interface drivers use this subclass
+
 class UHS_USBInterface {
 public:
 
         UHS_USB_HOST_BASE *pUsb; // Parent USB host
         volatile uint8_t bNumEP; // total number of EP in this interface
-        volatile UHS_EpInfo epInfo[16]; // This is a stub, override in the driver header.
+        volatile UHS_EpInfo epInfo[16]; // This is a stub, override in the driver.
 
         volatile uint8_t bAddress; // address of the device
         volatile uint8_t bConfNum; // configuration number
@@ -273,29 +270,35 @@ public:
         volatile uint32_t qNextPollTime; // next poll time
 
         /**
-         * Resets interface driver to unused state
+         * Resets interface driver to unused state. You should override this in
+         * your driver if it requires extra class variable cleanup.
          */
         virtual void DriverDefaults(void) {
+                printf("Default driver defaults.\r\n");
                 pUsb->DeviceDefaults(bNumEP, this);
         };
 
         /**
          * Checks if this interface is supported.
+         * Executed called when new devices are connected.
          *
          * @param ei
          * @return true if the interface is supported
          */
-        virtual bool OKtoEnumerate(ENUMERATION_INFO *ei) {
+        virtual bool OKtoEnumerate(NOTUSED(ENUMERATION_INFO *ei)) {
                 return false;
         };
 
         /**
          * Configures any needed endpoint information for an interface.
+         * You must provide this in your driver.
+         * Executed when new devices are connected and OKtoEnumerate()
+         * returned true.
          *
          * @param ei
          * @return zero on success
          */
-        virtual uint8_t SetInterface(ENUMERATION_INFO *ei) {
+        virtual uint8_t SetInterface(NOTUSED(ENUMERATION_INFO *ei)) {
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
@@ -338,15 +341,19 @@ public:
         };
 
         /**
-         * Release resources when device is disconnected
+         * Release resources when device is disconnected.
+         * Normally this does not need to be overridden.
          */
         virtual void Release(void) {
                 OnRelease();
                 DriverDefaults();
+                return;
         };
 
         /**
-         * Executed when there is an important change detected during polling.
+         * Executed After driver polls.
+         * Can be used when there is an important change detected during polling
+         * and you want to handle it elsewhere.
          * Examples:
          * Media status change for bulk, e.g. ready, not-ready, media changed, door opened.
          * Button state/joystick position/etc changes on a HID device.
@@ -357,20 +364,28 @@ public:
         };
 
         /**
-         * Poll interface driver
+         * Poll interface driver. You should override this in your driver if you
+         * require polling faster or slower than every 100 milliseconds, or your
+         * driver requires special housekeeping.
          */
         virtual void Poll() {
                 OnPoll();
+                qNextPollTime = millis() + 100;
         };
+
+        virtual bool UHS_NI Polling(void) {
+                return bPollEnable;
+        }
 
         /**
          * This is only for a hub.
          * @param port
          */
-        virtual void ResetHubPort(uint8_t port) {
+        virtual void ResetHubPort(NOTUSED(uint8_t port)) {
                 return;
         };
 
+#if 0
         /**
          *
          * @return true if this interface is Vendor Specific.
@@ -378,8 +393,10 @@ public:
         virtual bool IsVSI() {
                 return false;
         }
+#endif
 };
 
+#if 0
 /**
  *
  * Vendor Specific interface class.
@@ -389,9 +406,12 @@ public:
  * You can also add an instance of this class within the interface constructor
  * if you expect the interface.
  *
+ * If this is not needed, it may be removed. Nothing I have written needs this.
+ * Let me know if it is not required, then IsVSI method can also be shit-canned.
+ * -- AJK
  */
 
-class UHS_VSI: public UHS_USBInterface {
+class UHS_VSI : public UHS_USBInterface {
 public:
         volatile UHS_EpInfo epInfo[1];
         volatile ENUMERATION_INFO eInfo;
@@ -410,6 +430,7 @@ public:
         }
 
 };
+#endif
 
 #endif //_USBHOST_H_
 #endif

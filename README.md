@@ -3,14 +3,37 @@ Pre-release of USB Host Library version 3.0. No technical support offered at thi
 
 __This set of libraries is EXTERMELY ALPHA!__
 
-# Arduino version 1.6.1 OR BETTER ONLY!
+# Arduino version 1.6.9 OR BETTER ONLY! DO NOT USE 1.6.10, it is broken!
 * This library set does all USB host operations in an interrupt. This means that calling the Task() method no longer does anything, unless you disable the interrupt mode in your sketch.
-* This library set provides interrupt safe heap for AVR and ARM based boards.<BR>
+* This library set provides interrupt safe heap for AVR, ARM, and PIC32 based boards.<BR>
 * Circuitsathome USB Host Shield support (of course!)
 * Freescale Kinetis native full-speed host support!
-    * NOTE! To use the Teensy 3.0/3.1/LC in host mode, select "No USB" from the tools menu for USB Type.
+    * NOTE! To use the Teensy 3.0/3.1/3.2/3.4/3.5 and LC in host mode, select "No USB" from the tools menu for USB Type.
+* SDcard on SPI due to popular demand!
 
-## AVR Arduino hardware instructions
+# Current working USB interface drivers
+* HID RAW
+* MIDI
+* Hub
+* Mass storage
+* CDC-ACM serial
+* XR21B1411 serial
+* PROLIFIC serial
+* FTDI serial
+
+# USB interface drivers works in-progress
+* HID-BOOT-MOUSE
+* HID-BOOT-KEYBOARD
+
+## AVR MEGA ADK
+No special modifications are required!
+### Thank you Olayinka Babalola for donating an Arduino Mega ADK board. It would not have been possible without your support!
+
+## AVR Arduino 
+### Software tools
+Arduino AVR boards by Arduino 1.6.11.
+Newer versions are broken.
+### hardware instructions
 On AVR based Arduino boards and clones, you must do one of the following:
 
 Connect pin 9 to pin 3 with a jumper wire.
@@ -23,9 +46,43 @@ OR
 
 Cut the INT solder bridge. Install right angle headers and use a female jumper wire.
 
-## NON-AVR Arduino hardware instructions
+## ARM Arduino hardware instructions
 No special modifications are required!
 ARM boards have interrupt capabilities on nearly every pin.
 
+## PIC32
+UNO32, uC32, WF32, Wi-Fire
+
+Please note that the UNO32 really lacks enough flash to be very useful. Some demos will be too big to fit into flash.
+
+Digilent messed up on the ICSP connector. You need to modify your shield. Pull the 2x3 header plastic cover, and break off pin recepticle contacts for pins 2 and 5. Run a patch wire from +5V to pin 2. Run a patch wire from RESET to pin 5. Put plastic cover back on. Don't worry, the board will still work on all other development boards. Detailed photos are in the images directory. Alternatly, modify the Digilent board. More recent boards have an option jumper which you could use to do this fix as well, however you still need to patch 5v onto pin 2. 
+
+Then you must do one of the following:
+
+Connect pin 9 to pin 7 with a jumper wire.
+
+OR
+
+Cut the INT solder bridge. Connect from the INT thru-hole to pin 7 thru-hole with a jumper wire.
+
+OR
+
+Cut the INT solder bridge. Install right angle headers and use a female jumper wire.
+
+
 ### Installation
-Copy each of the directories in the libraries directory into your USER LIBARIES directories. DO NOT copy these to your system-wide installation. (you should never do that anyway!)
+Clone the repository:
+
+```
+With a github account:
+git clone --recursive git@github.com:felis/UHS30.git
+or
+Without a github account:
+git clone --recursive https://github.com/felis/UHS30.git
+```
+
+Then
+
+Copy each of the directories in the libraries directory into your USER LIBRARIES directory. DO NOT copy these to your system-wide installation. (you should never do that anyway!)
+
+If you want to do development, see the wiki. https://github.com/felis/UHS30/wiki

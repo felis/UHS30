@@ -1,4 +1,6 @@
-/* Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+   and
+Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
 This software may be distributed and modified under the terms of the GNU
 General Public License version 2 (GPL2) as published by the Free Software
@@ -66,16 +68,19 @@ void PrintHex2(Print *prn, T val) {
         prn->print((T)val, HEX);
 }
 
-template <class T> void D_PrintHex(T val, int lvl) {
 #ifdef DEBUG_USB_HOST
+template <class T> void D_PrintHex(T val, int lvl) {
         PrintHex<T > (val, lvl);
+#else
+template <class T> void D_PrintHex(NOTUSED(T val), NOTUSED(int lvl)) {
 #endif
 }
 
-template <class T>
-void D_PrintBin(T val, int lvl) {
 #ifdef DEBUG_USB_HOST
+template <class T> void D_PrintBin(T val, int lvl) {
         PrintBin<T > (val, lvl);
+#else
+template <class T> void D_PrintBin(NOTUSED(T val), NOTUSED(int lvl)) {
 #endif
 }
 

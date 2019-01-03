@@ -4,7 +4,7 @@
 /*------------------------------------------------------------------------*/
 
 
-#include <FAT/FatFS/src/ff.h>
+#include "../ff.h"
 
 #ifdef __cplusplus
 extern "C" {

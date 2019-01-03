@@ -1,4 +1,6 @@
-/* Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+   and
+Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
 This software may be distributed and modified under the terms of the GNU
 General Public License version 2 (GPL2) as published by the Free Software
@@ -39,8 +41,6 @@ e-mail   :  support@circuitsathome.com
 //                              | Other modules depend  |
 //                              | on this setting.      |
 // -----------------------------+-----------------------+-----------------------
-// USE_UHS_MEGA_ADK             | 0 = no, 1 = yes       | 0
-// -----------------------------+-----------------------+-----------------------
 // USE_UHS_BLACK_WIDDOW         | 0 = no, 1 = yes       | 0
 // -----------------------------+-----------------------+-----------------------
 // ENABLE_WII_IR_CAMERA         | 0 = no, 1 = yes       | 0
@@ -72,11 +72,6 @@ e-mail   :  support@circuitsathome.com
 ////////////////////////////////////////////////////////////////////////////////
 // Manual board activation
 ////////////////////////////////////////////////////////////////////////////////
-
-/* Set this to 1 if you are using an Arduino Mega ADK board with MAX3421e built-in */
-#ifndef USE_UHS_MEGA_ADK
-#define USE_UHS_MEGA_ADK 0 // If you are using Arduino 1.5.5 or newer there is no need to do this manually
-#endif
 
 /* Set this to 1 if you are using a Black Widdow */
 #ifndef USE_UHS_BLACK_WIDDOW
@@ -131,12 +126,6 @@ e-mail   :  support@circuitsathome.com
 #endif
 
 #define UHS_SLEEP_MS(v) pUsb->sof_delay(v)
-
-//#if defined(TEENSYDUINO) && defined(__arm__)
-//#define USING_SPI4TEENSY3 USE_SPI4TEENSY3
-//#else
-#define USING_SPI4TEENSY3 0
-//#endif
 
 #ifndef UHS_NI
 #define UHS_NI __attribute__((noinline))

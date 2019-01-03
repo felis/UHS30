@@ -1,0 +1,3 @@
+[submodule "RTClib"]
+	path = libraries/RTClib
+	url = https://github.com/xxxajk/RTClib.git

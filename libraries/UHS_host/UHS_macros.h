@@ -1,4 +1,6 @@
-/* Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+   and
+Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
 This software may be distributed and modified under the terms of the GNU
 General Public License version 2 (GPL2) as published by the Free Software
@@ -15,21 +17,27 @@ Web      :  http://www.circuitsathome.com
 e-mail   :  support@circuitsathome.com
  */
 
-#if !defined(_UHS_host_h_) || defined(MACROS_H)
-#error "Never include UHS_macros.h directly; include UHS_Usb.h instead"
-#else
+#if !defined(MACROS_H)
 #define MACROS_H
+#include "macro_logic.h"
 /*
  * Universal Arduino(tm) "IDE" fixups.
  */
+
+
+// Just in case...
+#ifndef SERIAL_PORT_MONITOR
+#define SERIAL_PORT_MONITOR Serial
+#endif
+
 #ifndef INT16_MIN
 #define INT16_MIN -32768
 #endif
-// WILL require 10600+ when ready
-#if defined(ARDUINO) && ARDUINO >=105
+// require 10607+
+#if defined(ARDUINO) && ARDUINO >=10607
 // nop :-)
 #else
-#error "Arduino version too old, and must be at least 1.0.5"
+#error "Arduino version too old, and must be at least 1.6.7"
 #endif
 
 // Nuke screwed up macro junk from the IDE.
@@ -43,6 +51,62 @@ e-mail   :  support@circuitsathome.com
 #endif
 
 
+#if !defined(UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE)
+
+#if !defined(UHS_BIG_FLASH)
+
+#if defined(FLASHEND) && defined(FLASHSTART)
+#if (FLASHEND - FLASHSTART) > 0x0FFFFU
+#define UHS_BIG_FLASH 1
+#else
+#define UHS_BIG_FLASH 0
+#endif
+
+#elif defined(__PIC32_FLASH_SIZE)
+#if __PIC32_FLASH_SIZE > 511
+#define UHS_BIG_FLASH 1
+#else
+#define UHS_BIG_FLASH 0
+#endif
+
+#elif defined(FLASHEND) && !defined(FLASHSTART)
+// Assumes flash starts at 0x00000, is this a safe assumption?
+// 192K + should be OK
+#if FLASHEND > 0x02FFFFU
+#define UHS_BIG_FLASH 1
+#else
+#define UHS_BIG_FLASH 0
+#endif
+
+#elif defined(IFLASH_SIZE)
+#if IFLASH_SIZE > 0x0FFFFU
+#define UHS_BIG_FLASH 1
+#else
+#define UHS_BIG_FLASH 0
+#endif
+
+#elif defined(ESP8266)
+#define UHS_BIG_FLASH 1
+
+#elif defined(__arm__) && defined(CORE_TEENSY)
+#define UHS_BIG_FLASH 1
+
+#elif defined(ARDUINO_spresense_ast)
+#define UHS_BIG_FLASH 1
+#else
+// safe default
+#warning Small flash?
+#define UHS_BIG_FLASH 0
+#endif
+#endif
+
+#if UHS_BIG_FLASH
+#define UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE 1
+#else
+#define UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE 0
+#endif
+#endif
+
 #if defined(__arm__) && defined(CORE_TEENSY)
 #define UHS_PIN_WRITE(p, v) digitalWriteFast(p, v)
 #define UHS_PIN_READ(p) digitalReadFast(p)
@@ -52,6 +116,21 @@ e-mail   :  support@circuitsathome.com
 //       For now, this will just work out-of-the-box.
 #define UHS_PIN_WRITE(p, v) digitalWrite(p, v)
 #define UHS_PIN_READ(p) digitalRead(p)
+#endif
+
+#if defined( __PIC32MX__ ) && !defined(interrupts) //compiling with Microchip XC32 compiler
+#define interrupts() __builtin_enable_interrupts()
+#edfine noInterrupts() __builtin_disable_interrupts()
+#endif
+
+#if !defined(ARDUINO_SAMD_ZERO)
+#if defined(ARDUINO_AVR_ADK)
+#define UHS_GET_DPI(x) (x == 54 ? 6 : digitalPinToInterrupt(x))
+#else
+#define UHS_GET_DPI(x) digitalPinToInterrupt(x)
+#endif
+#else
+#define UHS_GET_DPI(x) (x)
 #endif
 
 #ifndef __AVR__
@@ -76,35 +155,6 @@ e-mail   :  support@circuitsathome.com
 #ifndef _SFR_BYTE
 #define _SFR_BYTE(n) (n)
 #endif
-
-#ifndef prog_void
-typedef void prog_void;
-#endif
-#ifndef prog_char
-typedef char prog_char;
-#endif
-#ifndef prog_uchar
-typedef unsigned char prog_uchar;
-#endif
-#ifndef prog_int8_t
-typedef int8_t prog_int8_t;
-#endif
-#ifndef prog_uint8_t
-typedef uint8_t prog_uint8_t;
-#endif
-#ifndef prog_int16_t
-typedef int16_t prog_int16_t;
-#endif
-#ifndef prog_uint16_t
-typedef uint16_t prog_uint16_t;
-#endif
-#ifndef prog_int32_t
-typedef int32_t prog_int32_t;
-#endif
-#ifndef prog_uint32_t
-typedef uint32_t prog_uint32_t;
-#endif
-
 #ifndef memchr_P
 #define memchr_P(str, c, len) memchr((str), (c), (len))
 #endif
@@ -251,6 +301,17 @@ typedef uint32_t prog_uint32_t;
 // HANDY MACROS
 ////////////////////////////////////////////////////////////////////////////////
 
+// Atmoically set/clear single bits using bitbands.
+// Believe it or not, this boils down to a constant,
+// and is less code than using |= &= operators.
+// Bonus, it makes code easier to read too.
+// Bitbanding is a wonderful thing.
+#define BITNR(i) (i&0x1?0:i&0x2?1:i&0x4?2:i&0x8?3:i&0x10?4:i&0x20?5:i&0x40?6:i&0x80?7:i&0x100?8:i&0x200?9:i&0x400?10:i&0x800?11:i&0x1000?12:i&0x2000?13:i&0x4000?14:i&0x8000?15:i&0x10000?16:i&0x20000?17:i&0x40000?18:i&0x80000?19:i&0x100000?20:i&0x200000?21:i&0x400000?22:i&0x800000?23:i&0x1000000?24:i&0x2000000?25:i&0x4000000?26:i&0x8000000?27:i&0x10000000?28:i&0x20000000?29:i&0x40000000?30:i&0x80000000?31:32)
+#define UHS_KIO_BITBAND_ADDR(r, i) (((uint32_t)&(r) - 0x40000000) * 32 + (i) * 4 + 0x42000000)
+#define UHS_KIO_SETBIT_ATOMIC(r, m) (*(uint32_t *)UHS_KIO_BITBAND_ADDR((r), BITNR((m)))) = 1
+#define UHS_KIO_CLRBIT_ATOMIC(r, m) (*(uint32_t *)UHS_KIO_BITBAND_ADDR((r), BITNR((m)))) = 0
+
+
 #define VALUE_BETWEEN(v,l,h) (((v)>(l)) && ((v)<(h)))
 #define VALUE_WITHIN(v,l,h) (((v)>=(l)) && ((v)<=(h)))
 #define output_pgm_message(wa,fp,mp,el) wa = &mp, fp((char *)pgm_read_pointer(wa), el)
@@ -310,6 +371,8 @@ typedef uint32_t prog_uint32_t;
 #define USBTRACE2X(s,r) (USBTRACE3X((s),(r),0x80)); USB_HOST_SERIAL.flush()
 
 #define VOID0 ((void)0)
-
+#if !defined(NOTUSED)
+#define NOTUSED(...)  __VA_ARGS__ __attribute__((unused))
+#endif
 #endif /* MACROS_H */
 

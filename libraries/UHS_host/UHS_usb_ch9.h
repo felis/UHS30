@@ -1,4 +1,6 @@
-/* Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+   and
+Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
 This software may be distributed and modified under the terms of the GNU
 General Public License version 2 (GPL2) as published by the Free Software
@@ -87,8 +89,9 @@ e-mail   :  support@circuitsathome.com
 #define               USB_SETUP_RECIPIENT_OTHER 0x03    // Device Request bmRequestType recipient - other
 #define                USB_SETUP_RECIPIENT_PORT 0x04    // Wireless USB 1.0
 #define               USB_SETUP_RECIPIENT_RPIPE 0x05    // Wireless USB 1.0
-/* USB descriptors  */
 
+
+/* USB descriptors  */
 #define                   USB_DESCRIPTOR_DEVICE 0x01    // bDescriptorType for a Device Descriptor.
 #define            USB_DESCRIPTOR_CONFIGURATION 0x02    // bDescriptorType for a Configuration Descriptor.
 #define                   USB_DESCRIPTOR_STRING 0x03    // bDescriptorType for a String Descriptor.
@@ -109,8 +112,19 @@ e-mail   :  support@circuitsathome.com
 #define             USB_DESCRIPTOR_WIRE_ADAPTER 0x21
 #define                    USB_DESCRIPTOR_RPIPE 0x22
 #define         USB_DESCRIPTOR_CS_RADIO_CONTROL 0x23
+#define         USB_DESCRIPTOR_SS_ENDPOINT_COMP 0x30
 
 #define                      USB_HID_DESCRIPTOR 0x21
+
+
+// Conventional codes for class-specific descriptors. "Common Class" Spec (3.11)
+#define                USB_DESCRIPTOR_CS_DEVICE 0x21
+#define                USB_DESCRIPTOR_CS_CONFIG 0x22
+#define                USB_DESCRIPTOR_CS_STRING 0x23
+#define             USB_DESCRIPTOR_CS_INTERFACE 0x24
+#define              USB_DESCRIPTOR_CS_ENDPOINT 0x25
+
+
 
 /* USB Endpoint Transfer Types  */
 #define               USB_TRANSFER_TYPE_CONTROL 0x00    // Endpoint is a control endpoint.

@@ -1,5 +1,6 @@
-/*
- * (CopyLeft) 2013 Andrew J. Kroll
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+ *  and
+ * Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
  *
  * This Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +23,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <FAT/FAT.h>
-#include <UHS_FS.h>
+#include "FAT/FAT.h"
+#include "UHS_FS.h"
 #include "FatFS/src/diskio.h"
 
 #ifndef RTC_LOADED
@@ -117,7 +118,9 @@ DSTATUS PFAT::disk_initialize(void) {
 
 DSTATUS PFAT::disk_status(void) {
         bool rc = storage->Status(storage);
-        if(rc) return STA_OK;
+        if(rc) {
+                return STA_OK;
+        }
         return STA_PROTECT;
 }
 

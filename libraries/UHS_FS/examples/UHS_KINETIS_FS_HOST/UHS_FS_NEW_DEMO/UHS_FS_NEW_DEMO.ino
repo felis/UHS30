@@ -1,11 +1,25 @@
 //////////////////////////////////////
 // libraries that we will be using
 //////////////////////////////////////
-#define LOAD_USB_HOST_SYSTEM
+
+// inline library loading
+// Patch printf so we can use it.
+#define LOAD_UHS_PRINTF_HELPER
+// Load the Kinetis core
 #define LOAD_UHS_KINETIS_FS_HOST
+// Load the USB Host System core
+#define LOAD_USB_HOST_SYSTEM
+// Bulk Storage
 #define LOAD_UHS_BULK_STORAGE
+// RTC/clock
 #define LOAD_RTCLIB
+// USB hub
+#define LOAD_UHS_HUB
+// Filesystem
 #define LOAD_GENERIC_STORAGE
+
+// Redirect debugging and printf
+#define USB_HOST_SERIAL Serial1
 
 // Uncomment to debug
 //#define ENABLE_UHS_DEBUGGING 1
@@ -16,8 +30,6 @@
 // OPTIONS
 //////////////////////////////////////
 
-// Where to redirect debugging, also used for the program output
-#define USB_HOST_SERIAL Serial1
 
 #define TESTdsize 512
 #define TESTcycles (1048576/TESTdsize)
@@ -52,7 +64,9 @@
  *  1257 - Baltic (Windows)
  *  1258 - Vietnam (OEM, Windows)
  */
-#define _CODE_PAGE 437
+// default 3, 437
+//#define _USE_LFN 3
+//#define _CODE_PAGE 437
 
 // Set how many file and directory objects allowed opened at once.
 // Values from >= 1 are acceptable.
@@ -70,10 +84,8 @@
 // ...          |       ...             | ...
 // 1000         |       1000            | 1000
 // ...          |       ...             | ...
-#define	_FS_LOCK 1
-
-// Use long file names
-#define _USE_LFN 3
+// default 1
+//#define	_FS_LOCK 1
 
 
 //////////////////////////////////////
@@ -82,66 +94,25 @@
 
 // Arduino.h, if not already included
 #include <Arduino.h>
+#ifdef true
+#undef true
+#endif
+#ifdef false
+#undef false
+#endif
 
-// RTClib needs this
-#include <Wire.h>
 
 // Load the wanted libraries here
-#include <dyn_SWI.h> // provides a software interrupt fo use to run code as a light thread
 #include <RTClib.h> // Clock functions
 #include <UHS_host.h> // UHS USB HOST base classes
-#include <UHS_KINETIS_FS_HOST.h> // Kinetis hardware driver
-#include <UHS_HUB.h> // HUB interface driver
-#include <UHS_BULK_STORAGE.h> // Bulk storage interface driver
-#include <UHS_FS.h> // File system driver
 
-UHS_KINETIS_FS_HOST KINETIS_Usb;
-UHS_USBHub hub_KINETIS(&KINETIS_Usb);
+UHS_KINETIS_FS_HOST UHS_Usb;
+UHS_USBHub hub_1(&UHS_Usb);
 
 PFAT_DIRINFO *de;
 uint8_t *data;
 uint8_t mounted = PFAT_VOLUMES;
 uint8_t wasmounted = 0;
-
-#if defined(CORE_TEENSY)
-extern "C" {
-
-        int _write(int fd, const char *ptr, int len) {
-                int j;
-                for(j = 0; j < len; j++) {
-                        if(fd == 1)
-                                USB_HOST_SERIAL.write(*ptr++);
-                        else if(fd == 2)
-                                USB_HOST_SERIAL.write(*ptr++);
-                }
-                return len;
-        }
-
-        int _read(int fd, char *ptr, int len) {
-                if(len > 0 && fd == 0) {
-                        while(!USB_HOST_SERIAL.available());
-                        *ptr = USB_HOST_SERIAL.read();
-                        return 1;
-                }
-                return 0;
-        }
-
-#include <sys/stat.h>
-
-        int _fstat(int fd, struct stat *st) {
-                memset(st, 0, sizeof (*st));
-                st->st_mode = S_IFCHR;
-                st->st_blksize = 1024;
-                return 0;
-        }
-
-        int _isatty(int fd) {
-                return (fd < 3) ? 1 : 0;
-        }
-}
-
-// Else we are using CMSIS DAP
-#endif // TEENSY_CORE
 
 void show_dir(PFAT_DIRINFO *de) {
         int res;
@@ -211,15 +182,18 @@ void show_dir(PFAT_DIRINFO *de) {
 }
 
 void setup() {
+        // USB data switcher, PC -> device.
+        pinMode(5,OUTPUT),
+        digitalWriteFast(5, HIGH);
+
         de = (PFAT_DIRINFO *)malloc(sizeof (PFAT_DIRINFO));
         data = (uint8_t *)malloc(TESTdsize);
-        Serial1.begin(115200);
+        USB_HOST_SERIAL.begin(115200);
         printf("\r\n\r\nStart.");
-        Init_dyn_SWI();
         // Initialize generic storage. This must be done before USB starts.
-        Init_Generic_Storage(&KINETIS_Usb);
+        Init_Generic_Storage(&UHS_Usb);
         printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
-        while(KINETIS_Usb.Init(1000) != 0);
+        while(UHS_Usb.Init(1000) != 0);
         printf("\r\n\r\nUSB HOST READY.\r\n");
 }
 
@@ -227,12 +201,10 @@ uint8_t current_state = 128;
 uint8_t last_state = 255;
 
 void loop() {
-#if !USB_HOST_SHIELD_USE_ISR
-        KINETIS_Usb.Task();
-#endif
 
+// change to 1 to show usb task state
 #if 0
-        current_state = KINETIS_Usb.getUsbTaskState();
+        current_state = UHS_Usb.getUsbTaskState();
         if(current_state != last_state) {
                 last_state = current_state;
                 printf("USB HOST state %2.2x\r\n", current_state);

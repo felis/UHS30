@@ -8,10 +8,11 @@
 #ifndef DYN_SWI_H
 #define	DYN_SWI_H
 
-#if defined(__arm__)
 
-#include <Arduino.h>
-
+#if defined(__arm__) || defined(ARDUINO_ARCH_PIC32)
+#if defined(ARDUINO_ARCH_PIC32)
+#include <p32xxxx.h>
+#endif
 #ifdef __cplusplus
 
 #if defined(true)
@@ -24,8 +25,34 @@
 
 #endif
 
-#if !defined(NVIC_NUM_INTERRUPTS)
-
+#if defined(ARDUINO_spresense_ast)
+#define SWI_IRQ_NUM 666 // because this board is totally evil.
+#elif defined(ARDUINO_ARCH_PIC32)
+#ifndef SWI_IRQ_NUM
+#if defined(_DSPI0_IPL_ISR)
+#define SWI_IPL _DSPI0_IPL_ISR
+#define SWI_VECTOR _DSPI0_ERR_IRQ
+#define SWI_IRQ_NUM _DSPI0_ERR_IRQ
+#elif defined(_PMP_ERROR_IRQ)
+#define SWI_IRQ_NUM _PMP_ERROR_IRQ
+#define SWI_VECTOR _PMP_VECTOR
+#else
+#error SWI_IRQ_NUM and SWI_VECTOR need a definition
+#endif
+#ifdef __cplusplus
+extern "C"
+{
+        void
+#if defined(__PIC32MZXX__)
+                __attribute__((nomips16,at_vector(SWI_VECTOR),interrupt(SWI_IPL)))
+#else
+                __attribute__((interrupt(),nomips16))
+#endif
+                softISR(void);
+}
+#endif
+#endif
+#elif !defined(NVIC_NUM_INTERRUPTS)
 // Assume CMSIS
 #define __USE_CMSIS_VECTORS__
 #if defined(NUMBER_OF_INT_VECTORS)
@@ -51,11 +78,15 @@
 // HSMCI_IRQn Multimedia Card Interface (HSMCI)
 // EMAC_IRQn Ethernet MAC (EMAC)
 // EMAC is not broken out on the official DUE, but is on clones.
-// However it seems like a good default to me.
-#define SWI_IRQ_NUM EMAC_IRQn
+// SPI0_IRQn Serial Peripheral Interface (SPI0)
+// SPI0_IRQn seems to be the best choice, as long as nobody uses an ISR based master
+#define SWI_IRQ_NUM SPI0_IRQn
+#elif defined(ARDUINO_SAMD_ZERO)
+// Just use sercom4's unused IRQ vector.
+#define SWI_IRQ_NUM I2S_IRQn
+//#define SWI_IRQ_NUM SERCOM4_IRQn
 #endif
 #endif
-
 
 #ifndef SWI_IRQ_NUM
 #error SWI_IRQ_NUM not defined (CMSIS)
@@ -75,21 +106,23 @@
 #define SWI_IRQ_NUM 5
 #elif defined(__MKL26Z64__)
 #define SWI_IRQ_NUM 4
+#elif defined(__MK66FX1M0__)
+#define SWI_IRQ_NUM 30
+#elif defined(__MK64FX512__)
+#define SWI_IRQ_NUM 30
 #else
 #error Do not know how to relocate IRQ vectors for this pjrc product
 #endif
 #endif
-
-#else // Not CMSIS or PJRC CORE_TEENSY
-#error Do not know how to relocate IRQ vectors
 #endif
+#else // Not CMSIS or PJRC CORE_TEENSY or PIC32 or SPRESENSE
+#error Do not know how to relocate IRQ vectors or perform SWI
 #endif // SWI_IRQ_NUM
 
 
 #ifndef SWI_IRQ_NUM
 #error SWI_IRQ_NUM not defined
-#endif
-
+#else
 /**
  * Use this class to extend your class, in order to provide
  * a C++ context callable SWI.
@@ -108,6 +141,16 @@ extern int exec_SWI(const dyn_SWI* klass);
 
 #include "SWI_INLINE.h"
 
+// IMPORTANT! Define this so that you do NOT end up with a NULL stub!
+#define SWI_NO_STUB
+#endif /* SWI_IRQ_NUM */
 #endif /* __arm__ */
-#endif	/* DYN_SWI_H */
 
+// if no SWI for CPU (e.g. AVR) make a void stub.
+#ifndef SWI_NO_STUB
+#define Init_dyn_SWI() (void(0))
+#if !defined(DDSB)
+#define DDSB() (void(0))
+#endif
+#endif
+#endif	/* DYN_SWI_H */

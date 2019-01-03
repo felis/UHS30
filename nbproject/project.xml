@@ -14,7 +14,15 @@
             </sourceRootList>
             <confList>
                 <confElem>
-                    <name>Default</name>
+                    <name>AVR</name>
+                    <type>0</type>
+                </confElem>
+                <confElem>
+                    <name>Teensy-3.6</name>
+                    <type>0</type>
+                </confElem>
+                <confElem>
+                    <name>KE1xF512</name>
                     <type>0</type>
                 </confElem>
             </confList>
@@ -22,5 +30,19 @@
                 <project-formatting-style>false</project-formatting-style>
             </formatting>
         </data>
+        <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+            <word>Atmoically</word>
+            <word>Bitbanding</word>
+            <word>bitbands</word>
+            <word>dongle</word>
+            <word>dongles</word>
+            <word>isr</word>
+            <word>Kroll</word>
+            <word>lu</word>
+            <word>Mbps</word>
+            <word>printf</word>
+            <word>usb</word>
+            <word>Vbus</word>
+        </spellchecker-wordlist>
     </configuration>
 </project>

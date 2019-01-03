@@ -1,12 +1,24 @@
+// define the label of your filesystem. VOL_PATH must end in '/'
+// Example:
+// #define VOL_LABEL "/foo"
+// #define VOL_PATH "/foo/"
+
+#define VOL_LABEL "/"
+#define VOL_PATH "/"
+
 // inline library loading
+// Patch printf so we can use it.
+#define LOAD_UHS_PRINTF_HELPER
+// Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
+// Load USB Host Shield
 #define LOAD_USB_HOST_SHIELD
+// Bulk Storage
 #define LOAD_UHS_BULK_STORAGE
+// RTC/clock
 #define LOAD_RTCLIB
+// Filesystem
 #define LOAD_GENERIC_STORAGE
-//#define UHS_MAX3421E_SPD 4000000
-#define _USE_MAX3421E_HOST 1
-//#define USB_HOST_SHIELD_USE_ISR 0
 
 #include <Arduino.h>
 #ifdef true
@@ -15,10 +27,6 @@
 #ifdef false
 #undef false
 #endif
-
-#include <stdio.h>
-#include <Wire.h>
-#include <SPI.h>
 
 // This figures out how much of the demo we can use
 #ifdef __AVR__
@@ -67,6 +75,8 @@
 #define MAKE_BIG_DEMO 0
 #else
 #define MAKE_BIG_DEMO 1
+// Use USB hub
+#define LOAD_UHS_HUB
 #endif
 
 
@@ -77,32 +87,6 @@
 #endif
 
 #define TESTcycles (1048576/TESTdsize)
-
-
-#ifndef __AVR__
-#ifndef printf_P
-#define printf_P(...) printf(__VA_ARGS__)
-#endif
-#endif
-
-#ifndef USB_HOST_SHIELD_USE_ISR
-#if defined(__arm__) && defined(CORE_TEENSY)
-#include <dyn_SWI.h>
-#include <SWI_INLINE.h>
-#define USB_HOST_SHIELD_USE_ISR 1
-#endif
-#endif
-
-#ifndef USB_HOST_SHIELD_USE_ISR
-#if defined(__AVR__)
-#define USB_HOST_SHIELD_USE_ISR 1
-#else
-// Not yet working on Arduino ARM yet because of IRQ limitations.
-#define USB_HOST_SHIELD_USE_ISR 0
-#endif
-#endif
-
-#define _USE_FASTSEEK 0
 
 /* The _CODE_PAGE specifies the OEM code page to be used on the target system.
  * Incorrect setting of the code page can cause a file open failure.
@@ -134,8 +118,9 @@
  *  1257 - Baltic (Windows)
  *  1258 - Vietnam (OEM, Windows)
  */
-#define _USE_LFN 3
-#define _CODE_PAGE 437
+// default 3, 437
+//#define _USE_LFN 3
+//#define _CODE_PAGE 437
 
 // Set how many file and directory objects allowed opened at once.
 // Values from >= 1 are acceptable.
@@ -154,20 +139,17 @@
 // 1000         |       1000            | 1000
 // ...          |       ...             | ...
 
-#define	_FS_LOCK 1
+// default 1
+//#define	_FS_LOCK 1
 
 
 #include <RTClib.h>
 #include <UHS_host.h>
-#include <USB_HOST_SHIELD.h>
-#include <UHS_HUB.h>
-#include <UHS_BULK_STORAGE.h>
-#include <UHS_FS.h>
 
 
-MAX3421E_HOST MAX3421E_Usb;
+MAX3421E_HOST UHS_Usb;
 #if MAKE_BIG_DEMO
-UHS_USBHub hub_MAX3421E(&MAX3421E_Usb);
+UHS_USBHub hub_1(&UHS_Usb);
 PFAT_DIRINFO *de;
 uint8_t *data;
 #endif
@@ -175,76 +157,6 @@ uint8_t *data;
 uint8_t mounted = PFAT_VOLUMES;
 uint8_t wasmounted = 0;
 
-#if defined(__AVR__)
-extern "C" {
-
-        static FILE tty_stdio;
-        static FILE tty_stderr;
-
-        static int tty_stderr_putc(char c, FILE *t) {
-                USB_HOST_SERIAL.write(c);
-                return 0;
-        }
-
-        static int tty_stderr_flush(FILE *t) {
-                USB_HOST_SERIAL.flush();
-                return 0;
-        }
-
-        static int tty_std_putc(char c, FILE *t) {
-                Serial.write(c);
-                return 0;
-        }
-
-        static int tty_std_getc(FILE *t) {
-                while(!Serial.available());
-                return Serial.read();
-        }
-
-        static int tty_std_flush(FILE *t) {
-                Serial.flush();
-                return 0;
-        }
-}
-#else
-#if defined(CORE_TEENSY)
-extern "C" {
-
-        int _write(int fd, const char *ptr, int len) {
-                int j;
-                for(j = 0; j < len; j++) {
-                        if(fd == 1)
-                                Serial.write(*ptr++);
-                        else if(fd == 2)
-                                USB_HOST_SERIAL.write(*ptr++);
-                }
-                return len;
-        }
-
-        int _read(int fd, char *ptr, int len) {
-                if(len > 0 && fd == 0) {
-                        while(!Serial.available());
-                        *ptr = Serial.read();
-                        return 1;
-                }
-                return 0;
-        }
-
-#include <sys/stat.h>
-
-        int _fstat(int fd, struct stat *st) {
-                memset(st, 0, sizeof (*st));
-                st->st_mode = S_IFCHR;
-                st->st_blksize = 1024;
-                return 0;
-        }
-
-        int _isatty(int fd) {
-                return (fd < 3) ? 1 : 0;
-        }
-}
-#endif // TEENSY_CORE
-#endif // AVR
 
 #if MAKE_BIG_DEMO
 
@@ -253,9 +165,9 @@ void show_dir(PFAT_DIRINFO *de) {
         uint64_t fre;
         uint32_t numlo;
         uint32_t numhi;
-        int fd = fs_opendir("/");
+        int fd = fs_opendir(VOL_PATH);
         if(fd > 0) {
-                printf_P(PSTR("Directory of '/'\r\n"));
+                printf_P(PSTR("Directory of '" VOL_PATH "'\r\n"));
                 do {
                         res = fs_readdir(fd, de);
                         if(!res) {
@@ -302,13 +214,9 @@ void show_dir(PFAT_DIRINFO *de) {
                         }
 
                 } while(!res);
-                //printf("CLOSEDIR\r\n");
-                //fflush(stdout);
-                //delay(1000);
-
                 fs_closedir(fd);
 
-                fre = fs_getfree("/");
+                fre = fs_getfree(VOL_PATH);
                 numlo = fre % 100000000llu;
                 numhi = fre / 100000000llu;
 
@@ -328,35 +236,16 @@ void setup() {
         de = (PFAT_DIRINFO *)malloc(sizeof (PFAT_DIRINFO));
         data = (uint8_t *)malloc(TESTdsize);
 #endif
-        while(!Serial);
-        Serial.begin(115200);
+        while(!USB_HOST_SERIAL);
+        USB_HOST_SERIAL.begin(115200);
         delay(10000);
-        Serial.println("Start.");
-#if defined(SWI_IRQ_NUM)
-        Init_dyn_SWI();
-#endif
-#if defined(__AVR__)
-        // Set up stdio/stderr
-        tty_stdio.put = tty_std_putc;
-        tty_stdio.get = tty_std_getc;
-        tty_stdio.flags = _FDEV_SETUP_RW;
-        tty_stdio.udata = 0;
-
-        tty_stderr.put = tty_stderr_putc;
-        tty_stderr.get = NULL;
-        tty_stderr.flags = _FDEV_SETUP_WRITE;
-        tty_stderr.udata = 0;
-
-        stdout = &tty_stdio;
-        stdin = &tty_stdio;
-        stderr = &tty_stderr;
-#endif
+        USB_HOST_SERIAL.println("Start.");
         // Initialize generic storage. This must be done before USB starts.
-        Init_Generic_Storage(&MAX3421E_Usb);
+        Init_Generic_Storage(&UHS_Usb);
+        while(UHS_Usb.Init(1000) != 0);
 #if defined(SWI_IRQ_NUM)
         printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
 #endif
-        while(MAX3421E_Usb.Init(1000) != 0);
         printf("\r\n\r\nUSB HOST READY.\r\n");
 }
 
@@ -364,18 +253,16 @@ uint8_t current_state = 128;
 uint8_t last_state = 255;
 
 void loop() {
-#if !USB_HOST_SHIELD_USE_ISR
-        MAX3421E_Usb.Task();
-#endif
 
-#if 1
-        current_state = MAX3421E_Usb.getUsbTaskState();
+// change to 1 to show usb task state
+#if 0
+        current_state = UHS_Usb.getUsbTaskState();
         if(current_state != last_state) {
                 last_state = current_state;
                 printf("USB HOST state %2.2x\r\n", current_state);
         }
 #endif
-        mounted = fs_ready("/");
+        mounted = fs_ready(VOL_LABEL);
         if(mounted != wasmounted) {
                 wasmounted = mounted;
                 if(mounted != PFAT_VOLUMES) {
@@ -388,16 +275,16 @@ void loop() {
 #endif
                         int res;
                         int fd;
-                        printf_P(PSTR("/ mounted.\r\n"));
+                        printf_P(PSTR(VOL_LABEL " mounted.\r\n"));
 #if MAKE_BIG_DEMO
-                        fre = fs_getfree("/");
+                        fre = fs_getfree(VOL_PATH);
                         if(fre > 2097152) {
-                                printf_P(PSTR("Removing '/HeLlO.tXt' file... "));
+                                printf_P(PSTR("Removing '" VOL_PATH "HeLlO.tXt' file... "));
                                 fflush(stdout);
-                                res = fs_unlink("/hello.txt");
+                                res = fs_unlink( VOL_PATH "hello.txt");
                                 printf_P(PSTR("completed with %i\r\n"), res);
                                 printf_P(PSTR("\r\nStarting Write test...\r\n"));
-                                fd = fs_open("/HeLlO.tXt", O_WRONLY | O_CREAT);
+                                fd = fs_open( VOL_PATH "HeLlO.tXt", O_WRONLY | O_CREAT);
                                 if(fd > 0) {
                                         printf_P(PSTR("File opened OK, fd = %i\r\n"), fd);
                                         char hi[] = "]-[ello \\/\\/orld!\r\n";
@@ -410,7 +297,7 @@ void loop() {
                                         printf_P(PSTR("Error %d (%u)\r\n"), fd, fs_err);
                                 }
                                 printf_P(PSTR("\r\nStarting Read test...\r\n"));
-                                fd = fs_open("/hElLo.TxT", O_RDONLY);
+                                fd = fs_open( VOL_PATH "hElLo.TxT", O_RDONLY);
                                 if(fd > 0) {
                                         res = 1;
                                         printf_P(PSTR("File opened OK, fd = %i, displaying contents...\r\n"), fd);
@@ -428,22 +315,22 @@ void loop() {
                                         res = fs_close(fd);
                                         printf_P(PSTR("file close result = %i.\r\n"), res);
                                         printf_P(PSTR("Testing rename\r\n"));
-                                        fs_unlink("/newtest.txt");
-                                        res = fs_rename("/HeLlO.tXt", "/newtest.txt");
+                                        fs_unlink( VOL_PATH "newtest.txt");
+                                        res = fs_rename( VOL_PATH "HeLlO.tXt",  VOL_PATH "newtest.txt");
                                         printf_P(PSTR("file rename result = %i.\r\n"), res);
                                 } else {
                                         printf_P(PSTR("File not found.\r\n"));
                                 }
-                                printf_P(PSTR("\r\nRemoving '/1MB.bin' file... "));
+                                printf_P(PSTR("\r\nRemoving '" VOL_PATH "1MB.bin' file... "));
                                 fflush(stdout);
-                                res = fs_unlink("/1MB.bin");
+                                res = fs_unlink( VOL_PATH "1MB.bin");
                                 printf_P(PSTR("completed with %i\r\n"), res);
                                 //show_dir(de);
                                 printf_P(PSTR("1MB write timing test "));
                                 fflush(stdout);
 
                                 //for (int i = 0; i < 128; i++) data[i] = i & 0xff;
-                                fd = fs_open("/1MB.bin", O_WRONLY | O_CREAT);
+                                fd = fs_open( VOL_PATH "1MB.bin", O_WRONLY | O_CREAT);
                                 if(fd > 0) {
                                         int i = 0;
                                         delay(500);
@@ -469,7 +356,7 @@ void loop() {
                                 printf_P(PSTR("1MB read timing test "));
                                 fflush(stdout);
 
-                                fd = fs_open("/1MB.bin", O_RDONLY);
+                                fd = fs_open( VOL_PATH "1MB.bin", O_RDONLY);
                                 if(fd > 0) {
                                         delay(500);
                                         start = millis();
@@ -501,7 +388,7 @@ void loop() {
 #endif
 
                 } else {
-                        printf("No media. Waiting to mount /\r\n");
+                        printf("No media. Waiting to mount "  VOL_LABEL "\r\n");
                 }
         }
 }

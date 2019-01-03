@@ -46,6 +46,7 @@
 #define UHS_VID_PLANEX 0x0053U // Planex
 #define UHS_VID_DRAGONRISE 0x0079U // DragonRise Inc.
 #define UHS_VID_TRUST_INTERNATIONAL_BV 0x0105U // Trust International B.V.
+#define UHS_VID_IBP 0x0127U // IBP
 #define UHS_VID_UNKNOWN_1 0x0145U // Unknown
 #define UHS_VID_MLK 0x017cU // MLK
 #define UHS_VID_TP_LINK 0x0200U // TP-Link
@@ -189,7 +190,7 @@
 #define UHS_VID_KENSINGTON 0x047dU // Kensington
 #define UHS_VID_AGERE_SYSTEMS_INC_LUCENT 0x047eU // Agere Systems, Inc. (Lucent)
 #define UHS_VID_PLANTRONICS 0x047fU // Plantronics, Inc.
-#define UHS_VID_TOSHIBA_AMERICA_INFO_SYSTEMS 0x0480U // Toshiba America Info. Systems, Inc.
+#define UHS_VID_TOSHIBA_AMERICA 0x0480U // Toshiba America Inc
 #define UHS_VID_ZENITH_DATA_SYSTEMS 0x0481U // Zenith Data Systems
 #define UHS_VID_KYOCERA 0x0482U // Kyocera Corp.
 #define UHS_VID_STMICROELECTRONICS 0x0483U // STMicroelectronics
@@ -544,7 +545,7 @@
 #define UHS_VID_RFC_DISTRIBUTIONS_PTE 0x05f7U // RFC Distribution(s) PTE, Ltd
 #define UHS_VID_PSC_SCANNING 0x05f9U // PSC Scanning, Inc.
 #define UHS_VID_SIEMENS_TELECOMMUNICATIONS_SYSTEMS 0x05faU // Siemens Telecommunications Systems, Ltd
-#define UHS_VID_HARMAN_MULTIMEDIA 0x05fcU // Harman Multimedia
+#define UHS_VID_HARMAN 0x05fcU // Harman
 #define UHS_VID_INTERACT 0x05fdU // InterAct, Inc.
 #define UHS_VID_CHIC_TECHNOLOGY 0x05feU // Chic Technology Corp.
 #define UHS_VID_LECROY 0x05ffU // LeCroy Corp.
@@ -781,6 +782,7 @@
 #define UHS_VID_INDUSTRIAL_ELECTRONIC_ENGINEERS 0x073cU // Industrial Electronic Engineers, Inc.
 #define UHS_VID_EUTRON_SPA 0x073dU // Eutron S.p.a.
 #define UHS_VID_NEC_1 0x073eU // NEC, Inc.
+#define UHS_VID_STOLLMANN 0x0742U // Stollmann
 #define UHS_VID_SYNTECH_INFORMATION 0x0745U // Syntech Information Co., Ltd
 #define UHS_VID_ONKYO 0x0746U // Onkyo Corp.
 #define UHS_VID_LABWAY 0x0747U // Labway Corp.
@@ -989,6 +991,7 @@
 #define UHS_VID_TOSHIBA_TEC 0x08a6U // Toshiba TEC
 #define UHS_VID_ANDREA_ELECTRONICS 0x08a8U // Andrea Electronics
 #define UHS_VID_CWAV 0x08a9U // CWAV Inc.
+#define UHS_VID_MACRAIGOR_SYSTEMS 0x08acU // Macraigor Systems LLC
 #define UHS_VID_MACALLY_MACE_GROUP 0x08aeU // Macally (Mace Group, Inc.)
 #define UHS_VID_METROHM 0x08b0U // Metrohm
 #define UHS_VID_SORENSON_VISION 0x08b4U // Sorenson Vision, Inc.
@@ -1153,6 +1156,7 @@
 #define UHS_VID_ACTIVCARD 0x09c3U // ActivCard, Inc.
 #define UHS_VID_ACTISYS 0x09c4U // ACTiSYS Corp.
 #define UHS_VID_MEMORY 0x09c5U // Memory Corp.
+#define UHS_VID_BMC_MESSSYSTEME 0x09caU // BMC Messsysteme GmbH
 #define UHS_VID_WORKBIT 0x09ccU // Workbit Corp.
 #define UHS_VID_PSION_DACOM_HOME_NETWORKS 0x09cdU // Psion Dacom Home Networks, Ltd
 #define UHS_VID_CITY_ELECTRONICS 0x09ceU // City Electronics, Ltd
@@ -1252,6 +1256,7 @@
 #define UHS_VID_MAUI_INNOVATIVE_PERIPHERALS 0x0a84U // Maui Innovative Peripherals
 #define UHS_VID_IDEXX_LABS 0x0a85U // Idexx Labs
 #define UHS_VID_NITGEN 0x0a86U // NITGen Co., Ltd
+#define UHS_VID_AKTIV 0x0a89U // Aktiv
 #define UHS_VID_PICTURETEL 0x0a8dU // Picturetel
 #define UHS_VID_JAPAN_AVIATION_ELECTRONICS_INDUSTRY 0x0a8eU // Japan Aviation Electronics Industry, Ltd
 #define UHS_VID_CANDY_TECHNOLOGY 0x0a90U // Candy Technology Co., Ltd
@@ -1376,7 +1381,7 @@
 #define UHS_VID_TAIKO_DENKI 0x0b7bU // Taiko Denki Co., Ltd
 #define UHS_VID_ITRAN_COMMUNICATIONS 0x0b7cU // ITRAN Communications, Ltd
 #define UHS_VID_ASTRODESIGN 0x0b7dU // Astrodesign, Inc.
-#define UHS_VID_ID3_SEMICONDUCTORS 0x0b81U // id3 Semiconductors
+#define UHS_VID_ID3_TECHNOLOGIES 0x0b81U // id3 Technologies
 #define UHS_VID_REXTRON_TECHNOLOGY 0x0b84U // Rextron Technology, Inc.
 #define UHS_VID_ELKAT_ELECTRONICS_SDN_BHD 0x0b85U // Elkat Electronics, Sdn., Bhd.
 #define UHS_VID_EXPUTER_SYSTEMS 0x0b86U // Exputer Systems, Inc.
@@ -1675,7 +1680,7 @@
 #define UHS_VID_SUZHOU_PETERS_PRECISE_INDUSTRIAL 0x0da1U // Suzhou Peter's Precise Industrial Co., Ltd
 #define UHS_VID_LAND_INSTRUMENTS_INTERNATIONAL 0x0da2U // Land Instruments International, Ltd
 #define UHS_VID_NIPPON_ELECTRO_SENSORY_DEVICES 0x0da3U // Nippon Electro-Sensory Devices Corp.
-#define UHS_VID_POLAR_ELECTRO_OY 0x0da4U // Polar Electro OY
+#define UHS_VID_POLAR_ELECTRO_OY 0x0da4U // Polar Electro Oy
 #define UHS_VID_IOGEAR 0x0da7U // IOGear, Inc.
 #define UHS_VID_SOFTDSP 0x0da8U // softDSP Co., Ltd
 #define UHS_VID_CUBIG_GROUP 0x0dabU // Cubig Group
@@ -1685,6 +1690,7 @@
 #define UHS_VID_SHIAN_HWI_PLUG_PARTS_PLASTIC_FACTORY 0x0db2U // Shian Hwi Plug Parts, Plastic Factory
 #define UHS_VID_TEKRAM_TECHNOLOGY_1 0x0db3U // Tekram Technology Co., Ltd
 #define UHS_VID_CHUNG_FU_CHEN_YEH_ENTERPRISE 0x0db4U // Chung Fu Chen Yeh Enterprise Corp.
+#define UHS_VID_ACCESS_IS 0x0db5U // Access IS
 #define UHS_VID_ELCON_SYSTEMTECHNIK 0x0db7U // ELCON Systemtechnik
 #define UHS_VID_DIGIDESIGN 0x0dbaU // Digidesign
 #define UHS_VID_AANDD_MEDICAL 0x0dbcU // A&D Medical
@@ -1726,6 +1732,7 @@
 #define UHS_VID_WINBEST_TECHNOLOGY 0x0e08U // Winbest Technology Co., Ltd
 #define UHS_VID_AMIGO_TECHNOLOGY 0x0e0bU // Amigo Technology Inc.
 #define UHS_VID_GESYTEC 0x0e0cU // Gesytec
+#define UHS_VID_PICOQUANT 0x0e0dU // PicoQuant GmbH
 #define UHS_VID_VMWARE 0x0e0fU // VMware, Inc.
 #define UHS_VID_JMTEK_1 0x0e16U // JMTek, LLC
 #define UHS_VID_WALEX_ELECTRONIC 0x0e17U // Walex Electronic, Ltd
@@ -1999,6 +2006,7 @@
 #define UHS_VID_ON_SEMICONDUCTOR 0x1057U // ON Semiconductor
 #define UHS_VID_WESTERN_DIGITAL_TECHNOLOGIES 0x1058U // Western Digital Technologies, Inc.
 #define UHS_VID_GIESECKE_AND_DEVRIENT 0x1059U // Giesecke & Devrient GmbH
+#define UHS_VID_FOXCONN_INTERNATIONAL 0x105bU // Foxconn International, Inc.
 #define UHS_VID_HONG_JI_ELECTRIC_WIRE_AND_CABLE_DONGGUAN 0x105cU // Hong Ji Electric Wire & Cable (Dongguan) Co., Ltd
 #define UHS_VID_DELKIN_DEVICES 0x105dU // Delkin Devices, Inc.
 #define UHS_VID_VALENCE_SEMICONDUCTOR_DESIGN 0x105eU // Valence Semiconductor Design, Ltd
@@ -2051,6 +2059,7 @@
 #define UHS_VID_SILICON_LABS 0x10ceU // Silicon Labs
 #define UHS_VID_VELLEMAN_COMPONENTS 0x10cfU // Velleman Components, Inc.
 #define UHS_VID_HOTTINGER_BALDWIN_MEASUREMENT 0x10d1U // Hottinger Baldwin Measurement
+#define UHS_VID_RAYCOMPOSER__R_ADAMS 0x10d2U // RayComposer - R. Adams
 #define UHS_VID_MAN_BOON_MANUFACTORY 0x10d4U // Man Boon Manufactory, Ltd
 #define UHS_VID_UNI_CLASS_TECHNOLOGY 0x10d5U // Uni Class Technology Co., Ltd
 #define UHS_VID_ACTIONS_SEMICONDUCTOR 0x10d6U // Actions Semiconductor Co., Ltd
@@ -2140,6 +2149,7 @@
 #define UHS_VID_MAGELLAN 0x120fU // Magellan
 #define UHS_VID_DIGITECH 0x1210U // DigiTech
 #define UHS_VID_JUNGSOFT 0x121eU // Jungsoft Co., Ltd
+#define UHS_VID_UNKNOWN_MANUFACTURER_1 0x1221U // Unknown manufacturer
 #define UHS_VID_SKYCABLE_ENTERPRISE 0x1223U // SKYCABLE ENTERPRISE. CO., LTD.
 #define UHS_VID_DATAPAQ_LIMITED 0x1228U // Datapaq Limited
 #define UHS_VID_CHIPIDEA_MICROELECTRONICA 0x1230U // Chipidea-Microelectronica, S.A.
@@ -2175,6 +2185,7 @@
 #define UHS_VID_ZHEJIANG_XINYA_ELECTRONIC_TECHNOLOGY 0x12b8U // Zhejiang Xinya Electronic Technology Co., Ltd.
 #define UHS_VID_E28 0x12b9U // E28
 #define UHS_VID_LICENSED_BY_SONY_COMPUTER_ENTERTAINMENT_AMERICA 0x12baU // Licensed by Sony Computer Entertainment America
+#define UHS_VID_GEMBIRD 0x12bdU // Gembird
 #define UHS_VID_AUTOCUE_GROUP 0x12c4U // Autocue Group Ltd
 #define UHS_VID_DEXIN_1 0x12cfU // DEXIN
 #define UHS_VID_HUAWEI_TECHNOLOGIES 0x12d1U // Huawei Technologies Co., Ltd.
@@ -2205,8 +2216,10 @@
 #define UHS_VID_PANJIT_INTERNATIONAL 0x134cU // PanJit International Inc.
 #define UHS_VID_DIGBYS_BITPILE_INC_DBA_D_BIT 0x134eU // Digby's Bitpile, Inc. DBA D Bit
 #define UHS_VID_PANDE_MICROCOMPUTER_SYSTEMS 0x1357U // P&E Microcomputer Systems
+#define UHS_VID_CONTROL_DEVELOPMENT 0x135fU // Control Development Inc.
 #define UHS_VID_SEGGER 0x1366U // SEGGER
 #define UHS_VID_STEC 0x136bU // STEC
+#define UHS_VID_ANDOR_TECHNOLOGY 0x136eU // Andor Technology Ltd.
 #define UHS_VID_SWISSBIT 0x1370U // Swissbit
 #define UHS_VID_CNET_TECHNOLOGY 0x1371U // CNet Technology Inc.
 #define UHS_VID_VIMTRON_ELECTRONICS 0x1376U // Vimtron Electronics Co., Ltd.
@@ -2232,6 +2245,7 @@
 #define UHS_VID_A_MAX_TECHNOLOGY_MACAO_COMMERCIAL_OFFSHORE 0x13d1U // A-Max Technology Macao Commercial Offshore Co. Ltd.
 #define UHS_VID_SHARK_MULTIMEDIA_1 0x13d2U // Shark Multimedia
 #define UHS_VID_IMC_NETWORKS 0x13d3U // IMC Networks
+#define UHS_VID_GUIDANCE_SOFTWARE 0x13d7U // Guidance Software, Inc.
 #define UHS_VID_ALEREON 0x13dcU // ALEREON, INC.
 #define UHS_VID_ITECH_DYNAMIC_LIMITED 0x13ddU // i.Tech Dynamic Limited
 #define UHS_VID_KAIBO_WIRE_AND_CABLE_SHENZHEN 0x13e1U // Kaibo Wire & Cable (Shenzhen) Co., Ltd.
@@ -2297,7 +2311,6 @@
 #define UHS_VID_RARITAN_COMPUTER 0x14ddU // Raritan Computer, Inc.
 #define UHS_VID_WINRADIO_COMMUNICATIONS 0x14e0U // WiNRADiO Communications
 #define UHS_VID_DIALOGUE_TECHNOLOGY 0x14e1U // Dialogue Technology Corp.
-#define UHS_VID_BROADCOM_1 0x14e4U // Broadcom Corp.
 #define UHS_VID_SAIN_INFORMATION_AND_COMMUNICATIONS 0x14e5U // SAIN Information & Communications Co., Ltd.
 #define UHS_VID_PLANEX_COMMUNICATIONS_1 0x14eaU // Planex Communications
 #define UHS_VID_SHURE 0x14edU // Shure Inc.
@@ -2315,6 +2328,7 @@
 #define UHS_VID_SILICON_PORTALS 0x1527U // Silicon Portals
 #define UHS_VID_UBIQUAM 0x1529U // UBIQUAM Co., Ltd.
 #define UHS_VID_THESYCON_SYSTEMSOFTWARE_AND_CONSULTING 0x152aU // Thesycon Systemsoftware & Consulting GmbH
+#define UHS_VID_MIR_SRL 0x152bU // MIR Srl
 #define UHS_VID_JMICRON_TECHNOLOGY_CORP_JMICRON_USA_TECHNOLOGY 0x152dU // JMicron Technology Corp. / JMicron USA Technology Corp.
 #define UHS_VID_LG_HLDS 0x152eU // LG (HLDS)
 #define UHS_VID_RAZER_USA 0x1532U // Razer USA, Ltd
@@ -2368,6 +2382,7 @@
 #define UHS_VID_VIA_TECHNOLOGIES_1 0x160aU // VIA Technologies, Inc.
 #define UHS_VID_INRO 0x160eU // INRO
 #define UHS_VID_AMOI_ELECTRONICS 0x1614U // Amoi Electronics
+#define UHS_VID_SONY_1 0x1617U // Sony Corp.
 #define UHS_VID_L_AND_K_PRECISION_TECHNOLOGY 0x1619U // L & K Precision Technology Co., Ltd.
 #define UHS_VID_WIONICS_RESEARCH 0x1621U // Wionics Research
 #define UHS_VID_STONESTREET_ONE 0x1628U // Stonestreet One, Inc.
@@ -2375,7 +2390,7 @@
 #define UHS_VID_WIQUEST_COMMUNICATIONS 0x162fU // WiQuest Communications, Inc.
 #define UHS_VID_2WIRE_1 0x1630U // 2Wire, Inc.
 #define UHS_VID_GOOD_WAY_TECHNOLOGY 0x1631U // Good Way Technology
-#define UHS_VID_CROSS_MATCH_TECHNOLOGIES_1 0x1645U // Cross Match Technologies GmbH
+#define UHS_VID_ENTREGA_HEX_ 0x1645U // Entrega [hex]
 #define UHS_VID_SOFTEC_MICROSYSTEMS 0x1649U // SofTec Microsystems
 #define UHS_VID_CHIPX 0x164aU // ChipX
 #define UHS_VID_MATRIX_VISION 0x164cU // Matrix Vision GmbH
@@ -2383,6 +2398,7 @@
 #define UHS_VID_FRONTIER_DESIGN_GROUP 0x165bU // Frontier Design Group
 #define UHS_VID_KONDO_KAGAKU 0x165cU // Kondo Kagaku
 #define UHS_VID_CREATIX_POLYMEDIA 0x1660U // Creatix Polymedia GmbH
+#define UHS_VID_GIGA_TMS 0x1667U // GIGA-TMS INC.
 #define UHS_VID_ACTIONTEC_ELECTRONICS_INC_HEX_ 0x1668U // Actiontec Electronics, Inc. [hex]
 #define UHS_VID_PIKRON_LTD_HEX_ 0x1669U // PiKRON Ltd. [hex]
 #define UHS_VID_CLIPSAL 0x166aU // Clipsal
@@ -2512,7 +2528,7 @@
 #define UHS_VID_MATROX_GRAPHICS 0x18eaU // Matrox Graphics, Inc.
 #define UHS_VID_ARKMICRO_TECHNOLOGIES 0x18ecU // Arkmicro Technologies Inc.
 #define UHS_VID_FINEARCH 0x18fdU // FineArch Inc.
-#define UHS_VID_GEMBIRD 0x1908U // GEMBIRD
+#define UHS_VID_GEMBIRD_1 0x1908U // GEMBIRD
 #define UHS_VID_MOTOROLA_GSG 0x190dU // Motorola GSG
 #define UHS_VID_ALCO_DIGITAL_DEVICES_LIMITED 0x1914U // Alco Digital Devices Limited
 #define UHS_VID_NORDIC_SEMICONDUCTOR_ASA 0x1915U // Nordic Semiconductor ASA
@@ -2542,6 +2558,7 @@
 #define UHS_VID_BECEEM_COMMUNICATIONS 0x198fU // Beceem Communications Inc.
 #define UHS_VID_ACRON_PRECISION_INDUSTRIAL 0x1990U // Acron Precision Industrial Co., Ltd.
 #define UHS_VID_TRILLIUM_TECHNOLOGY_PTY 0x1995U // Trillium Technology Pty. Ltd.
+#define UHS_VID_PIXELINK 0x1996U // PixeLINK
 #define UHS_VID_MICROSTRAIN 0x199bU // MicroStrain, Inc.
 #define UHS_VID_THE_IMAGING_SOURCE_EUROPE 0x199eU // The Imaging Source Europe GmbH
 #define UHS_VID_BENICA_CORPORATION 0x199fU // Benica Corporation
@@ -2679,6 +2696,7 @@
 #define UHS_VID_ZHONGSHAN_CHIANG_YU_ELECTRIC 0x1c22U // ZHONGSHAN CHIANG YU ELECTRIC CO., LTD.
 #define UHS_VID_SHANGHAI_HAIYING_ELECTRONICS 0x1c26U // Shanghai Haiying Electronics Co., Ltd.
 #define UHS_VID_HUIYANG_D_AND_S_CABLE 0x1c27U // HuiYang D & S Cable Co., Ltd.
+#define UHS_VID_ELSTER 0x1c29U // Elster GmbH
 #define UHS_VID_LS_CABLE 0x1c31U // LS Cable Ltd.
 #define UHS_VID_SPRINGCARD 0x1c34U // SpringCard
 #define UHS_VID_AUTHORIZER_TECHNOLOGIES 0x1c37U // Authorizer Technologies, Inc.
@@ -2784,20 +2802,31 @@
 #define UHS_VID_IDEOFY 0x1fffU // Ideofy Inc.
 #define UHS_VID_D_LINK 0x2001U // D-Link Corp.
 #define UHS_VID_DAP_TECHNOLOGIES 0x2002U // DAP Technologies
+#define UHS_VID_DETECTOMAT 0x2003U // detectomat
 #define UHS_VID_RELOOP 0x200cU // Reloop
 #define UHS_VID_PCTV_SYSTEMS 0x2013U // PCTV Systems
 #define UHS_VID_PLANEX_1 0x2019U // PLANEX
+#define UHS_VID_ENCORE_ELECTRONICS 0x203dU // Encore Electronics Inc.
 #define UHS_VID_HAUPPAUGE 0x2040U // Hauppauge
 #define UHS_VID_TEXAS_INSTRUMENTS_2 0x2047U // Texas Instruments
+#define UHS_VID_NANO_RIVER_TECHNOLOGY 0x2058U // Nano River Technology
+#define UHS_VID_TAICANG_TANDW_ELECTRONICS 0x2077U // Taicang T&W Electronics Co. Ltd
 #define UHS_VID_BARNES_AND_NOBLE 0x2080U // Barnes & Noble
+#define UHS_VID_SIMPASS 0x2086U // SIMPASS
 #define UHS_VID_CANDO 0x2087U // Cando
 #define UHS_VID_CLAY_LOGIC 0x20a0U // Clay Logic
 #define UHS_VID_XMOS 0x20b1U // XMOS Ltd
 #define UHS_VID_HANVON 0x20b3U // Hanvon
 #define UHS_VID_QI_HARDWARE 0x20b7U // Qi Hardware
+#define UHS_VID_MINICIRCUITS 0x20ceU // Minicircuits
 #define UHS_VID_SIMTEC_ELECTRONICS 0x20dfU // Simtec Electronics
+#define UHS_VID_NET_NEW_ELECTRONIC_TECHNOLOGY 0x20f1U // NET New Electronic Technology GmbH
 #define UHS_VID_TRENDNET_1 0x20f4U // TRENDnet
+#define UHS_VID_XIMEA 0x20f7U // XIMEA
+#define UHS_VID_RT_SYSTEMS 0x2100U // RT Systems
 #define UHS_VID_ACTIONSTAR 0x2101U // ActionStar
+#define UHS_VID_VIA_LABS 0x2109U // VIA Labs, Inc.
+#define UHS_VID_SOFTKINETIC 0x2113U // Softkinetic
 #define UHS_VID_ADVANCED_SILICON 0x2149U // Advanced Silicon S.A.
 #define UHS_VID_CREATIVE_UNKNOWN 0x2162U // Creative (?)
 #define UHS_VID_GW_INSTEK 0x2184U // GW Instek
@@ -2808,6 +2837,7 @@
 #define UHS_VID_SILICON_MOTION_1 0x2232U // Silicon Motion
 #define UHS_VID_RADIOSHACK_CORPORATION 0x2233U // RadioShack Corporation
 #define UHS_VID_KOBO 0x2237U // Kobo Inc.
+#define UHS_VID_MORPHO 0x225dU // Morpho
 #define UHS_VID_8D_TECHNOLOGIES 0x228dU // 8D Technologies inc.
 #define UHS_VID_PIE_DIGITAL 0x22a6U // Pie Digital, Inc.
 #define UHS_VID_MOTOROLA_PCS 0x22b8U // Motorola PCS
@@ -2821,7 +2851,9 @@
 #define UHS_VID_SANHO_DIGITAL_ELECTRONICS 0x2406U // SANHO Digital Electronics Co., Ltd.
 #define UHS_VID_AESSENT_TECHNOLOGY 0x2443U // Aessent Technology Ltd
 #define UHS_VID_TRIPP_LITE_1 0x2478U // Tripp-Lite
+#define UHS_VID_MAXXTER 0x248aU // Maxxter
 #define UHS_VID_M2TECH_SRL 0x249cU // M2Tech s.r.l.
+#define UHS_VID_PARATRONIC 0x24e1U // Paratronic
 #define UHS_VID_TWINMOS_1 0x2632U // TwinMOS
 #define UHS_VID_XSENS 0x2639U // Xsens
 #define UHS_VID_ELECTRONICS_FOR_IMAGING_INC_HEX_ 0x2650U // Electronics For Imaging, Inc. [hex]
@@ -2830,19 +2862,30 @@
 #define UHS_VID_CITIZEN_1 0x2730U // Citizen
 #define UHS_VID_DIGITALWAY_2 0x2735U // DigitalWay
 #define UHS_VID_NHJ 0x2770U // NHJ, Ltd
+#define UHS_VID_THINGM 0x27b8U // ThingM
 #define UHS_VID_ASUSTEK_COMPUTER_1 0x2821U // ASUSTek Computer Inc.
 #define UHS_VID_TOPTRONIC_INDUSTRIAL 0x2899U // Toptronic Industrial Co., Ltd
+#define UHS_VID_DRACALRAPHNET_TECHNOLOGIES 0x289bU // Dracal/Raphnet technologies
+#define UHS_VID_JOLLA_OY 0x2931U // Jolla Oy
+#define UHS_VID_DOG_HUNTER_AG 0x2a03U // dog hunter AG
+#define UHS_VID_RTD_EMBEDDED_TECHNOLOGIES 0x2a37U // RTD Embedded Technologies, Inc.
+#define UHS_VID_MEIZU 0x2a45U // Meizu Corp.
 #define UHS_VID_PLANEX_COMMUNICATIONS_2 0x2c02U // Planex Communications
 #define UHS_VID_DOLPHIN_PERIPHERALS 0x2c1aU // Dolphin Peripherals
 #define UHS_VID_FUJITSU_1 0x2fb2U // Fujitsu, Ltd
 #define UHS_VID_EAGLETRON_1 0x3125U // Eagletron
+#define UHS_VID_NAVINI_NETWORKS 0x3136U // Navini Networks
 #define UHS_VID_WHANAM_ELECTRONICS 0x3176U // Whanam Electronics Co., Ltd
+#define UHS_VID_LINK_INSTRUMENTS 0x3195U // Link Instruments
 #define UHS_VID_VIDZMEDIA_PTE 0x3275U // VidzMedia Pte Ltd
+#define UHS_VID_INLINE 0x3333U // InLine
 #define UHS_VID_AEI 0x3334U // AEI
 #define UHS_VID_YAKUMO 0x3340U // Yakumo
+#define UHS_VID_LEAGUER_MICROELECTRONICS_LME 0x3344U // Leaguer Microelectronics (LME)
 #define UHS_VID_MICRO_STAR 0x3504U // Micro Star
 #define UHS_VID_POWER_QUOTIENT_INTERNATIONAL_1 0x3538U // Power Quotient International Co., Ltd
 #define UHS_VID_DIVA 0x3579U // DIVA
+#define UHS_VID_SHARKOON 0x357dU // Sharkoon
 #define UHS_VID_INVIBRO 0x3636U // InVibro
 #define UHS_VID_WEM 0x3838U // WEM
 #define UHS_VID_NATIONAL_INSTRUMENTS 0x3923U // National Instruments Corp.
@@ -2851,8 +2894,10 @@
 #define UHS_VID_IRIVER_1 0x4102U // iRiver, Ltd.
 #define UHS_VID_DELL_COMPUTER_1 0x413cU // Dell Computer Corp.
 #define UHS_VID_USBEST_TECHNOLOGY 0x4146U // USBest Technology
+#define UHS_VID_TARGUS 0x4168U // Targus
 #define UHS_VID_USB_DESIGN_BY_EXAMPLE 0x4242U // USB Design by Example
-#define UHS_VID_BROADCOM_2 0x4317U // Broadcom Corp.
+#define UHS_VID_GOPRO 0x4255U // GoPro
+#define UHS_VID_BROADCOM_1 0x4317U // Broadcom Corp.
 #define UHS_VID_WINCHIPHEAD 0x4348U // WinChipHead
 #define UHS_VID_SHUTTLE_2 0x4572U // Shuttle, Inc.
 #define UHS_VID_PANRAM 0x4586U // Panram
@@ -2869,17 +2914,22 @@
 #define UHS_VID_SWEEX_1 0x5173U // Sweex
 #define UHS_VID_I_TETRA 0x5219U // I-Tetra
 #define UHS_VID_OWON 0x5345U // Owon
+#define UHS_VID_SATOSHILABS 0x534cU // SatoshiLabs
+#define UHS_VID_MEYER_INSTRUMENTS_MIS_1 0x5354U // Meyer Instruments (MIS)
 #define UHS_VID_TRANSMETA 0x544dU // Transmeta Corp.
 #define UHS_VID_UC_LOGIC_TECHNOLOGY 0x5543U // UC-Logic Technology Corp.
 #define UHS_VID_EPIPHAN_SYSTEMS 0x5555U // Epiphan Systems Inc.
 #define UHS_VID_ONSPEC_ELECTRONIC 0x55aaU // OnSpec Electronic, Inc.
+#define UHS_VID_GOTVIEW 0x5654U // Gotview
 #define UHS_VID_UNI_TREND_GROUP_LIMITED 0x5656U // Uni-Trend Group Limited
 #define UHS_VID_IRTOUCHSYSTEMS 0x595aU // IRTOUCHSYSTEMS Co. Ltd.
 #define UHS_VID_ACER_2 0x5986U // Acer, Inc
+#define UHS_VID_NONOLITH_LABS 0x59e3U // Nonolith Labs
 #define UHS_VID_ZINWELL 0x5a57U // Zinwell
 #define UHS_VID_BEHOLDER_INTERNATIONAL 0x6000U // Beholder International Ltd.
 #define UHS_VID_INGENIC_SEMICONDUCTOR 0x601aU // Ingenic Semiconductor Ltd.
 #define UHS_VID_SITECOM 0x6189U // Sitecom
+#define UHS_VID_LIGHTINGSOFT_AG 0x6244U // LightingSoft AG
 #define UHS_VID_TWINHAN_TECHNOLOGY 0x6253U // TwinHan Technology Co., Ltd
 #define UHS_VID_CORELOGIC 0x636cU // CoreLogic, Inc.
 #define UHS_VID_UNKNOWN_SONY_UNKNOWN 0x6472U // Unknown (Sony?)
@@ -2894,32 +2944,51 @@
 #define UHS_VID_CME_CENTRAL_MUSIC 0x7104U // CME (Central Music Co.)
 #define UHS_VID_STACKFOUNDRY 0x726cU // StackFoundry LLC
 #define UHS_VID_TBS_TECHNOLOGIES_CHINA 0x734cU // TBS Technologies China
+#define UHS_VID_BEIJING_STONE_TECHNOLOGY 0x7373U // Beijing STONE Technology Co. Ltd.
 #define UHS_VID_EDIMAX_TECHNOLOGY_1 0x7392U // Edimax Technology Co., Ltd
 #define UHS_VID_INTEL_1 0x8086U // Intel Corp.
 #define UHS_VID_INTEL_2 0x8087U // Intel Corp.
 #define UHS_VID_VIRTUALBOX 0x80eeU // VirtualBox
 #define UHS_VID_KEIO 0x8282U // Keio
 #define UHS_VID_EGO_SYSTEMS_1 0x8341U // EGO Systems, Inc.
+#define UHS_VID_TRANSCEND_INFORMATION_1 0x8564U // Transcend Information, Inc.
+#define UHS_VID_INTENSO_GMBG 0x8644U // Intenso GmbG
+#define UHS_VID_CH_PRODUCTS_1 0x8e06U // CH Products, Inc.
 #define UHS_VID_SITECOM_1 0x9016U // Sitecom
 #define UHS_VID_TEVII_TECHNOLOGY 0x9022U // TeVii Technology Ltd.
 #define UHS_VID_GEOLAB 0x9148U // GeoLab, Ltd
 #define UHS_VID_MOSCHIP_SEMICONDUCTOR 0x9710U // MosChip Semiconductor
+#define UHS_VID_BESTMEDIA_CD_RECORDABLE_GMBH_AND_CO_KG 0x9849U // Bestmedia CD Recordable GmbH & Co. KG
+#define UHS_VID_ODEON 0x9999U // Odeon
 #define UHS_VID_GRANDTEC_1 0x99faU // Grandtec
 #define UHS_VID_J_WESTHUES 0x9ac4U // J. Westhues
+#define UHS_VID_MARVELL_SEMICONDUCTOR_1 0x9e88U // Marvell Semiconductor, Inc.
 #define UHS_VID_ANMO_ELECTRONICS_CORP_DINO_LITE_UNKNOWN 0xa128U // AnMo Electronics Corp. / Dino-Lite (?)
 #define UHS_VID_ANMO_ELECTRONICS_CORPORATION 0xa168U // AnMo Electronics Corporation
 #define UHS_VID_ASIX 0xa600U // Asix
 #define UHS_VID_3COM_2 0xa727U // 3Com
+#define UHS_VID_MXT 0xaaaaU // MXT
 #define UHS_VID_UNKNOWN_3 0xabcdU // Unknown
+#define UHS_VID_BLUE_MICROPHONES 0xb58eU // Blue Microphones
+#define UHS_VID_CARD_DEVICE_EXPERT 0xc216U // Card Device Expert Co., LTD
 #define UHS_VID_KEIL_SOFTWARE_1 0xc251U // Keil Software, Inc.
 #define UHS_VID_CACE_TECHNOLOGIES 0xcaceU // CACE Technologies Inc.
-#define UHS_VID_ULTIMARC 0xd209U // Ultimarc
+#define UHS_VID_SMART_TECHNOLOGY_INDUSTRIAL 0xcd12U // SMART TECHNOLOGY INDUSTRIAL LTD.
+#define UHS_VID_ULTIMARC 0xd208U // Ultimarc
+#define UHS_VID_ULTIMARC_1 0xd209U // Ultimarc
+#define UHS_VID_LOGILINK 0xd904U // LogiLink
 #define UHS_VID_XORCOM 0xe4e4U // Xorcom Ltd.
 #define UHS_VID_MAKINGTHINGS 0xeb03U // MakingThings
 #define UHS_VID_EMPIA_TECHNOLOGY 0xeb1aU // eMPIA Technology, Inc.
 #define UHS_VID_KWORLD 0xeb2aU // KWorld
+#define UHS_VID_SMART_TECHNOLOGY_INDUSTRIAL_1 0xef18U // SMART TECHNOLOGY INDUSTRIAL LTD.
 #define UHS_VID_HEWLETT_PACKARD_1 0xf003U // Hewlett Packard
+#define UHS_VID_LEAP_MOTION 0xf182U // Leap Motion
 #define UHS_VID_ATTEN_ELECTRONICS_SIGLENT_TECHNOLOGIES 0xf4ecU // Atten Electronics / Siglent Technologies
+#define UHS_VID_SHENZHEN_SIGLENT 0xf4edU // Shenzhen Siglent Co., Ltd.
+#define UHS_VID_HAMA_1 0xf766U // Hama
+#define UHS_VID_CONRAD_ELECTRONIC_SE 0xfc08U // Conrad Electronic SE
+#define UHS_VID_FNK_TECH 0xffeeU // FNK Tech
 
 #endif
 

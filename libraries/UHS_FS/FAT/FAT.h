@@ -1,4 +1,6 @@
-/*
+/* Copyright (C) 2015-2016 Andrew J. Kroll
+ *  and
+ * Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
  *
  * Parts from
  *

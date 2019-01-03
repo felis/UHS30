@@ -52,14 +52,17 @@
 /  ff_memalloc() and ff_memfree() must be added to the project.
 
  */
-
+#ifndef _FS_READONLY
 #define _FS_READONLY	0	/* 0:Read/Write or 1:Read only */
+#endif
+
 /* Setting _FS_READONLY to 1 defines read only configuration. This removes
 /  writing functions, f_write, f_sync, f_unlink, f_mkdir, f_chmod, f_rename,
 /  f_truncate and useless f_getfree. */
 
-
+#ifndef _FS_MINIMIZE
 #define _FS_MINIMIZE	0	/* 0 to 3 */
+#endif
 /* The _FS_MINIMIZE option defines minimization level to remove some functions.
 /
 /   0: Full function.
@@ -68,16 +71,18 @@
 /   2: f_opendir and f_readdir are removed in addition to 1.
 /   3: f_lseek is removed in addition to 2. */
 
-
+#ifndef _USE_STRFUNC
 #define	_USE_STRFUNC	0	/* 0:Disable or 1-3:Enable */
+#endif
 /* To enable string functions, set _USE_STRFUNC to 1 or 2.
  * 1 enable and be sane like Linux
  * > 1 enables everything as text... lame!
  * 3 lame dos LF -> CRLF
  */
 
-
+#ifndef _USE_MKFS
 #define	_USE_MKFS	1	/* 0:Disable or 1:Enable */
+#endif
 /* To enable f_mkfs function, set _USE_MKFS to 1 and set _FS_READONLY to 0 */
 
 #ifndef _USE_FASTSEEK
@@ -85,7 +90,9 @@
 /* To enable fast seek feature, set _USE_FASTSEEK to 1. */
 #endif
 
+#ifndef _USE_LABEL
 #define _USE_LABEL	1	/* 0:Disable or 1:Enable */
+#endif
 /* To enable volume label functions, set _USE_LABEL to 1 */
 
 
@@ -132,7 +139,9 @@
  */
 #endif
 
+#ifndef _LFN_UNICODE
 #define	_LFN_UNICODE	0	/* 0:ANSI/OEM or 1:Unicode 2: UTF-8 */
+#endif
 /* To switch the character code set on FatFs API to Unicode,
 /  enable LFN feature and set _LFN_UNICODE to 1.
  */
@@ -219,18 +228,24 @@
 #define GCONST const
 #endif
 
-#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN
+#ifndef _WORD_ACCESS
+
+#if defined(__BYTE_ORDER)
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 #define _WORD_ACCESS	1	/* 0 or 1 */
+#else
+#define _WORD_ACCESS    0
 #endif
 
-/* on most arduino, it's LE, 'cept a few... */
-#ifndef _WORD_ACCESS
-#if defined(__AVR__) || defined(__ARM__)
+#elif defined(__AVR__) || defined(__ARM__)
 #define _WORD_ACCESS	1	/* 0 or 1 */
 #else
 #define _WORD_ACCESS	0	/* 0 or 1 */
 #endif
+
 #endif
+
 
 /* Set 0 first and it is always compatible with all platforms. The _WORD_ACCESS
 /  option defines which access method is used to the word data on the FAT volume.
