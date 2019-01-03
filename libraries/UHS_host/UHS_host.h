@@ -30,9 +30,9 @@ e-mail   :  support@circuitsathome.com
 #include <Wire.h>
 #include <SPI.h>
 #include <UHS_ByteBuffer.h>
+#include "UHS_macros.h"
 
 // None of these should ever be directly included by a driver, or a user's sketch.
-#include "UHS_macros.h"
 #include "../dyn_SWI/dyn_SWI.h"
 #include "UHS_USB_IDs.h"
 #include "UHS_settings.h"

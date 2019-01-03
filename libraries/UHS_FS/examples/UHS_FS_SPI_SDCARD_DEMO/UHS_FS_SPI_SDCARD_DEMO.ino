@@ -1,38 +1,27 @@
-//////////////////////////////////////
-// libraries that we will be using
-//////////////////////////////////////
+// define the label of your filesystem. VOL_PATH must end in '/'
+// Example:
+// #define VOL_LABEL "/foo"
+// #define VOL_PATH "/foo/"
+
+#define VOL_LABEL "/"
+#define VOL_PATH "/"
+
+
+#define SDCARD_CS_PIN 5
+// this pin needs to be on a real IRQ.
+// All boards should be able to use pin2.
+#define SDCARD_DETECT_PIN 2
 
 // inline library loading
 // Patch printf so we can use it.
 #define LOAD_UHS_PRINTF_HELPER
-// Load the Kinetis core
-#define LOAD_UHS_KINETIS_FS_HOST
-// Load the USB Host System core
-#define LOAD_USB_HOST_SYSTEM
-// Bulk Storage
-#define LOAD_UHS_BULK_STORAGE
 // RTC/clock
 #define LOAD_RTCLIB
-// USB hub
-#define LOAD_UHS_HUB
 // Filesystem
 #define LOAD_GENERIC_STORAGE
 
-// Redirect debugging and printf
-#define USB_HOST_SERIAL Serial1
-
-// Uncomment to debug
-//#define ENABLE_UHS_DEBUGGING 1
-// Uncomment to make debugging very noisy
-//#define DEBUG_PRINTF_EXTRA_HUGE 1
-
-//////////////////////////////////////
-// OPTIONS
-//////////////////////////////////////
-
-
-#define TESTdsize 512
-#define TESTcycles (1048576/TESTdsize)
+#define UHS_USE_SDCARD
+#define UHS_MAX_SD_CARDS 1
 
 /* The _CODE_PAGE specifies the OEM code page to be used on the target system.
  * Incorrect setting of the code page can cause a file open failure.
@@ -84,15 +73,11 @@
 // ...          |       ...             | ...
 // 1000         |       1000            | 1000
 // ...          |       ...             | ...
+
 // default 1
 //#define	_FS_LOCK 1
 
 
-//////////////////////////////////////
-// Includes
-//////////////////////////////////////
-
-// Arduino.h, if not already included
 #include <Arduino.h>
 #ifdef true
 #undef true
@@ -100,52 +85,163 @@
 #ifdef false
 #undef false
 #endif
+#ifdef __AVR__
+#include <avr/io.h>
+#endif
 
 
-// Load the wanted libraries here
-#include <RTClib.h> // Clock functions
-#include <UHS_host.h> // UHS USB HOST base classes
 
-UHS_KINETIS_FS_HOST UHS_Usb;
-UHS_USBHub hub_1(&UHS_Usb);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+// In order to support a wide range of MCUs,
+// this section tries to figure out how much of this demo to include.
+// It is not required for your code.
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+#ifndef RAMSIZE
+#if defined(RAMEND)
+#if defined(RAMSTART)
+#define RAMSIZE (RAMEND - RAMSTART)
+#else
+#define RAMSIZE RAMEND
+#endif
+#endif
+#endif
+
+
+#ifndef FLASHSIZE
+#if defined(FLASHEND)
+#if defined(FLASHSTART)
+#define RAMSIZE (FLASHEND - FLASHSTART)
+#else
+#define FLASHSIZE FLASHEND
+#endif
+#endif
+#endif
+#ifdef RAMSIZE
+#if (RAMSIZE < 4094)
+#define RAM_TOO_SMALL 1
+#endif
+#endif
+#ifdef FLASHSIZE
+#if (FLASHSIZE < 65000)
+#define FLASH_TOO_SMALL 1
+#endif
+#endif
+
+#ifndef RAM_TOO_SMALL
+#define RAM_TOO_SMALL 0
+#endif
+#ifndef FLASH_TOO_SMALL
+#define FLASH_TOO_SMALL 0
+#endif
+
+#if RAM_TOO_SMALL || FLASH_TOO_SMALL
+#define MAKE_BIG_DEMO 0
+#else
+#define MAKE_BIG_DEMO 1
+#endif
+
+
+#if RAM_TOO_SMALL
+#define TESTdsize 128
+#else
+#define TESTdsize 512
+#endif
+
+#define TESTcycles (1048576/TESTdsize)
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#include <UHS_FS.h>
+
+
+#if MAKE_BIG_DEMO
 PFAT_DIRINFO *de;
 uint8_t *data;
+#endif
+
 uint8_t mounted = PFAT_VOLUMES;
 uint8_t wasmounted = 0;
+
+
+#if MAKE_BIG_DEMO
 
 void show_dir(PFAT_DIRINFO *de) {
         int res;
         uint64_t fre;
         uint32_t numlo;
         uint32_t numhi;
-        int fd = fs_opendir("/");
+        int fd = fs_opendir(VOL_PATH);
         if(fd > 0) {
-                printf("Directory of '/'\r\n");
+                printf_P(PSTR("Directory of '" VOL_PATH "'\r\n"));
                 do {
                         res = fs_readdir(fd, de);
                         if(!res) {
                                 DateTime tstamp(de->fdate, de->ftime);
                                 if(!(de->fattrib & AM_VOL)) {
                                         if(de->fattrib & AM_DIR) {
-                                                printf("d");
-                                        } else printf("-");
+                                                printf_P(PSTR("d"));
+                                        } else printf_P(PSTR("-"));
 
                                         if(de->fattrib & AM_RDO) {
-                                                printf("r-");
-                                        } else printf("rw");
+                                                printf_P(PSTR("r-"));
+                                        } else printf_P(PSTR("rw"));
 
                                         if(de->fattrib & AM_HID) {
-                                                printf("h");
-                                        } else printf("-");
+                                                printf_P(PSTR("h"));
+                                        } else printf_P(PSTR("-"));
 
                                         if(de->fattrib & AM_SYS) {
-                                                printf("s");
-                                        } else printf("-");
+                                                printf_P(PSTR("s"));
+                                        } else printf_P(PSTR("-"));
+
 
                                         if(de->fattrib & AM_ARC) {
-                                                printf("a");
-                                        } else printf("-");
+                                                printf_P(PSTR("a"));
+                                        } else printf_P(PSTR("-"));
+
+
 
                                         numlo = de->fsize % 100000000llu;
                                         numhi = de->fsize / 100000000llu;
@@ -154,21 +250,20 @@ void show_dir(PFAT_DIRINFO *de) {
                                         } else {
                                                 printf(" %12lu", numlo);
                                         }
-                                        printf(" %.4u-%.2u-%.2u", tstamp.year(), tstamp.month(), tstamp.day());
-                                        printf(" %.2u:%.2u:%.2u", tstamp.hour(), tstamp.minute(), tstamp.second());
-                                        printf(" %s", de->fname);
+                                        printf_P(PSTR(" %.4u-%.2u-%.2u"), tstamp.year(), tstamp.month(), tstamp.day());
+                                        printf_P(PSTR(" %.2u:%.2u:%.2u"), tstamp.hour(), tstamp.minute(), tstamp.second());
+                                        printf_P(PSTR(" %s"), de->fname);
                                         if(de->lfname[0] != 0) {
-                                                printf(" (%s)", de->lfname);
+                                                printf_P(PSTR(" (%s)"), de->lfname);
                                         }
-                                        printf("\r\n");
+                                        printf_P(PSTR("\r\n"));
                                 }
                         }
 
                 } while(!res);
-
                 fs_closedir(fd);
 
-                fre = fs_getfree("/");
+                fre = fs_getfree(VOL_PATH);
                 numlo = fre % 100000000llu;
                 numhi = fre / 100000000llu;
 
@@ -177,24 +272,31 @@ void show_dir(PFAT_DIRINFO *de) {
                 } else {
                         printf("%lu", numlo);
                 }
-                printf(" bytes available on disk.\r\n");
+                printf_P(PSTR(" bytes available on disk.\r\n"));
         }
+
 }
+#endif
 
 void setup() {
-        // USB data switcher, PC -> device.
-        pinMode(5,OUTPUT),
-        digitalWriteFast(5, HIGH);
-
+#if MAKE_BIG_DEMO
         de = (PFAT_DIRINFO *)malloc(sizeof (PFAT_DIRINFO));
         data = (uint8_t *)malloc(TESTdsize);
+#endif
+#if !defined(STDIO_IS_OK_TO_USE_AS_IS)
+        while(!USB_HOST_SERIAL);
         USB_HOST_SERIAL.begin(115200);
-        printf("\r\n\r\nStart.");
-        // Initialize generic storage. This must be done before USB starts.
-        Init_Generic_Storage(&UHS_Usb);
-        printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
-        while(UHS_Usb.Init(1000) != 0);
-        printf("\r\n\r\nUSB HOST READY.\r\n");
+        delay(10000);
+        UHS_printf_HELPER_init();
+        USB_HOST_SERIAL.println("Start.");
+#else
+        printf("Start.");
+#endif
+        // Initialize generic storage.
+        int detpins[UHS_MAX_SD_CARDS] = {SDCARD_DETECT_PIN}; // list of sdcard detection pins
+        int cspins[UHS_MAX_SD_CARDS] = {SDCARD_CS_PIN}; // list of CS pins
+        Init_Generic_Storage(detpins, cspins);
+
 }
 
 uint8_t current_state = 128;
@@ -202,50 +304,45 @@ uint8_t last_state = 255;
 
 void loop() {
 
-// change to 1 to show usb task state
-#if 0
-        current_state = UHS_Usb.getUsbTaskState();
-        if(current_state != last_state) {
-                last_state = current_state;
-                printf("USB HOST state %2.2x\r\n", current_state);
-        }
-#endif
-        mounted = fs_ready("/");
+        mounted = fs_ready(VOL_LABEL);
         if(mounted != wasmounted) {
                 wasmounted = mounted;
                 if(mounted != PFAT_VOLUMES) {
                         uint64_t fre;
+#if MAKE_BIG_DEMO
                         uint32_t start;
                         uint32_t end;
                         uint32_t wt;
                         uint32_t rt;
+#endif
                         int res;
                         int fd;
-                        printf("/ mounted.\r\n");
-                        fre = fs_getfree("/");
+                        printf_P(PSTR(VOL_LABEL " mounted.\r\n"));
+#if MAKE_BIG_DEMO
+                        fre = fs_getfree(VOL_PATH);
                         if(fre > 2097152) {
-                                printf("Removing '/HeLlO.tXt' file... ");
+                                printf_P(PSTR("Removing '" VOL_PATH "HeLlO.tXt' file... "));
                                 fflush(stdout);
-                                res = fs_unlink("/hello.txt");
-                                printf("completed with %i\r\n", res);
-                                printf("\r\nStarting Write test...\r\n");
-                                fd = fs_open("/HeLlO.tXt", O_WRONLY | O_CREAT);
+                                res = fs_unlink( VOL_PATH "hello.txt");
+                                printf_P(PSTR("completed with %i\r\n"), res);
+                                printf_P(PSTR("\r\nStarting Write test...\r\n"));
+                                fd = fs_open( VOL_PATH "HeLlO.tXt", O_WRONLY | O_CREAT);
                                 if(fd > 0) {
-                                        printf("File opened OK, fd = %i\r\n", fd);
+                                        printf_P(PSTR("File opened OK, fd = %i\r\n"), fd);
                                         char hi[] = "]-[ello \\/\\/orld!\r\n";
                                         res = fs_write(fd, hi, strlen(hi));
-                                        printf("Wrote %i bytes, ", res);
+                                        printf_P(PSTR("Wrote %i bytes, "), res);
                                         fflush(stdout);
                                         res = fs_close(fd);
-                                        printf("File closed result = %i.\r\n", res);
+                                        printf_P(PSTR("File closed result = %i.\r\n"), res);
                                 } else {
-                                        printf("Error %d (%u)\r\n", fd, fs_err);
+                                        printf_P(PSTR("Error %d (%u)\r\n"), fd, fs_err);
                                 }
-                                printf("\r\nStarting Read test...\r\n");
-                                fd = fs_open("/hElLo.TxT", O_RDONLY);
+                                printf_P(PSTR("\r\nStarting Read test...\r\n"));
+                                fd = fs_open( VOL_PATH "hElLo.TxT", O_RDONLY);
                                 if(fd > 0) {
                                         res = 1;
-                                        printf("File opened OK, fd = %i, displaying contents...\r\n", fd);
+                                        printf_P(PSTR("File opened OK, fd = %i, displaying contents...\r\n"), fd);
 
                                         while(res > 0) {
                                                 res = fs_read(fd, data, TESTdsize);
@@ -254,27 +351,28 @@ void loop() {
                                                         if(data[i] != '\r') fputc(data[i], stdout);
                                                 }
                                         }
-                                        printf("\r\nRead completed, last read result = %i (%i), ", res, fs_err
+                                        printf_P(PSTR("\r\nRead completed, last read result = %i (%i), "), res, fs_err
                                                 );
                                         fflush(stdout);
                                         res = fs_close(fd);
-                                        printf("file close result = %i.\r\n", res);
-                                        printf("Testing rename\r\n");
-                                        fs_unlink("/newtest.txt");
-                                        res = fs_rename("/HeLlO.tXt", "/newtest.txt");
-                                        printf("file rename result = %i.\r\n", res);
+                                        printf_P(PSTR("file close result = %i.\r\n"), res);
+                                        printf_P(PSTR("Testing rename\r\n"));
+                                        fs_unlink( VOL_PATH "newtest.txt");
+                                        res = fs_rename( VOL_PATH "HeLlO.tXt",  VOL_PATH "newtest.txt");
+                                        printf_P(PSTR("file rename result = %i.\r\n"), res);
                                 } else {
-                                        printf("File not found.\r\n");
+                                        printf_P(PSTR("File not found.\r\n"));
                                 }
-                                printf("\r\nRemoving '/1MB.bin' file... ");
+                                printf_P(PSTR("\r\nRemoving '" VOL_PATH "1MB.bin' file... "));
                                 fflush(stdout);
-                                res = fs_unlink("/1MB.bin");
-                                printf("completed with %i\r\n", res);
-                                printf("1MB write timing test ");
+                                res = fs_unlink( VOL_PATH "1MB.bin");
+                                printf_P(PSTR("completed with %i\r\n"), res);
+                                //show_dir(de);
+                                printf_P(PSTR("1MB write timing test "));
                                 fflush(stdout);
 
                                 //for (int i = 0; i < 128; i++) data[i] = i & 0xff;
-                                fd = fs_open("/1MB.bin", O_WRONLY | O_CREAT);
+                                fd = fs_open( VOL_PATH "1MB.bin", O_WRONLY | O_CREAT);
                                 if(fd > 0) {
                                         int i = 0;
                                         delay(500);
@@ -284,21 +382,23 @@ void loop() {
                                                 if(fs_err
                                                         ) break;
                                         }
-                                        printf(" %i writes, (%i), ", i, fs_err);
+                                        printf_P(PSTR(" %i writes, (%i), "), i, fs_err
+                                                );
                                         fflush(stdout);
                                         res = fs_close(fd);
                                         end = millis();
                                         wt = end - start;
-                                        printf("(%i), ", fs_err);
-                                        printf(" %lu ms (%lu sec)\r\n", wt, (500 + wt) / 1000UL);
+                                        printf_P(PSTR("(%i), "), fs_err
+                                                );
+                                        printf_P(PSTR(" %lu ms (%lu sec)\r\n"), wt, (500 + wt) / 1000UL);
                                 }
-                                printf("completed with %i\r\n", fs_err);
+                                printf_P(PSTR("completed with %i\r\n"), fs_err);
 
                                 //show_dir(de);
-                                printf("1MB read timing test ");
+                                printf_P(PSTR("1MB read timing test "));
                                 fflush(stdout);
 
-                                fd = fs_open("/1MB.bin", O_RDONLY);
+                                fd = fs_open( VOL_PATH "1MB.bin", O_RDONLY);
                                 if(fd > 0) {
                                         delay(500);
                                         start = millis();
@@ -310,27 +410,27 @@ void loop() {
                                         }
                                         end = millis();
                                         i--;
-                                        printf("%i reads, (%i), ", i, fs_err);
+                                        printf_P(PSTR("%i reads, (%i), "), i, fs_err);
                                         fflush(stdout);
                                         res = fs_close(fd);
                                         rt = end - start;
-                                        printf(" %lu ms (%lu sec)\r\n", rt, (500 + rt) / 1000UL);
+                                        printf_P(PSTR(" %lu ms (%lu sec)\r\n"), rt, (500 + rt) / 1000UL);
                                 }
-                                printf("completed with %i\r\n", fs_err);
+                                printf_P(PSTR("completed with %i\r\n"), fs_err);
                                 show_dir(de);
-                                printf("\r\nFlushing caches...");
+                                printf_P(PSTR("\r\nFlushing caches..."));
                                 fflush(stdout);
                                 fs_sync(); // IMPORTANT! Sync all caches to all medias!
-                                printf("\r\nRemove and insert media...\r\n");
+                                printf_P(PSTR("\r\nRemove and insert media...\r\n"));
                                 fflush(stdout);
 
                         } else {
                                 printf("Not enough space to run tests.\r\n");
                         }
+#endif
 
                 } else {
-                        printf("No media. Waiting to mount /\r\n");
+                        printf("No media. Waiting to mount "  VOL_LABEL "\r\n");
                 }
         }
 }
-

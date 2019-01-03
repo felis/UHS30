@@ -88,6 +88,9 @@
         </df>
         <df name="UHS_FS">
           <df name="examples">
+            <df name="UHS_FS_SPI_SDCARD_DEMO">
+              <in>UHS_FS_SPI_SDCARD_DEMO.ino</in>
+            </df>
             <df name="UHS_KINETIS_FS_HOST">
               <df name="UHS_FS_NEW_DEMO">
                 <in>UHS_FS_NEW_DEMO.ino</in>
@@ -128,7 +131,6 @@
           <in>UHS_FS.h</in>
           <in>UHS_FS_INLINE.h</in>
           <in>fcntl.h</in>
-          <in>macro_logic.h</in>
         </df>
         <df name="UHS_host">
           <df name="UHS_ADK">
@@ -404,6 +406,11 @@
             tool="1"
             flavor2="4">
       </item>
+      <item path="libraries/UHS_FS/examples/UHS_FS_SPI_SDCARD_DEMO/UHS_FS_SPI_SDCARD_DEMO.ino"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
       <item path="libraries/UHS_FS/examples/UHS_KINETIS_FS_HOST/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
             ex="false"
             tool="1"
@@ -650,8 +657,6 @@
             ex="false"
             tool="1"
             flavor2="4">
-      </item>
-      <item path="libraries/UHS_FS/macro_logic.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_ADK/examples/UHS_KINETIS_FS_HOST/ArduinoBlinkLED/ArduinoBlinkLED.ino"
             ex="false"
@@ -965,14 +970,17 @@
       </item>
       <item path="libraries/UHS_FS/UHS_FS_INLINE.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="libraries/UHS_FS/examples/UHS_FS_SPI_SDCARD_DEMO/UHS_FS_SPI_SDCARD_DEMO.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
       <item path="libraries/UHS_FS/examples/USB_HOST_SHIELD/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
             ex="false"
             tool="1"
             flavor2="0">
       </item>
       <item path="libraries/UHS_FS/fcntl.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="libraries/UHS_FS/macro_logic.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_ADK/UHS_ADK.h"
             ex="false"

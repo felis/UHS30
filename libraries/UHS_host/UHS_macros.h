@@ -17,9 +17,7 @@ Web      :  http://www.circuitsathome.com
 e-mail   :  support@circuitsathome.com
  */
 
-#if !defined(_UHS_host_h_) || defined(MACROS_H)
-#error "Never include UHS_macros.h directly; include UHS_Usb.h instead"
-#else
+#if !defined(MACROS_H)
 #define MACROS_H
 #include "macro_logic.h"
 /*

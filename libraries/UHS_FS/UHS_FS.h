@@ -26,18 +26,23 @@ e-mail   :  support@circuitsathome.com
 
 #ifndef UHS_FS_H
 #define	UHS_FS_H
-
-#include "macro_logic.h"
+// from UHS_host lib...
+#include <UHS_settings.h>
+#include <UHS_macros.h>
+#include <UHS_printf_HELPER.h>
 #include <ISR_safe_memory.h>
 #include "FAT/FatFS/src/ff.h"
 #include "fcntl.h"
 #ifdef UHS_USE_SDCARD
+#include <SPI.h>
 #ifndef __UHS_BULK_STORAGE_H__
 #endif
 #endif
 #if !defined(NOTUSED)
 #define NOTUSED(...)  __VA_ARGS__ __attribute__((unused))
 #endif
+
+#include <RTClib.h>
 
 #ifdef __cplusplus
 extern "C" {

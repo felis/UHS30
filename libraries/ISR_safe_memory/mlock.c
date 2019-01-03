@@ -121,7 +121,7 @@ static volatile uint32_t irecover;
 
 void
 __malloc_lock(ptr)
-struct _reent *ptr;
+struct _reent *ptr __attribute__((unused));
 {
 #ifdef __USE_ISR_SAFE_MALLOC__
 #if defined(__arm__)
@@ -149,7 +149,7 @@ static volatile uint32_t i;
 
 void
 __malloc_unlock(ptr)
-struct _reent *ptr;
+struct _reent *ptr __attribute__((unused));
 {
 #ifndef __SINGLE_THREAD__
         __lock_release_recursive(__malloc_lock_object);

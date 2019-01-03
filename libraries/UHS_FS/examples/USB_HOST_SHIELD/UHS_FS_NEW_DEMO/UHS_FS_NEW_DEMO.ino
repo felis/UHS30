@@ -88,9 +88,6 @@
 
 #define TESTcycles (1048576/TESTdsize)
 
-
-#define _USE_FASTSEEK 0
-
 /* The _CODE_PAGE specifies the OEM code page to be used on the target system.
  * Incorrect setting of the code page can cause a file open failure.
  *
@@ -121,8 +118,9 @@
  *  1257 - Baltic (Windows)
  *  1258 - Vietnam (OEM, Windows)
  */
-#define _USE_LFN 3
-#define _CODE_PAGE 437
+// default 3, 437
+//#define _USE_LFN 3
+//#define _CODE_PAGE 437
 
 // Set how many file and directory objects allowed opened at once.
 // Values from >= 1 are acceptable.
@@ -141,7 +139,8 @@
 // 1000         |       1000            | 1000
 // ...          |       ...             | ...
 
-#define	_FS_LOCK 1
+// default 1
+//#define	_FS_LOCK 1
 
 
 #include <RTClib.h>
@@ -215,10 +214,6 @@ void show_dir(PFAT_DIRINFO *de) {
                         }
 
                 } while(!res);
-                //printf("CLOSEDIR\r\n");
-                //fflush(stdout);
-                //delay(1000);
-
                 fs_closedir(fd);
 
                 fre = fs_getfree(VOL_PATH);
@@ -258,12 +253,9 @@ uint8_t current_state = 128;
 uint8_t last_state = 255;
 
 void loop() {
-        // The following does not work yet!
-#if !USB_HOST_SHIELD_USE_ISR
-        UHS_Usb.Task();
-#endif
 
-#if 1
+// change to 1 to show usb task state
+#if 0
         current_state = UHS_Usb.getUsbTaskState();
         if(current_state != last_state) {
                 last_state = current_state;
