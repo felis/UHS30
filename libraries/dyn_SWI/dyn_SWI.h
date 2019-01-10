@@ -110,6 +110,8 @@ extern "C"
 #define SWI_IRQ_NUM 30
 #elif defined(__MK64FX512__)
 #define SWI_IRQ_NUM 30
+#elif defined(__IMXRT1052__) || defined(__IMXRT1062__)
+#define SWI_IRQ_NUM 71
 #else
 #error Do not know how to relocate IRQ vectors for this pjrc product
 #endif
