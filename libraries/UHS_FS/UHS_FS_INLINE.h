@@ -32,7 +32,7 @@ extern "C" {
         static PFAT *Fats[PFAT_VOLUMES];
         static storage_t *sto[PFAT_VOLUMES];
 
-#ifdef __UHS_BULK_STORAGE_H
+#ifdef __UHS_BULK_STORAGE_H__
         static bool last_ready[MAX_USB_MS_DRIVERS][MASS_MAX_SUPPORTED_LUN];
 
         static void none_ready(int idx) {
@@ -58,13 +58,12 @@ extern "C" {
         }
 #endif
 
-#ifdef __UHS_BULK_STORAGE_H
+#ifdef __UHS_BULK_STORAGE_H__
 
         static void kill_mounts(int idx, int drv) {
                 for(int f = 0; f < PFAT_VOLUMES; f++) {
                         if(Fats[f] != NULL) {
                                 if(sto[f]->driver_type == drv) {
-#ifdef __UHS_BULK_STORAGE_H
                                         if(drv == 0) {
                                                 if(((pvt_t *)sto[f]->private_data)->B == idx) {
                                                         delete Fats[f];
@@ -74,26 +73,6 @@ extern "C" {
                                                         none_ready(idx);
                                                 }
                                         }
-#endif
-
-#if 0
-                                                // Probably not needed
-                                                //you can't yank out a SDcard interface
-#ifdef UHS_USE_SDCARD
-#ifdef __UHS_BULK_STORAGE_H
-                                        else
-#endif
-                                                if(drv == 1) {
-                                                if(((SDpvt_t *)sto[f]->private_data)->B == idx) {
-                                                        delete Fats[f];
-                                                        Fats[f] = NULL;
-                                                        delete (SDpvt_t *)sto[f]->private_data;
-                                                        sto[f]->private_data = NULL;
-                                                        SD_none_ready(idx);
-                                                }
-                                        }
-#endif
-#endif
                                 }
                         }
                 }
