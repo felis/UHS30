@@ -729,6 +729,14 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         HOST_DUBUG("SetAddress, speed=%ld, maxlen=%ld\r\n", speed, maxlen);
         // maxlen = 16; // uncomment for testing with device having ep0 maxlen=16
 
+	// TODO: OutTransfer() for mass storage is failing because maxlen is zero!
+	// How can this be?  Whatever endpoint we're going to use couldn't possibly
+	// have a 0 byte maximum packet length.  That makes no sense at all.
+	if (maxlen == 0) {
+		maxlen = (speed == 2 && type == 2) ? 512 : 64; // just blind guess!
+		HOST_DUBUG("  WARNING: horrible maxlen hack, guessing %ld\r\n", maxlen);
+	}
+
         // TODO, bmParent & bmAddress do not seem to always work
         // Paul: these are not what you think they are, that's why :-)
 
@@ -799,6 +807,23 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                                 // no longer active, not halted, no errors... so ok
                                 return UHS_HOST_ERROR_NONE;
                         }
+			if (((status & 0xFF) == 0x01) && (QH.staticEndpointStates[0] & (1<<13))) {
+				// 480 Mbit OUT endpoint responded with NYET token.
+				// Officially, we are supposed to remember this
+				// endpoint is in the "ping state" (see section
+				// 8.5.1 in the USB 2.0 spec, pages 217-220) and
+				// *next* time we wish to send an OUT packet, first
+				// send PING packets until it answers ACK.
+				// But UHS_EpInfo does not have any way to retain
+				// this info about the endpoint's state.  Even if it
+				// did, we don't have a pointer to this endpoint's
+				// UHS_EpInfo struct here.  Hard to see how we can
+				// hope to do the PING protocol properly.  For now,
+				// we'll just pretend the endpoint returned ACK and
+				// hope the device might work even if we don't do
+				// PING protocol as the USB 2.0 spec requires.
+				return UHS_HOST_ERROR_NONE;
+			}
                         // one of many possible errors
                         // TODO: do we need to clear halt condition or
                         // do anything else special here to deal with errors?
@@ -819,6 +844,15 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
         }
         if(condet) return UHS_HOST_ERROR_UNPLUGGED;
         return UHS_HOST_ERROR_TIMEOUT;
+}
+
+uint8_t UHS_NI UHS_KINETIS_EHCI::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data) {
+	HOST_DUBUG("OutTransfer %d\n", nbytes);
+	init_qTD(data, nbytes, 0, pep->bmRcvToggle, false);
+	uint8_t rcode = dispatchPkt(0, 0, nak_limit);
+	uint32_t status = qTD.transferResults;
+	pep->bmRcvToggle = status >> 31;
+	return rcode;
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data) {
