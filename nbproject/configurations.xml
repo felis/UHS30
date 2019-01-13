@@ -139,9 +139,6 @@
                 <df name="ArduinoBlinkLED">
                   <in>ArduinoBlinkLED.ino</in>
                 </df>
-                <df name="demokit_20">
-                  <in>demokit_20.ino</in>
-                </df>
               </df>
               <df name="USB_HOST_SHIELD">
                 <df name="ArduinoBlinkLED">
@@ -201,16 +198,6 @@
             <in>UHS_CDC_ACM_XR21B1411.h</in>
           </df>
           <df name="UHS_HID">
-            <df name="examples">
-              <df name="USB_HOST_SHIELD">
-                <df name="UHS_HID_KB_MOUSE">
-                  <in>UHS_HID_KB_MOUSE.ino</in>
-                </df>
-                <df name="UHS_HID_RAW">
-                  <in>UHS_HID_RAW.ino</in>
-                </df>
-              </df>
-            </df>
             <df name="HIDBOOT">
               <in>UHS_HIDRAWBOOT_KEYBOARD.h</in>
               <in>UHS_HIDRAWBOOT_MOUSE.h</in>
@@ -247,24 +234,6 @@
             <in>UHS_KINETIS_FS_HOST_INLINE.h</in>
           </df>
           <df name="UHS_MIDI">
-            <df name="examples">
-              <df name="UHS_KINETIS_FS_HOST">
-                <df name="USB_MIDI_Converter">
-                  <in>USB_MIDI_Converter.ino</in>
-                </df>
-                <df name="USB_MIDI_dump">
-                  <in>USB_MIDI_dump.ino</in>
-                </df>
-              </df>
-              <df name="USB_HOST_SHIELD">
-                <df name="USB_MIDI_Converter">
-                  <in>USB_MIDI_Converter.ino</in>
-                </df>
-                <df name="USB_MIDI_dump">
-                  <in>USB_MIDI_dump.ino</in>
-                </df>
-              </df>
-            </df>
             <in>UHS_MIDI.h</in>
             <in>UHS_MIDI_INLINE.h</in>
           </df>
@@ -668,11 +637,6 @@
             tool="1"
             flavor2="0">
       </item>
-      <item path="libraries/UHS_host/UHS_HID/examples/USB_HOST_SHIELD/UHS_HID_KB_MOUSE/UHS_HID_KB_MOUSE.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
       <item path="libraries/UHS_host/UHS_KINETIS_EHCI/examples/KINETIS_EHCI_TEST/KINETIS_EHCI_TEST.ino"
             ex="false"
             tool="1"
@@ -992,16 +956,6 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="libraries/UHS_host/UHS_ADK/examples/UHS_KINETIS_FS_HOST/demokit_20/demokit_20.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_ADK/examples/USB_HOST_SHIELD/ArduinoBlinkLED/ArduinoBlinkLED.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
       <item path="libraries/UHS_host/UHS_ADK/examples/USB_HOST_SHIELD/demokit_20/demokit_20.ino"
             ex="false"
             tool="1"
@@ -1020,11 +974,6 @@
       <item path="libraries/UHS_host/UHS_BULK_STORAGE/UHS_SCSI.h"
             ex="false"
             tool="3"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_BULK_STORAGE/examples/USB_HOST_SHIELD/TEST_BULK/TEST_BULK.ino"
-            ex="false"
-            tool="1"
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_CDC/UHS_CDC.h"
@@ -1097,16 +1046,6 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="libraries/UHS_host/UHS_HID/examples/USB_HOST_SHIELD/UHS_HID_KB_MOUSE/UHS_HID_KB_MOUSE.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_HID/examples/USB_HOST_SHIELD/UHS_HID_RAW/UHS_HID_RAW.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
       <item path="libraries/UHS_host/UHS_HUB/UHS_HUB.h"
             ex="false"
             tool="3"
@@ -1127,6 +1066,11 @@
             tool="3"
             flavor2="0">
       </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_EHCI/examples/KINETIS_EHCI_TEST/KINETIS_EHCI_TEST.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
       <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/UHS_KINETIS_FS_HOST.h"
             ex="false"
             tool="3"
@@ -1145,26 +1089,6 @@
       <item path="libraries/UHS_host/UHS_MIDI/UHS_MIDI_INLINE.h"
             ex="false"
             tool="3"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_MIDI/examples/UHS_KINETIS_FS_HOST/USB_MIDI_Converter/USB_MIDI_Converter.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_MIDI/examples/UHS_KINETIS_FS_HOST/USB_MIDI_dump/USB_MIDI_dump.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_MIDI/examples/USB_HOST_SHIELD/USB_MIDI_Converter/USB_MIDI_Converter.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/UHS_MIDI/examples/USB_HOST_SHIELD/USB_MIDI_dump/USB_MIDI_dump.ino"
-            ex="false"
-            tool="1"
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_UNOFFICIAL_IDs.h"
@@ -1222,16 +1146,6 @@
       <item path="libraries/UHS_host/USB_HOST_SHIELD/USB_HOST_SHIELD_INLINE.h"
             ex="false"
             tool="3"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/USB_HOST_SHIELD/examples/TWO_HOSTS_BULK/TWO_HOSTS_BULK.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="libraries/UHS_host/USB_HOST_SHIELD/examples/board_qc/board_qc.ino"
-            ex="false"
-            tool="1"
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/macro_logic.h" ex="false" tool="3" flavor2="0">
