@@ -7,7 +7,7 @@ BOARD=teensy:avr:teensy31:usb=serial,speed=96,opt=o1std,keys=en-us
 #BOARD=teensy:avr:teensy33:usb=serial,speed=96,opt=o1std,keys=en-us
 #BOARD=teensy:avr:teensy34::usb=serial,speed=96,opt=o1std,keys=en-us
 #BOARD=teensy:avr:teensy35:usb=serial,speed=96opt,keys=en-us
-#BOARD=teensy:avr:teensy36:usb=serial,speed=96opt,keys=en-us
+#BOARD=teensy:avr:teensy36:usb=serial,speed=180,opt=o1std,keys=en-us
 #BOARD=teensy:avr:teensypp2:usb=serial,speed=16,keys=en-us
 #BOARD=arduino:avr:mega:cpu=atmega2560
 

@@ -1,9 +1,3 @@
-// Note: to use Serial 1 for debugging
-// Attach FTDI or similar to pins 0 and 1
-// N/8/1 @ 115200
-// and uncomment the next two lines.
-//#define USB_HOST_SERIAL Serial1
-//#define USB_HOST_SERIAL_NOWAIT
 // Send an 's' to print out the INTEN and CTL registers.
 // Send a 'p' to print out status of the interface.
 

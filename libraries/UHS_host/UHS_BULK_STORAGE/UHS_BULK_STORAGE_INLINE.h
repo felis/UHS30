@@ -377,7 +377,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
         //        Serial.print("Bulk Start USB Host Address Pool @ 0x");
         //        Serial.println((uint32_t)pUsb->GetAddressPool(), HEX);
 
-        BS_HOST_DEBUG("BS Start, speed: %i\r\n", pUsb->GetAddressPool()->GetUsbDevicePtr(bAddress)->usb_host_speed);
+        BS_HOST_DEBUG("BS Start, speed: %i\r\n", pUsb->GetAddressPool()->GetUsbDevicePtr(bAddress)->speed);
         USBTRACE("BS Start\r\n");
         rcode = pUsb->setEpInfoEntry(bAddress, bIface, 3, epInfo);
         //        Serial.println(rcode,HEX);
@@ -392,7 +392,8 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                 goto FailGetMaxLUN;
         }
         if(bMaxLUN >= MASS_MAX_SUPPORTED_LUN) bMaxLUN = MASS_MAX_SUPPORTED_LUN - 1;
-        ErrorMessage<uint8_t > (PSTR("MaxLUN"), bMaxLUN);
+        BS_HOST_DEBUG("MaxLUN %u\r\n", bMaxLUN);
+        //ErrorMessage<uint8_t > (PSTR("MaxLUN"), bMaxLUN);
         if(!UHS_SLEEP_MS(150)) goto FailUnPlug; // Delay a bit for slow firmware. (again)
 
         for(uint8_t lun = 0; lun <= bMaxLUN; lun++) {
@@ -466,10 +467,10 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                 if(!rcode) {
                         if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
                         BS_HOST_DEBUG("CheckLUN...\r\n");
-                        BS_HOST_DEBUG("%u\r\n", millis()/1000);
+                        BS_HOST_DEBUG("%lu\r\n", millis()/1000);
                         // Stalls on ***some*** devices, ***WHY***?! Device SAID it is READY!!
                         LUNOk[lun] = CheckLUN(lun);
-                        BS_HOST_DEBUG("%u\r\n", millis()/1000);
+                        BS_HOST_DEBUG("%lu\r\n", millis()/1000);
                         if(!LUNOk[lun]) LUNOk[lun] = CheckLUN(lun);
                         if(!UHS_SLEEP_MS(1)) goto FailUnPlug;
                         BS_HOST_DEBUG("Checked LUN...\r\n");

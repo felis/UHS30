@@ -226,6 +226,7 @@ uint8_t UHS_NI UHS_USBHub::PortStatusChange(uint8_t port, UHS_HubEvent &evt) {
         UHS_DeviceAddress a;
         a.devAddress = 0;
         a.bmHub = 0;
+        // This isn't correct.
         a.bmParent = bAddress;
         a.bmAddress = port;
 

@@ -686,7 +686,7 @@ structure.
  */
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t & nak_limit) {
-        HOST_DUBUG("SetAddress, addr=%d, ep=%x\n", addr, ep);
+        HOST_DUBUG("SetAddress, addr=%d, ep=%x\r\n", addr, ep);
 
         UHS_Device *p = addrPool.GetUsbDevicePtr(addr);
         if(!p) return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
@@ -726,23 +726,29 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         // Paul: Never seen this happen, save for a few broken devices.
 
         uint32_t maxlen = (*ppep)->maxPktSize;
-        HOST_DUBUG("SetAddress, speed=%ld, maxlen=%ld\n", speed, maxlen);
+        HOST_DUBUG("SetAddress, speed=%ld, maxlen=%ld\r\n", speed, maxlen);
         // maxlen = 16; // uncomment for testing with device having ep0 maxlen=16
 
         // TODO, bmParent & bmAddress do not seem to always work
         // Paul: these are not what you think they are, that's why :-)
-        // bmParent (if non-zero) == the parent hub, zero == the host controller
-        // bmAddress == the actual address we want to talk to, however
-        // hubs are stupid devices normally.
-        // Since EHCI is twiddling TT's we'll have to note, or ask external hubs what port.
-        // This isn't implemented yet, so for now we are stuck and can't use hubs...
 
         uint32_t hub_addr = p->address.bmParent;
         uint32_t hub_port = 1; // hub ports start at zero
         if(hub_addr) {
                 // get port number from hub, somehow... perhaps needs to be a new field... argh
+                // Paul:
+                // bmParent (if non-zero) == the parent hub, zero == the host controller
+                // bmAddress == the actual address we want to talk to, however
+                // hubs are stupid devices normally.
+                //
+                // Since EHCI is twiddling TT's we'll have to note, or ask external hubs what port.
+                // This isn't implemented yet, so for now we are stuck and can't use hubs...
+                // We will be able to decode port from address, though
+                // bool is_a_hub = (bmUSB_DEV_ADDR_HUB & addr) == bmUSB_DEV_ADDR_HUB;
+                // uint8_t port = (bmUSB_DEV_ADDR_ADDRESS & addr);
+                
         }
-        printf("SetAddress, parent=%lu, parent_port=%lu\n", hub_addr, hub_port);
+        printf("SetAddress, parent=%lu, parent_port=%lu\r\n", hub_addr, hub_port);
 
         if(type == 0 && speed != 2) {
                 c = 1;
@@ -762,7 +768,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         // the important stuff off the window.
         static int diecount = 0;
         if(++diecount > 5) {
-                printf("DIE HERE\n");
+                printf("DIE HERE\r\n");
                 while(1);
         }
 #endif
@@ -787,7 +793,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                 // Wait for a state change.
                 // See UHS_KINETIS_FS_HOST_INLINE.h
                 uint32_t status = qTD.transferResults;
-                //HOST_DUBUG("dispatchPkt %lx\n", status);
+                //HOST_DUBUG("dispatchPkt %lx\r\n", status);
                 if(!(status & 0x80)) {
                         if(!(status & 0xffu)) {
                                 // no longer active, not halted, no errors... so ok
@@ -816,7 +822,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data) {
-        HOST_DUBUG("InTransfer %d\n", *nbytesptr);
+        HOST_DUBUG("InTransfer %d\r\n", *nbytesptr);
         init_qTD(data, *nbytesptr, 1, pep->bmRcvToggle, false);
         uint8_t rcode = dispatchPkt(0, 0, nak_limit);
         uint32_t status = qTD.transferResults;
@@ -826,7 +832,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
 }
 
 UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr) {
-        HOST_DUBUG("ctrlReqOpen\n");
+        HOST_DUBUG("ctrlReqOpen\r\n");
 
         UHS_EpInfo *pep = NULL;
         uint16_t nak_limit = 0;
@@ -855,7 +861,21 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
 uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t * dataptr) {
         printf("ctrlReqRead left: %i, nbytes: %i, dataptr: %lx\r\n",
                 *left, nbytes, (uint32_t)dataptr);
-
+#if 1
+        uint8_t rcode = 0;
+        if(*left) {
+                *read = nbytes;
+                rcode = InTransfer(pep, 0, read, dataptr);
+                if(rcode) {
+                        HOST_DUBUG("ctrlReqRead ERROR: %2.2x, left: %i, read %i\r\n", rcode, *left, *read);
+                } else {
+                        *left -= *read;
+                        HOST_DUBUG("ctrlReqRead left: %i, read %i\r\n", *left, *read);
+                }
+        }
+        return rcode;
+#else
+        // Paul... wtf??
         if(*left > 0) {
                 uint16_t n = *left;
                 uint8_t *ptr = dataptr + nbytes - n; // really?!
@@ -871,6 +891,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, ui
                 *read = 0;
                 return 0;
         }
+#endif
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr) {
@@ -879,6 +900,15 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType
         if(((bmReqType & 0x80) == 0x80) && pep && left && dataptr) {
                 HOST_DUBUG("ctrlReqClose Sinking %i\r\n", left);
                 // TODO: is this needed?
+                // Paul: Yes! otherwise USB will stall and die. -- AJK
+                while(left) {
+                        uint16_t read = nbytes;
+                        rcode = InTransfer(pep, 0, &read, dataptr);
+                        if(rcode) break;
+                        left -= read;
+                        if(read < nbytes) break;
+                }
+
         }
 
         if(((bmReqType & 0x80) == 0x80)) {

@@ -31,8 +31,8 @@ e-mail   :  support@circuitsathome.com
 #define UHS_USB_NAK_NOWAIT                  1       // Single NAK stops transfer
 #define UHS_USB_NAK_NONAK                   0       // Do not count NAKs, stop retrying after USB Timeout. Try not to use this.
 
-#define bmUSB_DEV_ADDR_ADDRESS          0x07
-#define bmUSB_DEV_ADDR_PARENT           0x38
+#define bmUSB_DEV_ADDR_PORT             0x07
+#define bmUSB_DEV_ADDR_PARENT           0x78
 #define bmUSB_DEV_ADDR_HUB              0x40
 
 struct UHS_EpInfo {
@@ -51,14 +51,14 @@ struct UHS_EpInfo {
         };
 } __attribute__((packed));
 
-//        7   6   5   4   3   2   1   0
+//    7   6   5   4   3   2   1   0
 //  ---------------------------------
 //  |   | H | P | P | P | A | A | A |
 //  ---------------------------------
 //
 // H - if 1 the address is a hub address
-// P - parent hub address
-// A - device address / port number in case of hub
+// P - parent hub number
+// A - device address, also port number of parent
 //
 
 struct UHS_DeviceAddress {
