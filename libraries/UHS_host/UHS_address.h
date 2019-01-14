@@ -38,7 +38,7 @@ e-mail   :  support@circuitsathome.com
 struct UHS_EpInfo {
         uint8_t epAddr; // Endpoint address
         uint8_t bIface;
-        uint8_t maxPktSize; // Maximum packet size
+        uint16_t maxPktSize; // Maximum packet size
 
         union {
                 uint8_t epAttribs;

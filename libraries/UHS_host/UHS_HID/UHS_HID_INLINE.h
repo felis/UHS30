@@ -65,11 +65,12 @@ uint8_t UHS_NI UHS_HID::SetInterface(ENUMERATION_INFO *ei) {
                         }
                         index = ((ei->interface.epInfo[ep].bEndpointAddress & USB_TRANSFER_DIRECTION_IN) == USB_TRANSFER_DIRECTION_IN) ? epInterruptInIndex : epInterruptOutIndex;
                         epInfo[index].epAddr = (ei->interface.epInfo[ep].bEndpointAddress & 0x0F);
-                        epInfo[index].maxPktSize = (uint8_t)(ei->interface.epInfo[ep].wMaxPacketSize);
+                        epInfo[index].maxPktSize = ei->interface.epInfo[ep].wMaxPacketSize;
                         epInfo[index].epAttribs = 0;
                         epInfo[index].bmNakPower = UHS_USB_NAK_NOWAIT;
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
+                        epInfo[index].bIface=ei->interface.bInterfaceNumber;
                 }
         }
         epInfo[0].epAddr = 0;

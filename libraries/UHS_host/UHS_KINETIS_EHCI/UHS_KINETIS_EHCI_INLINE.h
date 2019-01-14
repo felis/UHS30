@@ -5,7 +5,6 @@
  * Created on July 31, 2016, 1:01 AM
  */
 
-// TO-DO: TX/RX packets.
 
 #if defined(UHS_KINETIS_EHCI_H) && !defined(UHS_KINETIS_EHCI_LOADED)
 
@@ -165,7 +164,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                 interrupts();
         }
 
-        HOST_DUBUG("ISRbottom, usb_task_state: 0x%0X \r\n", (uint8_t)usb_task_state);
+        //HOST_DUBUG("ISRbottom, usb_task_state: 0x%0X \r\n", (uint8_t)usb_task_state);
 
         switch(usb_task_state) {
                 case UHS_USB_HOST_STATE_INITIALIZE: /* 0x10 */ // initial state
@@ -232,11 +231,10 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                         usb_task_state = UHS_USB_HOST_STATE_RUNNING;
                         break;
                 case UHS_USB_HOST_STATE_CHECK: /* 0x0E */
-                        // Serial.println((uint32_t)__builtin_return_address(0),HEX);
                         break;
                 case UHS_USB_HOST_STATE_ERROR: /* 0xF0 */
-                        HOST_DUBUG("ISRbottom, error state, die here\r\n");
-                        while(1);
+                        HOST_DUBUG("ISRbottom, UHS_USB_HOST_STATE_ERROR\r\n");
+                        //while(1);
                         break;
                 case UHS_USB_HOST_STATE_RUNNING: /* 0x60 */
                         //printf("ISRbottom, UHS_USB_HOST_STATE_RUNNING\r\n");
@@ -499,16 +497,13 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         OSC0_CR |= OSC_ERCLKEN;
         SIM_SOPT2 |= SIM_SOPT2_USBREGEN; // turn on USB regulator
         SIM_SOPT2 &= ~SIM_SOPT2_USBSLSRC; // use IRC for slow clock
-#if defined(EHCI_TEST_DEV)
-        printf("power up USBHS PHY\r\n");
-#endif
+        HOST_DUBUG("power up USBHS PHY\r\n");
         SIM_USBPHYCTL |= SIM_USBPHYCTL_USBDISILIM; // disable USB current limit
         //SIM_USBPHYCTL = SIM_USBPHYCTL_USBDISILIM | SIM_USBPHYCTL_USB3VOUTTRG(6); // pg 237
         SIM_SCGC3 |= SIM_SCGC3_USBHSDCD | SIM_SCGC3_USBHSPHY | SIM_SCGC3_USBHS;
         USBHSDCD_CLOCK = 33 << 2;
-#if defined(EHCI_TEST_DEV)
-        printf("init USBHS PHY & PLL\r\n");
-#endif
+        HOST_DUBUG("init USBHS PHY & PLL\r\n");
+
         // init process: page 1681-1682
         USBPHY_CTRL_CLR = (USBPHY_CTRL_SFTRST | USBPHY_CTRL_CLKGATE); // // CTRL pg 1698
         USBPHY_TRIM_OVERRIDE_EN_SET = 1;
@@ -519,23 +514,20 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         while((USBPHY_PLL_SIC & USBPHY_PLL_SIC_PLL_LOCK) == 0) {
                 count++;
         }
-#if defined(EHCI_TEST_DEV)
-        printf("PLL locked, waited %i\r\n", count);
-#endif
+        HOST_DUBUG("PLL locked, waited %i\r\n", count);
+
         // turn on power to PHY
         USBPHY_PWD = 0;
         delay(10);
-#if defined(EHCI_TEST_DEV)
-        printf("begin ehci reset\r\n");
-#endif
+        HOST_DUBUG("begin ehci reset\r\n");
+
         USBHS_USBCMD |= USBHS_USBCMD_RST;
         count = 0;
         while(USBHS_USBCMD & USBHS_USBCMD_RST) {
                 count++;
         }
-#if defined(EHCI_TEST_DEV)
-        printf("reset waited %i\r\n", count);
-#endif
+        HOST_DUBUG("reset waited %i\r\n", count);
+
         // turn on the USBHS controller
         USBHS_USBMODE = /* USBHS_USBMODE_TXHSD(5) |*/ USBHS_USBMODE_CM(3); // host mode
         USBHS_FRINDEX = 0;
@@ -729,13 +721,14 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         HOST_DUBUG("SetAddress, speed=%ld, maxlen=%ld\r\n", speed, maxlen);
         // maxlen = 16; // uncomment for testing with device having ep0 maxlen=16
 
-	// TODO: OutTransfer() for mass storage is failing because maxlen is zero!
+        // Fixed.
+	// OutTransfer() for mass storage is failing because maxlen is zero!
 	// How can this be?  Whatever endpoint we're going to use couldn't possibly
 	// have a 0 byte maximum packet length.  That makes no sense at all.
-	if (maxlen == 0) {
-		maxlen = (speed == 2 && type == 2) ? 512 : 64; // just blind guess!
-		HOST_DUBUG("  WARNING: horrible maxlen hack, guessing %ld\r\n", maxlen);
-	}
+        // if (maxlen == 0) {
+	//	maxlen = (speed == 2 && type == 2) ? 512 : 64; // just blind guess!
+	//	HOST_DUBUG("  WARNING: horrible maxlen hack, guessing %ld\r\n", maxlen);
+	//}
 
         // TODO, bmParent & bmAddress do not seem to always work
         // Paul: these are not what you think they are, that's why :-)
@@ -754,9 +747,9 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
                 // We will be able to decode port from address, though
                 // bool is_a_hub = (bmUSB_DEV_ADDR_HUB & addr) == bmUSB_DEV_ADDR_HUB;
                 // uint8_t port = (bmUSB_DEV_ADDR_ADDRESS & addr);
-                
+
         }
-        printf("SetAddress, parent=%lu, parent_port=%lu\r\n", hub_addr, hub_port);
+        HOST_DUBUG("SetAddress, parent=%lu, parent_port=%lu\r\n", hub_addr, hub_port);
 
         if(type == 0 && speed != 2) {
                 c = 1;
@@ -837,10 +830,6 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                         // we need to get the actual translated error, for now, we'll say NAK here too
                         return UHS_HOST_ERROR_NAK;
                 }
-                //if(isrHappened) {
-                // ditto...
-                //        return UHS_HOST_ERROR_NAK;
-                //}
         }
         if(condet) return UHS_HOST_ERROR_UNPLUGGED;
         return UHS_HOST_ERROR_TIMEOUT;
@@ -893,7 +882,7 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t * dataptr) {
-        printf("ctrlReqRead left: %i, nbytes: %i, dataptr: %lx\r\n",
+        HOST_DUBUG("ctrlReqRead left: %i, nbytes: %i, dataptr: %lx\r\n",
                 *left, nbytes, (uint32_t)dataptr);
 #if 1
         uint8_t rcode = 0;
@@ -954,12 +943,6 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType
         }
         return rcode;
 }
-
-
-
-
-
-
 
 #endif	/* UHS_KINETIS_EHCI_INLINE_H */
 
