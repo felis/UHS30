@@ -790,7 +790,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
         isrHappened = false;
 
         while(!condet) {
-                // Paul: Better to watch this from the ISR.
+                // Paul: Better to watch this from the ISR?
                 // Wait for a state change.
                 // See UHS_KINETIS_FS_HOST_INLINE.h
                 uint32_t status = qTD.transferResults;
@@ -800,7 +800,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                                 // no longer active, not halted, no errors... so ok
                                 return UHS_HOST_ERROR_NONE;
                         }
-			if (((status & 0xFF) == 0x01) && (QH.staticEndpointStates[0] & (1<<13))) {
+			if ((status & 0x01u) && (QH.staticEndpointStates[0] & (1<<13))) {
 				// 480 Mbit OUT endpoint responded with NYET token.
 				// Officially, we are supposed to remember this
 				// endpoint is in the "ping state" (see section
@@ -815,15 +815,27 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
 				// we'll just pretend the endpoint returned ACK and
 				// hope the device might work even if we don't do
 				// PING protocol as the USB 2.0 spec requires.
+                                // Handle in OutTransfer.
+
 				return UHS_HOST_ERROR_NONE;
 			}
-                        // one of many possible errors
-                        // TODO: do we need to clear halt condition or
-                        // do anything else special here to deal with errors?
-                        // no. NAK != real error though...
-                        // Paul: 2 options- Translate in the ISR, or translate here.
-                        //       It is easier to translate in the ISR.
-                        //       See UHS_KINETIS_FS_HOST_INLINE.h
+
+                        // Important??
+                        // if(status & 0x02u) return; // split state...
+                        // if(status & 0x04u) return; // Missed Micro-Frame...
+
+                        if(status & 0x10u) return UHS_HOST_ERROR_BABBLE;// Babble Detected
+                        if(status & 0x20u) return UHS_HOST_ERROR_DMA; // Data Buffer Error
+                        if(status & 0x48u) {  // Halted or Transaction Error
+                                // Needs to return one of:
+                                // STALL
+                                // if error counter reached 0:
+                                // UHS_HOST_ERROR_TIMEOUT
+                                // UHS_HOST_ERROR_CRC
+                                // UHS_HOST_ERROR_TOGERR
+                                // UHS_HOST_ERROR_WRONGPID
+                                // Are these available??
+                        }
                         return UHS_HOST_ERROR_NAK;
                 }
                 if(newError) {

@@ -26,8 +26,8 @@ e-mail   :  support@circuitsathome.com
 
 /* NAK powers. To save space in endpoint data structure, amount of retries before giving up and returning 0x4 is stored in */
 /* bmNakPower as a power of 2. The actual nak_limit is then calculated as nak_limit = ( 2^bmNakPower - 1) */
-#define UHS_USB_NAK_MAX_POWER               15      // NAK binary order maximum value
-#define UHS_USB_NAK_DEFAULT                 14      // default 32K-1 NAKs before giving up
+#define UHS_USB_NAK_MAX_POWER               14      // NAK binary order maximum value
+#define UHS_USB_NAK_DEFAULT                 13      // default 16K-1 NAKs before giving up
 #define UHS_USB_NAK_NOWAIT                  1       // Single NAK stops transfer
 #define UHS_USB_NAK_NONAK                   0       // Do not count NAKs, stop retrying after USB Timeout. Try not to use this.
 
@@ -46,7 +46,8 @@ struct UHS_EpInfo {
                 struct {
                         uint8_t bmSndToggle : 1; // Send toggle, when zero bmSNDTOG0, bmSNDTOG1 otherwise
                         uint8_t bmRcvToggle : 1; // Send toggle, when zero bmRCVTOG0, bmRCVTOG1 otherwise
-                        uint8_t bmNakPower : 6; // Binary order for NAK_LIMIT value
+                        uint8_t bmNeedPing : 1, // 1 == ping protocol needed for next out packet
+                        uint8_t bmNakPower : 5; // Binary order for NAK_LIMIT value
                 } __attribute__((packed));
         };
 } __attribute__((packed));
