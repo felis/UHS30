@@ -46,7 +46,7 @@ struct UHS_EpInfo {
                 struct {
                         uint8_t bmSndToggle : 1; // Send toggle, when zero bmSNDTOG0, bmSNDTOG1 otherwise
                         uint8_t bmRcvToggle : 1; // Send toggle, when zero bmRCVTOG0, bmRCVTOG1 otherwise
-                        uint8_t bmNeedPing : 1, // 1 == ping protocol needed for next out packet
+                        uint8_t bmNeedPing : 1; // 1 == ping protocol needed for next out packet
                         uint8_t bmNakPower : 5; // Binary order for NAK_LIMIT value
                 } __attribute__((packed));
         };
