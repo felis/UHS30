@@ -199,6 +199,7 @@ e-mail   :  support@circuitsathome.com
 #define                        UHS_HOST_ERROR_TIMEOUT 0x0EU // Device did not respond in time
 #define                         UHS_HOST_ERROR_BABBLE 0x0FU // Line noise/unexpected data
 #define                        UHS_HOST_ERROR_MEM_LAT 0x10U // Error caused by memory latency.
+#define                           UHS_HOST_ERROR_NYET 0x11U // OUT transfer accepted with NYET
 
 // Addressing error codes
 #define                      ADDR_ERROR_INVALID_INDEX 0xA0U

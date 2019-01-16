@@ -763,6 +763,10 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         QH.staticEndpointStates[1] = QH_capabilities2(1, hub_port, hub_addr, 0, 0);
         QH.nextQtdPointer = (uint32_t) & qHalt;
         QH.alternateNextQtdPointer = (uint32_t) & qHalt;
+	if ((*ppep)->bmNeedPing) {
+		QH.transferOverlayResults[0] = 1;
+		(*ppep)->bmNeedPing = 0;
+	}
 #if 0
         // this can stop at specific locations in the enumeration process
         // helpful if things go awry, spewing endless data that scrolls
@@ -780,7 +784,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit) {
-        QH.transferOverlayResults[0] = 0;
+        QH.transferOverlayResults[0] &= 1;
         QH.nextQtdPointer = (uint32_t) & qTD;
 
         // Nope... We signal really bad shit from ISR.
@@ -802,22 +806,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                         }
 			if ((status & 0x01u) && (QH.staticEndpointStates[0] & (1<<13))) {
 				// 480 Mbit OUT endpoint responded with NYET token.
-				// Officially, we are supposed to remember this
-				// endpoint is in the "ping state" (see section
-				// 8.5.1 in the USB 2.0 spec, pages 217-220) and
-				// *next* time we wish to send an OUT packet, first
-				// send PING packets until it answers ACK.
-				// But UHS_EpInfo does not have any way to retain
-				// this info about the endpoint's state.  Even if it
-				// did, we don't have a pointer to this endpoint's
-				// UHS_EpInfo struct here.  Hard to see how we can
-				// hope to do the PING protocol properly.  For now,
-				// we'll just pretend the endpoint returned ACK and
-				// hope the device might work even if we don't do
-				// PING protocol as the USB 2.0 spec requires.
-                                // Handle in OutTransfer.
-
-				return UHS_HOST_ERROR_NONE;
+				return UHS_HOST_ERROR_NYET;
 			}
 
                         // Important??
@@ -853,6 +842,13 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit
 	uint8_t rcode = dispatchPkt(0, 0, nak_limit);
 	uint32_t status = qTD.transferResults;
 	pep->bmRcvToggle = status >> 31;
+	if (rcode == UHS_HOST_ERROR_NYET) {
+		// NYET means the OUT transfer was successful, but
+		// next time we need to begin the PING protocol.
+		// USB 2.0 spec: section 8.5.1, pages 217-220
+		pep->bmNeedPing = 1;
+		rcode = UHS_HOST_ERROR_NONE;
+	}
 	return rcode;
 }
 
