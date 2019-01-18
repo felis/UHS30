@@ -35,6 +35,7 @@ e-mail   :  support@circuitsathome.com
 #define bmUSB_DEV_ADDR_PARENT           0x78
 #define bmUSB_DEV_ADDR_HUB              0x40
 
+// TODO: embed parent?
 struct UHS_EpInfo {
         uint8_t epAddr; // Endpoint address
         uint8_t bIface;
@@ -52,6 +53,11 @@ struct UHS_EpInfo {
         };
 } __attribute__((packed));
 
+// TODO: embed parent address and port into epinfo struct,
+// and nuke this address stupidity.
+// This is a compact scheme. Should also support full spec.
+// This produces a 7 hub limit, 49 devices + 7 hubs, 56 total.
+//
 //    7   6   5   4   3   2   1   0
 //  ---------------------------------
 //  |   | H | P | P | P | A | A | A |
@@ -59,7 +65,7 @@ struct UHS_EpInfo {
 //
 // H - if 1 the address is a hub address
 // P - parent hub number
-// A - device address, also port number of parent
+// A - port number of parent
 //
 
 struct UHS_DeviceAddress {
@@ -67,7 +73,7 @@ struct UHS_DeviceAddress {
         union {
 
                 struct {
-                        uint8_t bmAddress : 3; // device address/port number
+                        uint8_t bmAddress : 3; // port number
                         uint8_t bmParent : 3; // parent hub address
                         uint8_t bmHub : 1; // hub flag
                         uint8_t bmReserved : 1; // reserved, must be zero
@@ -88,8 +94,8 @@ typedef void (*UsbDeviceHandleFunc)(UHS_Device *pdev);
 class AddressPool {
         UHS_EpInfo dev0ep; //Endpoint data structure used during enumeration for uninitialized device
 
-        uint8_t hubCounter; // hub counter is kept
-        // in order to avoid hub address duplication
+        // In order to avoid hub address duplication, this should use bits
+        uint8_t hubCounter; // hub counter
 
         UHS_Device thePool[UHS_HOST_MAX_INTERFACE_DRIVERS];
 
@@ -137,6 +143,7 @@ class AddressPool {
                         for(uint8_t i = 1; (i = FindChildIndex(uda, i));)
                                 FreeAddressByIndex(i);
 
+                        // FIXME: use BIT MASKS
                         // If the hub had the last allocated address, hubCounter should be decremented
                         if(hubCounter == uda.bmAddress)
                                 hubCounter--;
@@ -190,6 +197,7 @@ public:
                         //if(parent > 127 || port > 7)
                         return 0;
 
+                // FIXME: use BIT MASKS
                 if(is_hub && hubCounter == 7)
                         return 0;
 
@@ -202,6 +210,8 @@ public:
                 UHS_DeviceAddress addr;
                 addr.devAddress = port;
                 addr.bmParent = _parent.bmAddress;
+
+                // FIXME: use BIT MASKS
                 if(is_hub) {
                         hubCounter++;
                         addr.bmHub = 1;

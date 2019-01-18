@@ -23,7 +23,8 @@
 
 // enable testing output
 //#define EHCI_TEST_DEV
-#define DEBUG_PRINTF_EXTRA_HUGE 1
+//#define LED_STATUS 1
+//#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE 1
 
@@ -32,8 +33,8 @@
 //////////////////////////////////////
 
 
-#define TESTdsize 512
-#define TESTcycles (1048576/TESTdsize)
+#define TESTdsize 1024
+#define TESTcycles (10485760/TESTdsize)
 
 /* The _CODE_PAGE specifies the OEM code page to be used on the target system.
  * Incorrect setting of the code page can cause a file open failure.
@@ -183,6 +184,7 @@ void show_dir(PFAT_DIRINFO *de) {
 }
 
 void setup() {
+        delay(2000);
         de = (PFAT_DIRINFO *)malloc(sizeof (PFAT_DIRINFO));
         data = (uint8_t *)malloc(TESTdsize);
         USB_HOST_SERIAL.begin(115200);
@@ -220,7 +222,7 @@ void loop() {
                         int fd;
                         printf("/ mounted.\r\n");
                         fre = fs_getfree("/");
-                        if(fre > 2097152) {
+                        if(fre > 10551296) {
                                 printf("Removing '/HeLlO.tXt' file... ");
                                 fflush(stdout);
                                 res = fs_unlink("/hello.txt");
@@ -263,15 +265,15 @@ void loop() {
                                 } else {
                                         printf("File not found.\r\n");
                                 }
-                                printf("\r\nRemoving '/1MB.bin' file... ");
+                                printf("\r\nRemoving '/10MB.bin' file... ");
                                 fflush(stdout);
-                                res = fs_unlink("/1MB.bin");
+                                res = fs_unlink("/10MB.bin");
                                 printf("completed with %i\r\n", res);
-                                printf("1MB write timing test ");
+                                printf("10MB write timing test ");
                                 fflush(stdout);
 
                                 //for (int i = 0; i < 128; i++) data[i] = i & 0xff;
-                                fd = fs_open("/1MB.bin", O_WRONLY | O_CREAT);
+                                fd = fs_open("/10MB.bin", O_WRONLY | O_CREAT);
                                 if(fd > 0) {
                                         int i = 0;
                                         delay(500);
@@ -292,10 +294,10 @@ void loop() {
                                 printf("completed with %i\r\n", fs_err);
 
                                 //show_dir(de);
-                                printf("1MB read timing test ");
+                                printf("10MB read timing test ");
                                 fflush(stdout);
 
-                                fd = fs_open("/1MB.bin", O_RDONLY);
+                                fd = fs_open("/10MB.bin", O_RDONLY);
                                 if(fd > 0) {
                                         delay(500);
                                         start = millis();

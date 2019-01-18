@@ -37,7 +37,7 @@
 
 // 1 = LED debug
 #ifndef LED_STATUS
-#define LED_STATUS 1
+#define LED_STATUS 0
 #endif
 
 

@@ -722,19 +722,19 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         // maxlen = 16; // uncomment for testing with device having ep0 maxlen=16
 
         // Fixed.
-	// OutTransfer() for mass storage is failing because maxlen is zero!
-	// How can this be?  Whatever endpoint we're going to use couldn't possibly
-	// have a 0 byte maximum packet length.  That makes no sense at all.
+        // OutTransfer() for mass storage is failing because maxlen is zero!
+        // How can this be?  Whatever endpoint we're going to use couldn't possibly
+        // have a 0 byte maximum packet length.  That makes no sense at all.
         // if (maxlen == 0) {
-	//	maxlen = (speed == 2 && type == 2) ? 512 : 64; // just blind guess!
-	//	HOST_DUBUG("  WARNING: horrible maxlen hack, guessing %ld\r\n", maxlen);
-	//}
+        //	maxlen = (speed == 2 && type == 2) ? 512 : 64; // just blind guess!
+        //	HOST_DUBUG("  WARNING: horrible maxlen hack, guessing %ld\r\n", maxlen);
+        //}
 
         // TODO, bmParent & bmAddress do not seem to always work
         // Paul: these are not what you think they are, that's why :-)
 
         uint32_t hub_addr = p->address.bmParent;
-        uint32_t hub_port = 1; // hub ports start at zero
+        uint32_t hub_port = 1; // hub ports start at one
         if(hub_addr) {
                 // get port number from hub, somehow... perhaps needs to be a new field... argh
                 // Paul:
@@ -747,7 +747,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
                 // We will be able to decode port from address, though
                 // bool is_a_hub = (bmUSB_DEV_ADDR_HUB & addr) == bmUSB_DEV_ADDR_HUB;
                 // uint8_t port = (bmUSB_DEV_ADDR_ADDRESS & addr);
-
+                hub_port=(bmUSB_DEV_ADDR_PORT & addr);
         }
         HOST_DUBUG("SetAddress, parent=%lu, parent_port=%lu\r\n", hub_addr, hub_port);
 
@@ -763,10 +763,10 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         QH.staticEndpointStates[1] = QH_capabilities2(1, hub_port, hub_addr, 0, 0);
         QH.nextQtdPointer = (uint32_t) & qHalt;
         QH.alternateNextQtdPointer = (uint32_t) & qHalt;
-	if ((*ppep)->bmNeedPing) {
-		QH.transferOverlayResults[0] = 1;
-		(*ppep)->bmNeedPing = 0;
-	}
+        if((*ppep)->bmNeedPing) {
+                QH.transferOverlayResults[0] = 1;
+                (*ppep)->bmNeedPing = 0;
+        }
 #if 0
         // this can stop at specific locations in the enumeration process
         // helpful if things go awry, spewing endless data that scrolls
@@ -783,7 +783,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         return UHS_HOST_ERROR_NONE;
 }
 
-uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit) {
+uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uint8_t ep), NOTUSED(uint16_t nak_limit)) {
         QH.transferOverlayResults[0] &= 1;
         QH.nextQtdPointer = (uint32_t) & qTD;
 
@@ -804,18 +804,18 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                                 // no longer active, not halted, no errors... so ok
                                 return UHS_HOST_ERROR_NONE;
                         }
-			if ((status & 0x01u) && (QH.staticEndpointStates[0] & (1<<13))) {
-				// 480 Mbit OUT endpoint responded with NYET token.
-				return UHS_HOST_ERROR_NYET;
-			}
+                        if((status & 0x01u) && (QH.staticEndpointStates[0] & (1 << 13))) {
+                                // 480 Mbit OUT endpoint responded with NYET token.
+                                return UHS_HOST_ERROR_NYET;
+                        }
 
                         // Important??
                         // if(status & 0x02u) return; // split state...
                         // if(status & 0x04u) return; // Missed Micro-Frame...
 
-                        if(status & 0x10u) return UHS_HOST_ERROR_BABBLE;// Babble Detected
+                        if(status & 0x10u) return UHS_HOST_ERROR_BABBLE; // Babble Detected
                         if(status & 0x20u) return UHS_HOST_ERROR_DMA; // Data Buffer Error
-                        if(status & 0x48u) {  // Halted or Transaction Error
+                        if(status & 0x48u) { // Halted or Transaction Error
                                 // Needs to return one of:
                                 // STALL
                                 // if error counter reached 0:
@@ -837,28 +837,72 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data) {
-	HOST_DUBUG("OutTransfer %d\n", nbytes);
-	init_qTD(data, nbytes, 0, pep->bmRcvToggle, false);
-	uint8_t rcode = dispatchPkt(0, 0, nak_limit);
-	uint32_t status = qTD.transferResults;
-	pep->bmRcvToggle = status >> 31;
-	if (rcode == UHS_HOST_ERROR_NYET) {
-		// NYET means the OUT transfer was successful, but
-		// next time we need to begin the PING protocol.
-		// USB 2.0 spec: section 8.5.1, pages 217-220
-		pep->bmNeedPing = 1;
-		rcode = UHS_HOST_ERROR_NONE;
-	}
-	return rcode;
+        HOST_DUBUG("OutTransfer %d\n", nbytes);
+
+        uint16_t bytes;
+        uint8_t rcode = UHS_HOST_ERROR_NONE;
+        while(nbytes && !rcode) {
+                bytes = nbytes;
+                // don't exceed pep->maxPktSize
+                if(bytes > pep->maxPktSize) bytes = pep->maxPktSize;
+                init_qTD(data, bytes, 0, pep->bmRcvToggle, false);
+                rcode = dispatchPkt(0, 0, nak_limit);
+                uint32_t status = qTD.transferResults;
+                pep->bmRcvToggle = status >> 31;
+                if(rcode == UHS_HOST_ERROR_NYET) {
+                        // NYET means the OUT transfer was successful, but
+                        // next time we need to begin the PING protocol.
+                        // USB 2.0 spec: section 8.5.1, pages 217-220
+                        pep->bmNeedPing = 1;
+                        rcode = UHS_HOST_ERROR_NONE;
+                }
+                nbytes -= bytes;
+                data += bytes;
+        }
+
+        return rcode;
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data) {
         HOST_DUBUG("InTransfer %d\r\n", *nbytesptr);
+
+        // WARNING!
+        // Potentially unsafe if EHCI DMA > than requested size.
+        // This would cause corruption from broken hardware.
+        // This needs to be verified that it will never happen.
+        // If it becomes an issue, we need to allocate a dedicated buffer.
+        // certain devices can send more than asked for.
+        // Let's hope EHCI truncates.
+#if 0
         init_qTD(data, *nbytesptr, 1, pep->bmRcvToggle, false);
         uint8_t rcode = dispatchPkt(0, 0, nak_limit);
         uint32_t status = qTD.transferResults;
         *nbytesptr -= (status >> 16) & 0x7FFF;
         pep->bmRcvToggle = status >> 31;
+#else
+        uint8_t rcode = 0;
+        uint16_t pktsize;
+        uint16_t maxpktsize = pep->maxPktSize;
+        uint32_t datalen;
+        uint16_t nbytes= *nbytesptr;
+        *nbytesptr=0;
+        while(nbytes && !rcode) {
+                datalen = (nbytes > maxpktsize) ? maxpktsize : nbytes;
+                init_qTD(data, datalen, 1, pep->bmRcvToggle, false);
+                rcode = dispatchPkt(0, 0, nak_limit);
+                uint32_t status = qTD.transferResults;
+                // This field is decremented by the number of bytes actually moved
+                // during the transaction, only on the successful completion of the
+                // transaction.
+                pktsize = datalen - ((status >> 16) & 0x7FFF);
+                pep->bmRcvToggle = status >> 31;
+
+                data += pktsize;
+                nbytes -= pktsize;
+                *nbytesptr += pktsize;
+                if(pktsize < maxpktsize) break; // short packet.
+        }
+#endif
         return rcode;
 }
 
@@ -890,9 +934,7 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t * dataptr) {
-        HOST_DUBUG("ctrlReqRead left: %i, nbytes: %i, dataptr: %lx\r\n",
-                *left, nbytes, (uint32_t)dataptr);
-#if 1
+        HOST_DUBUG("ctrlReqRead left: %i, nbytes: %i, dataptr: %lx\r\n", *left, nbytes, (uint32_t)dataptr);
         uint8_t rcode = 0;
         if(*left) {
                 *read = nbytes;
@@ -905,24 +947,6 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, ui
                 }
         }
         return rcode;
-#else
-        // Paul... wtf??
-        if(*left > 0) {
-                uint16_t n = *left;
-                uint8_t *ptr = dataptr + nbytes - n; // really?!
-                uint8_t rcode = InTransfer(pep, 0, &n, ptr);
-                if(rcode == 0) {
-                        *left -= n;
-                        *read = n;
-                } else {
-                        *read = 0;
-                }
-                return rcode;
-        } else {
-                *read = 0;
-                return 0;
-        }
-#endif
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr) {

@@ -10,6 +10,7 @@
 #define LOAD_USB_HOST_SYSTEM
 
 // enable testing output
+#define LED_STATUS 1
 #define EHCI_TEST_DEV
 #define DEBUG_PRINTF_EXTRA_HUGE 1
 #define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1

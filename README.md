@@ -1,7 +1,7 @@
 # UHS30
 Pre-release of USB Host Library version 3.0. No technical support offered at this time.
 
-__This set of libraries is EXTERMELY ALPHA!__
+__This set of libraries is EXTREMELY ALPHA!__
 
 # Arduino version 1.6.9 OR BETTER ONLY! DO NOT USE 1.6.10, it is broken!
 * This library set does all USB host operations in an interrupt. This means that calling the Task() method no longer does anything, unless you disable the interrupt mode in your sketch.
@@ -10,6 +10,7 @@ __This set of libraries is EXTERMELY ALPHA!__
 * Freescale Kinetis native full-speed host support!
     * NOTE! To use the Teensy 3.0/3.1/3.2/3.4/3.5 and LC in host mode, select "No USB" from the tools menu for USB Type.
 * SDcard on SPI due to popular demand!
+* Kinetis EHCI (experimental)
 
 # Current working USB interface drivers
 * HID RAW
