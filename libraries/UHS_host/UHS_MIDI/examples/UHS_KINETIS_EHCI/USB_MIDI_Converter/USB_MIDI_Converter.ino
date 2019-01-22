@@ -17,7 +17,7 @@
 // Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
 // Load the Kinetis core
-#define LOAD_UHS_KINETIS_FS_HOST
+#define LOAD_UHS_KINETIS_EHCI
 // Load MIDI class driver
 #define LOAD_UHS_MIDI
 // No worries on RAM space.
@@ -26,11 +26,12 @@
 //#define ENABLE_UHS_DEBUGGING 1
 //#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
-//#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_KINETIS 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_MIDI_HOST 1
 
-#define _MIDI_SERIAL_PORT Serial2
-#define USB_HOST_SERIAL Serial1
+// NOTE: USB_HOST_SERIAL is debugging/printf
+// NOTE: _MIDI_SERIAL_PORT is the external MIDI serial.
+#define _MIDI_SERIAL_PORT Serial1
+#define USB_HOST_SERIAL Serial
 
 #include <Arduino.h>
 #ifdef true

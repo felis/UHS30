@@ -1,6 +1,7 @@
 BOARD=teensy:avr:teensy36:usb=serial,speed=180,opt=o1std,keys=en-us
 
 PORT = /dev/ttyACM0
+CPORT = /dev/ttyUSB0
 
 # And finally, the part that brings everything together for you.
 HOMEDIR =$(HOME)

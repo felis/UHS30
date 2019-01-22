@@ -13,24 +13,22 @@
  *******************************************************************************
  */
 
+
 // Patch printf so we can use it.
 #define LOAD_UHS_PRINTF_HELPER
 // Load the USB Host System core
 #define LOAD_USB_HOST_SYSTEM
 // Load the Kinetis core
-#define LOAD_UHS_KINETIS_FS_HOST
+#define LOAD_UHS_KINETIS_EHCI
 // Load MIDI class driver
 #define LOAD_UHS_MIDI
 // No worries on RAM space.
 #define UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE 1
 
+//#define ENABLE_UHS_DEBUGGING 1
 //#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
-//#define DEBUG_PRINTF_EXTRA_HUGE_USB_HUB 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_MIDI_HOST 1
-//#define UHS_DEBUG_USB_ADDRESS 1
-// Redirect debugging and printf
-#define USB_HOST_SERIAL Serial1
 
 #include <Arduino.h>
 #ifdef true
