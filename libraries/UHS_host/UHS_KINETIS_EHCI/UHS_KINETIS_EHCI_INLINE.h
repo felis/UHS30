@@ -843,8 +843,8 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit
         uint8_t rcode = UHS_HOST_ERROR_NONE;
         while(nbytes && !rcode) {
                 bytes = nbytes;
-                // don't exceed pep->maxPktSize
-                if(bytes > pep->maxPktSize) bytes = pep->maxPktSize;
+                // don't exceed 16KB
+                if(bytes > 16384) bytes = 16384;
                 init_qTD(data, bytes, 0, pep->bmRcvToggle, false);
                 rcode = dispatchPkt(0, 0, nak_limit);
                 uint32_t status = qTD.transferResults;
@@ -882,12 +882,12 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
 #else
         uint8_t rcode = 0;
         uint16_t pktsize;
-        uint16_t maxpktsize = pep->maxPktSize;
+        //uint16_t maxpktsize = pep->maxPktSize;
         uint32_t datalen;
         uint16_t nbytes= *nbytesptr;
         *nbytesptr=0;
         while(nbytes && !rcode) {
-                datalen = (nbytes > maxpktsize) ? maxpktsize : nbytes;
+                datalen = (nbytes > 16384) ? 16384 : nbytes;
                 init_qTD(data, datalen, 1, pep->bmRcvToggle, false);
                 rcode = dispatchPkt(0, 0, nak_limit);
                 uint32_t status = qTD.transferResults;
@@ -900,7 +900,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
                 data += pktsize;
                 nbytes -= pktsize;
                 *nbytesptr += pktsize;
-                if(pktsize < maxpktsize) break; // short packet.
+                if(pktsize < datalen) break; // short packet.
         }
 #endif
         return rcode;
