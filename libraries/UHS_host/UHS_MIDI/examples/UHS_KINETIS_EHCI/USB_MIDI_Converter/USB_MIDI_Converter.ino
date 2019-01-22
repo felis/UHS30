@@ -43,7 +43,7 @@
 
 #include <UHS_host.h>
 
-UHS_KINETIS_EHCI UHS_Usb;
+UHS_KINETIS_EHCI *UHS_Usb;
 UHS_MIDI *Midi;
 bool connected;
 
