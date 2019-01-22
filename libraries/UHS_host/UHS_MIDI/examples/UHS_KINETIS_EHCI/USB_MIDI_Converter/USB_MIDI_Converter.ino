@@ -85,7 +85,7 @@ void setup() {
         }
         USB_HOST_SERIAL.begin(115200);
         _MIDI_SERIAL_PORT.begin(31250);
-        UHS_Usb = new UHS_KINETIS_FS_HOST();
+        UHS_Usb = new UHS_KINETIS_EHCI();
         Midi = new UHS_MIDI(UHS_Usb);
         while(UHS_Usb->Init(1000) != 0);
         delay(100);
