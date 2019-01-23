@@ -83,7 +83,7 @@ void MIDI_poll() {
         uint16_t rcvd;
         if(Midi->RecvData(&rcvd, bufMidi) == 0) {
                 printf_P(PSTR("%08lX:%d:"), (uint32_t)millis(), rcvd);
-                for(int i = 0; i < 64; i++) {
+                for(int i = 0; i < rcvd; i++) {
                         printf_P(PSTR(" %02X"), bufMidi[i]);
                 }
                 printf_P(PSTR("\r\n"));

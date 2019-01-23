@@ -73,14 +73,14 @@ void loop() {
   }
 }
 
-// Poll USB MIDI Controler and send to serial MIDI
+// Poll USB MIDI Controller and send to serial MIDI
 void MIDI_poll()
 {
   uint8_t bufMidi[64];
   uint16_t  rcvd;
   if (Midi->RecvData( &rcvd,  bufMidi) == 0 ) {
     printf_P(PSTR("%08lX:%d:"),  (uint32_t)millis(), rcvd);
-    for (int i = 0; i < 64; i++) {
+    for(int i = 0; i < rcvd; i++) {
       printf_P(PSTR(" %02X"), bufMidi[i]);
     }
     printf_P(PSTR("\r\n"));

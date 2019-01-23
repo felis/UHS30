@@ -239,6 +239,13 @@
             <in>UHS_KINETIS_FS_HOST_INLINE.h</in>
           </df>
           <df name="UHS_MIDI">
+            <df name="examples">
+              <df name="UHS_KINETIS_EHCI">
+                <df name="USB_MIDI_Converter">
+                  <in>USB_MIDI_Converter.ino</in>
+                </df>
+              </df>
+            </df>
             <in>UHS_MIDI.h</in>
             <in>UHS_MIDI_INLINE.h</in>
           </df>
@@ -653,6 +660,11 @@
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/KINETIS_DEV_DESC/KINETIS_DEV_DESC.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_MIDI/examples/UHS_KINETIS_EHCI/USB_MIDI_Converter/USB_MIDI_Converter.ino"
             ex="false"
             tool="1"
             flavor2="0">

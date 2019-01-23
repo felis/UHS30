@@ -59,8 +59,9 @@ bool UHS_NI UHS_MIDI::OKtoEnumerate(ENUMERATION_INFO *ei) {
  */
 uint8_t UHS_NI UHS_MIDI::SetInterface(ENUMERATION_INFO *ei) {
         UHS_MIDI_HOST_DEBUG("MIDI: SetInterface\r\n");
+        qPollRate = 0;
         for(uint8_t ep = 0; ep < ei->interface.numep; ep++) {
-                if(ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_BULK) {
+                if(ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_BULK || ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_INTERRUPT) {
                         uint8_t index = ((ei->interface.epInfo[ep].bEndpointAddress & USB_TRANSFER_DIRECTION_IN) == USB_TRANSFER_DIRECTION_IN) ? epDataInIndex : epDataOutIndex;
                         epInfo[index].epAddr = (ei->interface.epInfo[ep].bEndpointAddress & 0x0F);
                         epInfo[index].maxPktSize = ei->interface.epInfo[ep].wMaxPacketSize;
@@ -69,6 +70,10 @@ uint8_t UHS_NI UHS_MIDI::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
                         bNumEP++;
+
+                        if(qPollRate == 0 && ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_INTERRUPT) {
+                                qPollRate = ei->interface.epInfo[ep].bInterval;
+                        }
                 }
         }
         UHS_MIDI_HOST_DEBUG("MIDI: found %i endpoints\r\n", bNumEP);
@@ -85,7 +90,7 @@ uint8_t UHS_NI UHS_MIDI::SetInterface(ENUMERATION_INFO *ei) {
         // If you know, please fix and submit a pull request.
         // For now default to the minimum allowed by M$, even if Linux allows lower.
         // This seems to work just fine on AKAI and Yamaha keyboards.
-        qPollRate = 8;
+        if(qPollRate == 0) qPollRate = 8;
         return 0;
 }
 
@@ -96,7 +101,7 @@ uint8_t UHS_NI UHS_MIDI::SetInterface(ENUMERATION_INFO *ei) {
 uint8_t UHS_NI UHS_MIDI::Start(void) {
         uint8_t rcode;
         UHS_MIDI_HOST_DEBUG("MIDI: Start\r\n");
-
+        midibuf.clear();
         UHS_MIDI_HOST_DEBUG("MIDI: device detected\r\n");
         // Assign epInfo to epinfo pointer - this time all 3 endpoints
         rcode = pUsb->setEpInfoEntry(bAddress, bIface, bNumEP, epInfo);
@@ -150,31 +155,43 @@ void UHS_NI UHS_MIDI::Poll(void) {
                 uint16_t bytes_rcvd;
                 uint16_t count = 0;
                 if(!_RecvData(&bytes_rcvd, pktbuf)) {
-#if 1
+#if 0
+
                         while(bytes_rcvd--) {
                                 midibuf.put(pktbuf[count++]);
                         }
 #else
-                        //TODO: suppress padding data
-/*
-                        uint8_t tmpbuf[4];
-                        while(bytes_rcvd) {
-                                uint8_t sum = 0;
-                                //if all data is zero, no valid data received.
-                                sum |= (tmpbuf[0] = pktbuf[count++]);
-                                sum |= (tmpbuf[1] = pktbuf[count++]);
-                                sum |= (tmpbuf[2] = pktbuf[count++]);
-                                sum |= (tmpbuf[3] = pktbuf[count++]);
-                                if(sum == 0) {
-                                        break;
-                                }
-                                midibuf.put(tmpbuf[0]);
-                                midibuf.put(tmpbuf[1]);
-                                midibuf.put(tmpbuf[2]);
-                                midibuf.put(tmpbuf[3]);
-                                bytes_rcvd -= 4;
+                        uint32_t *bufword = (uint32_t *)pktbuf;
+                        bytes_rcvd /= 4;
+                        while(bytes_rcvd--) {
+                                if(*bufword == 0) break;
+                                midibuf.put(pktbuf[count++]);
+                                midibuf.put(pktbuf[count++]);
+                                midibuf.put(pktbuf[count++]);
+                                midibuf.put(pktbuf[count++]);
+                                bufword++;
                         }
-*/
+
+                        //TODO: suppress padding data
+                        /*
+                                                uint8_t tmpbuf[4];
+                                                while(bytes_rcvd) {
+                                                        uint8_t sum = 0;
+                                                        //if all data is zero, no valid data received.
+                                                        sum |= (tmpbuf[0] = pktbuf[count++]);
+                                                        sum |= (tmpbuf[1] = pktbuf[count++]);
+                                                        sum |= (tmpbuf[2] = pktbuf[count++]);
+                                                        sum |= (tmpbuf[3] = pktbuf[count++]);
+                                                        if(sum == 0) {
+                                                                break;
+                                                        }
+                                                        midibuf.put(tmpbuf[0]);
+                                                        midibuf.put(tmpbuf[1]);
+                                                        midibuf.put(tmpbuf[2]);
+                                                        midibuf.put(tmpbuf[3]);
+                                                        bytes_rcvd -= 4;
+                                                }
+                         */
 #endif
                 }
         }
@@ -286,10 +303,10 @@ uint8_t UHS_NI UHS_MIDI::RecvRawData(uint8_t *outBuf) {
 uint8_t UHS_NI UHS_MIDI::RecvData(uint16_t *bytes_rcvd, uint8_t *dataptr) {
         *bytes_rcvd = midibuf.getSize();
         if(*bytes_rcvd == 0) return 1;
-        if (*bytes_rcvd > UHS_MIDI_EVENT_PACKET_SIZE) {
+        if(*bytes_rcvd > UHS_MIDI_EVENT_PACKET_SIZE) {
                 *bytes_rcvd = UHS_MIDI_EVENT_PACKET_SIZE;
         }
-        for(uint8_t i=0; i<*bytes_rcvd; i++){
+        for(uint8_t i = 0; i<*bytes_rcvd; i++) {
                 *(dataptr++) = midibuf.get();
         }
         return 0;
