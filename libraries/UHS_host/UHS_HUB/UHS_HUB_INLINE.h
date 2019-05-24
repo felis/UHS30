@@ -2,12 +2,19 @@
    and
 Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
-This software may be distributed and modified under the terms of the GNU
-General Public License version 2 (GPL2) as published by the Free Software
-Foundation and appearing in the file GPL2.TXT included in the packaging of
-this file. Please note that GPL2 Section 2[b] requires that all works based
-on this software must also be made publicly available under the terms of
-the GPL2 ("Copyleft").
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 Contact information
 -------------------
@@ -22,12 +29,12 @@ e-mail   :  support@circuitsathome.com
 
 #if DEBUG_PRINTF_EXTRA_HUGE
 #ifdef DEBUG_PRINTF_EXTRA_HUGE_USB_HUB
-#define HUB_DUBUG(...) printf(__VA_ARGS__)
+#define HUB_DEBUG(...) printf(__VA_ARGS__)
 #else
-#define HUB_DUBUG(...) VOID0
+#define HUB_DEBUG(...) VOID0
 #endif
 #else
-#define HUB_DUBUG(...) VOID0
+#define HUB_DEBUG(...) VOID0
 #endif
 
 
@@ -43,7 +50,7 @@ UHS_NI UHS_USBHub::UHS_USBHub(UHS_USB_HOST_BASE *p) {
 }
 
 bool UHS_NI UHS_USBHub::OKtoEnumerate(ENUMERATION_INFO *ei) {
-        HUB_DUBUG("USBHub: checking numep %i, klass %2.2x, interface.klass %2.2x\r\n", ei->interface.numep, ei->klass, ei->interface.klass);
+        HUB_DEBUG("USBHub: checking numep %i, klass %2.2x, interface.klass %2.2x\r\n", ei->interface.numep, ei->klass, ei->interface.klass);
         return ((ei->interface.numep == 1) && ((ei->klass == UHS_USB_CLASS_HUB) || (ei->interface.klass == UHS_USB_CLASS_HUB)));
 }
 
@@ -62,7 +69,7 @@ void UHS_NI UHS_USBHub::DriverDefaults(void) {
 
 uint8_t UHS_NI UHS_USBHub::SetInterface(ENUMERATION_INFO *ei) {
         //DriverDefaults();
-        HUB_DUBUG("USBHub Accepting address assignment %2.2x\r\n", ei->address);
+        HUB_DEBUG("USBHub Accepting address assignment %2.2x\r\n", ei->address);
         bNumEP = 2;
         bAddress = ei->address;
         epInfo[0].epAddr = 0;
@@ -149,7 +156,7 @@ void UHS_NI UHS_USBHub::CheckHubStatus(void) {
         rcode = pUsb->inTransfer(bAddress, 1, &read, buf);
 
         if(rcode) {
-                HUB_DUBUG("UHS_USBHub::CheckHubStatus %2.2x\r\n", rcode);
+                HUB_DEBUG("UHS_USBHub::CheckHubStatus %2.2x\r\n", rcode);
                 return;
         }
 
@@ -262,7 +269,7 @@ uint8_t UHS_NI UHS_USBHub::PortStatusChange(uint8_t port, UHS_HubEvent &evt) {
                                 UHS_SLEEP_MS(200);
 
                                 a.devAddress = bAddress;
-                                HUB_DUBUG("USBHub configure %2.2x %2.2x %2.2x\r\n", a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED)==UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED?0:1));
+                                HUB_DEBUG("USBHub configure %2.2x %2.2x %2.2x\r\n", a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED)==UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED?0:1));
                                 pUsb->Configuring(a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED)==UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED?0:1));
                                 bResetInitiated = false;
                         }

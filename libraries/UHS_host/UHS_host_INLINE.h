@@ -2,12 +2,19 @@
    and
 Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
-This software may be distributed and modified under the terms of the GNU
-General Public License version 2 (GPL2) as published by the Free Software
-Foundation and appearing in the file GPL2.TXT included in the packaging of
-this file. Please note that GPL2 Section 2[b] requires that all works based
-on this software must also be made publicly available under the terms of
-the GPL2 ("Copyleft").
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 Contact information
 -------------------
@@ -26,12 +33,12 @@ e-mail   :  support@circuitsathome.com
 
 #if DEBUG_PRINTF_EXTRA_HUGE
 #if DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST
-#define HOST_DUBUG(...) printf(__VA_ARGS__)
+#define HOST_DEBUG(...) printf(__VA_ARGS__)
 #else
-#define HOST_DUBUG(...) VOID0
+#define HOST_DEBUG(...) VOID0
 #endif
 #else
-#define HOST_DUBUG(...) VOID0
+#define HOST_DEBUG(...) VOID0
 #endif
 
 UHS_EpInfo* UHS_USB_HOST_BASE::getEpInfoEntry(uint8_t addr, uint8_t ep) {
@@ -47,7 +54,7 @@ UHS_EpInfo* UHS_USB_HOST_BASE::getEpInfoEntry(uint8_t addr, uint8_t ep) {
 
                 for(uint8_t i = 0; i < p->epcount; i++) {
                         if((pep)->epAddr == ep) {
-                                HOST_DUBUG("ep entry for interface %d ep %d max packet size = %d\r\n", pep->bIface, ep, pep->maxPktSize);
+                                HOST_DEBUG("ep entry for interface %d ep %d max packet size = %d\r\n", pep->bIface, ep, pep->maxPktSize);
                                 return pep;
                         }
 
@@ -146,7 +153,7 @@ uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t add
                         retries++;
                         sof_delay(10);
                 } while(retries < 200);
-                HOST_DUBUG("%i retries.\r\n", retries);
+                HOST_DEBUG("%i retries.\r\n", retries);
         } else {
 #if DEBUG_PRINTF_EXTRA_HUGE
                 printf("\r\ndoSoftReset called with address == 0.\r\n");
@@ -214,7 +221,7 @@ uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t add
  */
 uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t speed) {
         //uint8_t bAddress = 0;
-        HOST_DUBUG("\r\n\r\n\r\nConfiguring: parent = %i, port = %i, speed = %i\r\n", parent, port, speed);
+        HOST_DEBUG("\r\n\r\n\r\nConfiguring: parent = %i, port = %i, speed = %i\r\n", parent, port, speed);
         uint8_t rcode = 0;
         uint8_t retries = 0;
         uint8_t numinf = 0;
@@ -253,7 +260,7 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
                 sof_delay(200);
                 p = addrPool.GetUsbDevicePtr(0);
                 if(!p) {
-                        HOST_DUBUG("Configuring error: USB_ERROR_ADDRESS_NOT_FOUND_IN_POOL\r\n");
+                        HOST_DEBUG("Configuring error: USB_ERROR_ADDRESS_NOT_FOUND_IN_POOL\r\n");
                         return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
                 }
 
@@ -268,7 +275,7 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
 #endif
 again:
                 memset((void *)buf, 0, biggest);
-                HOST_DUBUG("\r\n\r\nConfiguring PktSize 0x%2.2x,  rcode: 0x%2.2x, retries %i,\r\n", p->epinfo[0][0].maxPktSize, rcode, retries);
+                HOST_DEBUG("\r\n\r\nConfiguring PktSize 0x%2.2x,  rcode: 0x%2.2x, retries %i,\r\n", p->epinfo[0][0].maxPktSize, rcode, retries);
                 rcode = getDevDescr(0, biggest, (uint8_t*)buf);
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
                 if(rcode || udd->bMaxPacketSize0 < 8)
@@ -296,13 +303,13 @@ again:
                         } else if((rcode == UHS_HOST_ERROR_DMA || rcode == UHS_HOST_ERROR_MEM_LAT) && retries < 4) {
                                 if(p->epinfo[0][0].maxPktSize < 32) p->epinfo[0][0].maxPktSize = p->epinfo[0][0].maxPktSize << 1;
 #endif
-                                HOST_DUBUG("Configuring error: 0x%2.2x UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", rcode, p->epinfo[0][0].maxPktSize);
+                                HOST_DEBUG("Configuring error: 0x%2.2x UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", rcode, p->epinfo[0][0].maxPktSize);
                                 doSoftReset(parent, port, 0);
                                 retries++;
                                 sof_delay(200);
                                 goto again;
                         }
-                        HOST_DUBUG("Configuring error: 0x%2.2x Can't get USB_DEVICE_DESCRIPTOR\r\n", rcode);
+                        HOST_DEBUG("Configuring error: 0x%2.2x Can't get USB_DEVICE_DESCRIPTOR\r\n", rcode);
                         return rcode;
                 }
 
@@ -328,12 +335,12 @@ again:
 
                 if(rcode) {
                         addrPool.FreeAddress(ei.address);
-                        HOST_DUBUG("Configuring error: %2.2x Can't set USB INTERFACE ADDRESS\r\n", rcode);
+                        HOST_DEBUG("Configuring error: %2.2x Can't set USB INTERFACE ADDRESS\r\n", rcode);
                         return rcode;
                 }
 
                 { // the { } wrapper saves on stack.
-                        HOST_DUBUG("DevDescr 2nd poll, bMaxPacketSize0:%u\r\n", udd->bMaxPacketSize0);
+                        HOST_DEBUG("DevDescr 2nd poll, bMaxPacketSize0:%u\r\n", udd->bMaxPacketSize0);
                         UHS_EpInfo dev1ep;
                         dev1ep.maxPktSize = udd->bMaxPacketSize0;
                         dev1ep.epAddr = 0;
@@ -346,7 +353,7 @@ again:
                         sof_delay(10);
                         memset((void *)buf, 0, biggest);
                         rcode = getDevDescr(ei.address, 18, (uint8_t*)buf);
-                        if(rcode) HOST_DUBUG("getDevDescr err: 0x%x \r\n", rcode);
+                        if(rcode) HOST_DEBUG("getDevDescr err: 0x%x \r\n", rcode);
 
                         addrPool.FreeAddress(ei.address);
                         if(rcode && rcode != UHS_HOST_ERROR_DMA) {
@@ -394,29 +401,29 @@ again:
 
         if(rcode) {
                 addrPool.FreeAddress(ei.address);
-                HOST_DUBUG("Configuring error: %2.2x Can't set USB INTERFACE ADDRESS\r\n", rcode);
+                HOST_DEBUG("Configuring error: %2.2x Can't set USB INTERFACE ADDRESS\r\n", rcode);
                 return rcode;
         }
 
         if(configs < 1) {
-                HOST_DUBUG("No interfaces?!\r\n");
+                HOST_DEBUG("No interfaces?!\r\n");
                 addrPool.FreeAddress(ei.address);
                 // rcode = TestInterface(&ei);
                 // Not implemented (yet)
                 rcode = UHS_HOST_ERROR_DEVICE_NOT_SUPPORTED;
         } else {
-                HOST_DUBUG("configs: %i\r\n", configs);
+                HOST_DEBUG("configs: %i\r\n", configs);
                 for(uint8_t conf = 0; (!rcode) && (conf < configs); conf++) {
                         // read the config descriptor into a buffer.
                         rcode = getConfDescr(ei.address, sizeof (USB_CONFIGURATION_DESCRIPTOR), conf, buf);
                         if(rcode) {
-                                HOST_DUBUG("Configuring error: %2.2x Can't get USB_INTERFACE_DESCRIPTOR\r\n", rcode);
+                                HOST_DEBUG("Configuring error: %2.2x Can't get USB_INTERFACE_DESCRIPTOR\r\n", rcode);
                                 rcode = UHS_HOST_ERROR_FailGetConfDescr;
                                 continue;
                         }
                         ei.currentconfig = conf;
                         numinf = ucd->bNumInterfaces; // Does _not_ include alternates!
-                        HOST_DUBUG("CONFIGURATION: %i, bNumInterfaces %i, wTotalLength %i\r\n", conf, numinf, ucd->wTotalLength);
+                        HOST_DEBUG("CONFIGURATION: %i, bNumInterfaces %i, wTotalLength %i\r\n", conf, numinf, ucd->wTotalLength);
                         uint8_t success = 0;
                         uint16_t inf = 0;
                         uint8_t data[ei.bMaxPacketSize0];
@@ -431,20 +438,20 @@ again:
                         uint8_t offset;
                         rcode = initDescrStream(&ei, ucd, pep, data, &left, &read, &offset);
                         if(rcode) {
-                                HOST_DUBUG("Configuring error: %2.2x Can't get USB_INTERFACE_DESCRIPTOR stream.\r\n", rcode);
+                                HOST_DEBUG("Configuring error: %2.2x Can't get USB_INTERFACE_DESCRIPTOR stream.\r\n", rcode);
                                 break;
                         }
                         for(; (numinf) && (!rcode); inf++) {
                                 // iterate for each interface on this config
                                 rcode = getNextInterface(&ei, pep, data, &left, &read, &offset);
                                 if(rcode == UHS_HOST_ERROR_END_OF_STREAM) {
-                                        HOST_DUBUG("USB_INTERFACE END OF STREAM\r\n");
+                                        HOST_DEBUG("USB_INTERFACE END OF STREAM\r\n");
                                         ctrlReqClose(pep, UHS_bmREQ_GET_DESCR, left, ei.bMaxPacketSize0, data);
                                         rcode = 0;
                                         break;
                                 }
                                 if(rcode) {
-                                        HOST_DUBUG("Configuring error: %2.2x Can't close USB_INTERFACE_DESCRIPTOR stream.\r\n", rcode);
+                                        HOST_DEBUG("Configuring error: %2.2x Can't close USB_INTERFACE_DESCRIPTOR stream.\r\n", rcode);
                                         continue;
                                 }
                                 rcode = TestInterface(&ei);
@@ -466,7 +473,7 @@ again:
         if(!rcode) {
                 rcode = getConfDescr(ei.address, sizeof (USB_CONFIGURATION_DESCRIPTOR), bestconf, buf);
                 if(rcode) {
-                        HOST_DUBUG("Configuring error: %2.2x Can't get USB_INTERFACE_DESCRIPTOR\r\n", rcode);
+                        HOST_DEBUG("Configuring error: %2.2x Can't get USB_INTERFACE_DESCRIPTOR\r\n", rcode);
                         rcode = UHS_HOST_ERROR_FailGetConfDescr;
                 }
         }
@@ -474,9 +481,9 @@ again:
                 bestconf++;
                 ei.currentconfig = bestconf;
                 numinf = ucd->bNumInterfaces; // Does _not_ include alternates!
-                HOST_DUBUG("CONFIGURATION: %i, bNumInterfaces %i, wTotalLength %i\r\n", bestconf, numinf, ucd->wTotalLength);
+                HOST_DEBUG("CONFIGURATION: %i, bNumInterfaces %i, wTotalLength %i\r\n", bestconf, numinf, ucd->wTotalLength);
                 if(!rcode) {
-                        HOST_DUBUG("Best configuration is %i, enumerating interfaces.\r\n", bestconf);
+                        HOST_DEBUG("Best configuration is %i, enumerating interfaces.\r\n", bestconf);
                         uint16_t inf = 0;
                         uint8_t data[ei.bMaxPacketSize0];
                         UHS_EpInfo *pep;
@@ -490,7 +497,7 @@ again:
                                 uint8_t offset;
                                 rcode = initDescrStream(&ei, ucd, pep, data, &left, &read, &offset);
                                 if(rcode) {
-                                        HOST_DUBUG("Configuring error: %2.2x Can't get USB_INTERFACE_DESCRIPTOR stream.\r\n", rcode);
+                                        HOST_DEBUG("Configuring error: %2.2x Can't get USB_INTERFACE_DESCRIPTOR stream.\r\n", rcode);
                                 } else {
                                         for(; (numinf) && (!rcode); inf++) {
                                                 // iterate for each interface on this config
@@ -501,52 +508,52 @@ again:
                                                         break;
                                                 }
                                                 if(rcode) {
-                                                        HOST_DUBUG("Configuring error: %2.2x Can't close USB_INTERFACE_DESCRIPTOR stream.\r\n", rcode);
+                                                        HOST_DEBUG("Configuring error: %2.2x Can't close USB_INTERFACE_DESCRIPTOR stream.\r\n", rcode);
                                                         continue;
                                                 }
 
                                                 if(enumerateInterface(&ei) == UHS_HOST_MAX_INTERFACE_DRIVERS) {
-                                                        HOST_DUBUG("No interface driver for this interface.");
+                                                        HOST_DEBUG("No interface driver for this interface.");
                                                 } else {
-                                                        HOST_DUBUG("Interface Configured\r\n");
+                                                        HOST_DEBUG("Interface Configured\r\n");
                                                 }
                                         }
                                 }
                         }
                 } else {
-                        HOST_DUBUG("Configuring error: %2.2x Can't set USB_INTERFACE_CONFIG stream.\r\n", rcode);
+                        HOST_DEBUG("Configuring error: %2.2x Can't set USB_INTERFACE_CONFIG stream.\r\n", rcode);
                 }
         }
 
         if(!rcode) {
                 rcode = setConf(ei.address, bestconf);
                 if(rcode) {
-                        HOST_DUBUG("Configuring error: %2.2x Can't set Configuration.\r\n", rcode);
+                        HOST_DEBUG("Configuring error: %2.2x Can't set Configuration.\r\n", rcode);
                         addrPool.FreeAddress(ei.address);
                 } else {
                         for(devConfigIndex = 0; devConfigIndex < UHS_HOST_MAX_INTERFACE_DRIVERS; devConfigIndex++) {
-                                HOST_DUBUG("Driver %i ", devConfigIndex);
+                                HOST_DEBUG("Driver %i ", devConfigIndex);
                                 if(!devConfig[devConfigIndex]) {
-                                        HOST_DUBUG("no driver at this index.\r\n");
+                                        HOST_DEBUG("no driver at this index.\r\n");
                                         continue; // no driver
                                 }
-                                HOST_DUBUG("@ %2.2x ", devConfig[devConfigIndex]->bAddress);
+                                HOST_DEBUG("@ %2.2x ", devConfig[devConfigIndex]->bAddress);
                                 if(devConfig[devConfigIndex]->bAddress) {
                                         if(!devConfig[devConfigIndex]->bPollEnable) {
-                                                HOST_DUBUG("Initialize\r\n");
+                                                HOST_DEBUG("Initialize\r\n");
                                                 rcode = devConfig[devConfigIndex]->Finalize();
                                                 rcode = devConfig[devConfigIndex]->Start();
                                                 if(!rcode) {
-                                                        HOST_DUBUG("Total endpoints = (%i)%i\r\n", p->epcount, devConfig[devConfigIndex]->bNumEP);
+                                                        HOST_DEBUG("Total endpoints = (%i)%i\r\n", p->epcount, devConfig[devConfigIndex]->bNumEP);
                                                 } else {
                                                         break;
                                                 }
                                         } else {
-                                                HOST_DUBUG("Already initialized.\r\n");
+                                                HOST_DEBUG("Already initialized.\r\n");
                                                 continue; // consumed
                                         }
                                 } else {
-                                        HOST_DUBUG("Skipped\r\n");
+                                        HOST_DEBUG("Skipped\r\n");
                                 }
                         }
 #if 0 // defined(UHS_HID_LOADED)
@@ -666,10 +673,10 @@ uint8_t UHS_USB_HOST_BASE::setConf(uint8_t addr, uint8_t conf_value) {
 uint8_t UHS_USB_HOST_BASE::outTransfer(uint8_t addr, uint8_t ep, uint16_t nbytes, uint8_t* data) {
         UHS_EpInfo *pep = NULL;
         uint16_t nak_limit = 0;
-        HOST_DUBUG("outTransfer: addr: 0x%2.2x ep: 0x%2.2x nbytes: 0x%4.4x data: 0x%p\r\n", addr, ep, nbytes, data);
+        HOST_DEBUG("outTransfer: addr: 0x%2.2x ep: 0x%2.2x nbytes: 0x%4.4x data: 0x%p\r\n", addr, ep, nbytes, data);
 
         uint8_t rcode = SetAddress(addr, ep, &pep, nak_limit);
-        HOST_DUBUG("outTransfer: SetAddress 0x%2.2x\r\n", rcode);
+        HOST_DEBUG("outTransfer: SetAddress 0x%2.2x\r\n", rcode);
         if(!rcode)
                 rcode = OutTransfer(pep, nak_limit, nbytes, data);
         return rcode;
@@ -748,11 +755,11 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
                 if(rcode)
                         return rcode;
                 ty = data[*offset]; // bDescriptorType
-                HOST_DUBUG("bLength: %i ", remain);
-                HOST_DUBUG("bDescriptorType: %2.2x\r\n", ty);
+                HOST_DEBUG("bLength: %i ", remain);
+                HOST_DEBUG("bDescriptorType: %2.2x\r\n", ty);
                 remain--;
                 if(ty == USB_DESCRIPTOR_INTERFACE) {
-                        HOST_DUBUG("INTERFACE DESCRIPTOR FOUND\r\n");
+                        HOST_DEBUG("INTERFACE DESCRIPTOR FOUND\r\n");
                         ptr = (uint8_t *)(&(ei->interface.bInterfaceNumber));
                         for(int i = 0; i < 6; i++) {
                                 rcode = getone(pep, left, read, data, offset);
@@ -766,11 +773,11 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
                                 return rcode;
                         // Now at iInterface
                         // Get endpoints.
-                        HOST_DUBUG("Getting %i endpoints\r\n", ei->interface.numep);
+                        HOST_DEBUG("Getting %i endpoints\r\n", ei->interface.numep);
                         while(epc < ei->interface.numep) {
                                 rcode = getone(pep, left, read, data, offset);
                                 if(rcode) {
-                                        HOST_DUBUG("ENDPOINT DESCRIPTOR DIED WAY EARLY\r\n");
+                                        HOST_DEBUG("ENDPOINT DESCRIPTOR DIED WAY EARLY\r\n");
                                         return rcode;
                                 }
                                 remain = data[*offset]; // bLength
@@ -782,20 +789,20 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
                                 }
                                 rcode = getone(pep, left, read, data, offset);
                                 if(rcode) {
-                                        HOST_DUBUG("ENDPOINT DESCRIPTOR DIED EARLY\r\n");
+                                        HOST_DEBUG("ENDPOINT DESCRIPTOR DIED EARLY\r\n");
                                         return rcode;
                                 }
                                 ty = data[*offset]; // bDescriptorType
-                                HOST_DUBUG("bLength: %i ", remain);
-                                HOST_DUBUG("bDescriptorType: %2.2x\r\n", ty);
+                                HOST_DEBUG("bLength: %i ", remain);
+                                HOST_DEBUG("bDescriptorType: %2.2x\r\n", ty);
                                 remain -= 2;
                                 if(ty == USB_DESCRIPTOR_ENDPOINT) {
-                                        HOST_DUBUG("ENDPOINT DESCRIPTOR: %i\r\n", epc);
+                                        HOST_DEBUG("ENDPOINT DESCRIPTOR: %i\r\n", epc);
                                         ptr = (uint8_t *)(&(ei->interface.epInfo[epc].bEndpointAddress));
                                         for(unsigned int i = 0; i< sizeof (ENDPOINT_INFO); i++) {
                                                 rcode = getone(pep, left, read, data, offset);
                                                 if(rcode) {
-                                                        HOST_DUBUG("ENDPOINT DESCRIPTOR DIED LATE\r\n");
+                                                        HOST_DEBUG("ENDPOINT DESCRIPTOR DIED LATE\r\n");
                                                         return rcode;
                                                 }
                                                 *ptr = data[*offset];
@@ -803,11 +810,11 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
                                                 remain--;
                                         }
                                         epc++;
-                                        HOST_DUBUG("ENDPOINT DESCRIPTOR OK\r\n");
+                                        HOST_DEBUG("ENDPOINT DESCRIPTOR OK\r\n");
                                 }
                                 rcode = eat(pep, left, read, data, offset, &remain);
                                 if(rcode) {
-                                        HOST_DUBUG("ENDPOINT DESCRIPTOR DIED EATING\r\n");
+                                        HOST_DEBUG("ENDPOINT DESCRIPTOR DIED EATING\r\n");
                                         return rcode;
                                 }
                                 remain = 0;
@@ -818,7 +825,7 @@ uint8_t UHS_USB_HOST_BASE::getNextInterface(ENUMERATION_INFO *ei, UHS_EpInfo *pe
                         if(!ei->interface.numep && rcode) {
                                 return rcode;
                         }
-                        HOST_DUBUG("ENDPOINT DESCRIPTORS FILLED\r\n");
+                        HOST_DEBUG("ENDPOINT DESCRIPTORS FILLED\r\n");
                         return 0;
                 } else {
                         rcode = eat(pep, left, read, data, offset, &remain);
@@ -855,12 +862,12 @@ uint8_t UHS_USB_HOST_BASE::seekInterface(ENUMERATION_INFO *ei, uint16_t inf, USB
         rcode = getone(pep, &left, &read, data, &offset);
         if(rcode)
                 return rcode;
-        HOST_DUBUG("\r\nGetting interface: %i\r\n", inf);
+        HOST_DEBUG("\r\nGetting interface: %i\r\n", inf);
         inf++;
         while(cinf != inf && (left + read)) {
-                //HOST_DUBUG("getInterface: cinf: %i inf: %i left: %i read: %i offset: %i remain %i\r\n", cinf, inf, left, read, offset, remain);
+                //HOST_DEBUG("getInterface: cinf: %i inf: %i left: %i read: %i offset: %i remain %i\r\n", cinf, inf, left, read, offset, remain);
                 // Go past current descriptor
-                HOST_DUBUG("Skip: %i\r\n", remain);
+                HOST_DEBUG("Skip: %i\r\n", remain);
                 rcode = eat(pep, &left, &read, data, &offset, &remain);
                 if(rcode)
                         return rcode;
@@ -875,11 +882,11 @@ uint8_t UHS_USB_HOST_BASE::seekInterface(ENUMERATION_INFO *ei, uint16_t inf, USB
                 if(rcode)
                         return rcode;
                 ty = data[offset]; // bDescriptorType
-                HOST_DUBUG("bLength: %i ", remain);
-                HOST_DUBUG("bDescriptorType: %2.2x\r\n", ty);
+                HOST_DEBUG("bLength: %i ", remain);
+                HOST_DEBUG("bDescriptorType: %2.2x\r\n", ty);
                 remain--;
                 if(ty == USB_DESCRIPTOR_INTERFACE) {
-                        HOST_DUBUG("INTERFACE DESCRIPTOR: %i\r\n", cinf);
+                        HOST_DEBUG("INTERFACE DESCRIPTOR: %i\r\n", cinf);
                         cinf++;
                         if(cinf == inf) {
                                 // Get the interface descriptor information.
@@ -897,7 +904,7 @@ uint8_t UHS_USB_HOST_BASE::seekInterface(ENUMERATION_INFO *ei, uint16_t inf, USB
                                 // Now at iInterface
                                 remain = 0;
                                 // Get endpoints.
-                                HOST_DUBUG("Getting %i endpoints\r\n", ei->interface.numep);
+                                HOST_DEBUG("Getting %i endpoints\r\n", ei->interface.numep);
                                 while(epc < ei->interface.numep) {
                                         rcode = getone(pep, &left, &read, data, &offset);
                                         if(rcode)
@@ -913,11 +920,11 @@ uint8_t UHS_USB_HOST_BASE::seekInterface(ENUMERATION_INFO *ei, uint16_t inf, USB
                                         if(rcode)
                                                 return rcode;
                                         ty = data[offset]; // bDescriptorType
-                                        HOST_DUBUG("bLength: %i ", remain);
-                                        HOST_DUBUG("bDescriptorType: %2.2x\r\n", ty);
+                                        HOST_DEBUG("bLength: %i ", remain);
+                                        HOST_DEBUG("bDescriptorType: %2.2x\r\n", ty);
                                         remain--;
                                         if(ty == USB_DESCRIPTOR_ENDPOINT) {
-                                                HOST_DUBUG("ENDPOINT DESCRIPTOR: %i\r\n", epc);
+                                                HOST_DEBUG("ENDPOINT DESCRIPTOR: %i\r\n", epc);
                                                 ptr = (uint8_t *)(&(ei->interface.epInfo[epc].bEndpointAddress));
                                                 for(unsigned int i = 0; i< sizeof (ENDPOINT_INFO); i++) {
                                                         rcode = getone(pep, &left, &read, data, &offset);
@@ -966,7 +973,7 @@ uint8_t UHS_USB_HOST_BASE::getone(UHS_EpInfo *pep, uint16_t *left, uint16_t *rea
 
 uint8_t UHS_USB_HOST_BASE::eat(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint8_t *dataptr, uint8_t *offset, uint16_t *yum) {
         uint8_t rcode = 0;
-        HOST_DUBUG("eating %i\r\n", *yum);
+        HOST_DEBUG("eating %i\r\n", *yum);
         while(*yum) {
                 *yum -= 1;
                 rcode = getone(pep, left, read, dataptr, offset);
@@ -982,7 +989,7 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbyt
         //        Serial.println("");
         UHS_EpInfo *pep = ctrlReqOpen(addr, Request, dataptr);
         if(!pep) {
-                HOST_DUBUG("ctrlReq1: ERROR_NULL_EPINFO addr: %d\r\n", addr);
+                HOST_DEBUG("ctrlReq1: ERROR_NULL_EPINFO addr: %d\r\n", addr);
                 return UHS_HOST_ERROR_NULL_EPINFO;
         }
         uint8_t rt = (uint8_t)(Request & 0xFFU);
@@ -996,7 +1003,7 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbyt
                         while(left) {
                                 // Bytes read into buffer
                                 uint16_t read = nbytes;
-                                HOST_DUBUG("ctrlReq2: left: %i, read:%i, nbytes %i\r\n", left, read, nbytes);
+                                HOST_DEBUG("ctrlReq2: left: %i, read:%i, nbytes %i\r\n", left, read, nbytes);
                                 rcode = ctrlReqRead(pep, &left, &read, nbytes, dataptr);
 
                                 if(rcode) {
@@ -1006,7 +1013,7 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbyt
 
                                 // Should only be used for GET_DESCRIPTOR USB_DESCRIPTOR_DEVICE
                                 if(!addr && ((Request & (uint32_t)0xFF00FF00U) == (((uint32_t)USB_REQUEST_GET_DESCRIPTOR << 8) | ((uint32_t)USB_DESCRIPTOR_DEVICE << 24)))) {
-                                        HOST_DUBUG("ctrlReq3: acceptBuffer sz %i nbytes %i left %i\n\r", read, nbytes, left);
+                                        HOST_DEBUG("ctrlReq3: acceptBuffer sz %i nbytes %i left %i\n\r", read, nbytes, left);
                                         left = 0;
                                         break;
                                 }
@@ -1038,21 +1045,21 @@ uint8_t UHS_USB_HOST_BASE::TestInterface(ENUMERATION_INFO *ei) {
 
         uint8_t devConfigIndex;
         uint8_t rcode = 0;
-        HOST_DUBUG("TestInterface VID:%4.4x PID:%4.4x Class:%2.2x Subclass:%2.2x Protocol %2.2x\r\n", ei->vid, ei->pid, ei->klass, ei->subklass, ei->protocol);
-        HOST_DUBUG("Interface data: Class:%2.2x Subclass:%2.2x Protocol %2.2x, number of endpoints %i\r\n", ei->interface.klass, ei->interface.subklass, ei->interface.subklass, ei->interface.numep);
-        HOST_DUBUG("Parent: %2.2x, bAddress: %2.2x\r\n", ei->parent, ei->address);
+        HOST_DEBUG("TestInterface VID:%4.4x PID:%4.4x Class:%2.2x Subclass:%2.2x Protocol %2.2x\r\n", ei->vid, ei->pid, ei->klass, ei->subklass, ei->protocol);
+        HOST_DEBUG("Interface data: Class:%2.2x Subclass:%2.2x Protocol %2.2x, number of endpoints %i\r\n", ei->interface.klass, ei->interface.subklass, ei->interface.subklass, ei->interface.numep);
+        HOST_DEBUG("Parent: %2.2x, bAddress: %2.2x\r\n", ei->parent, ei->address);
         for(devConfigIndex = 0; devConfigIndex < UHS_HOST_MAX_INTERFACE_DRIVERS; devConfigIndex++) {
                 if(!devConfig[devConfigIndex]) {
-                        HOST_DUBUG("No driver at index %i\r\n", devConfigIndex);
+                        HOST_DEBUG("No driver at index %i\r\n", devConfigIndex);
                         continue; // no driver
                 }
                 if(devConfig[devConfigIndex]->bAddress) {
-                        HOST_DUBUG("Driver %i is already consumed @ %2.2x\r\n", devConfigIndex, devConfig[devConfigIndex]->bAddress);
+                        HOST_DEBUG("Driver %i is already consumed @ %2.2x\r\n", devConfigIndex, devConfig[devConfigIndex]->bAddress);
                         continue; // consumed
                 }
 
                 if(devConfig[devConfigIndex]->OKtoEnumerate(ei)) {
-                        HOST_DUBUG("Driver %i supports this interface\r\n", devConfigIndex);
+                        HOST_DEBUG("Driver %i supports this interface\r\n", devConfigIndex);
                         break;
                 }
         }
@@ -1066,15 +1073,15 @@ uint8_t UHS_USB_HOST_BASE::TestInterface(ENUMERATION_INFO *ei) {
                 }
 #endif
         }
-        if(!rcode) HOST_DUBUG("Driver %i can be used for this interface\r\n", devConfigIndex);
-        else HOST_DUBUG("No driver for this interface.\r\n");
+        if(!rcode) HOST_DEBUG("Driver %i can be used for this interface\r\n", devConfigIndex);
+        else HOST_DEBUG("No driver for this interface.\r\n");
         return rcode;
 };
 
 uint8_t UHS_USB_HOST_BASE::enumerateInterface(ENUMERATION_INFO *ei) {
         uint8_t devConfigIndex;
 
-        HOST_DUBUG("AttemptConfig: parent = %i, port = %i\r\n", ei->parent, ei->port);
+        HOST_DEBUG("AttemptConfig: parent = %i, port = %i\r\n", ei->parent, ei->port);
 
 #if 0 // defined(UHS_HID_LOADED)
         // Check HID here, if it is, then lie
@@ -1085,16 +1092,16 @@ uint8_t UHS_USB_HOST_BASE::enumerateInterface(ENUMERATION_INFO *ei) {
 #endif
                 for(devConfigIndex = 0; devConfigIndex < UHS_HOST_MAX_INTERFACE_DRIVERS; devConfigIndex++) {
                         if(!devConfig[devConfigIndex]) {
-                                HOST_DUBUG("No driver at index %i\r\n", devConfigIndex);
+                                HOST_DEBUG("No driver at index %i\r\n", devConfigIndex);
                                 continue; // no driver
                         }
                         if(devConfig[devConfigIndex]->bAddress) {
-                                HOST_DUBUG("Driver %i is already consumed @ %2.2x\r\n", devConfigIndex, devConfig[devConfigIndex]->bAddress);
+                                HOST_DEBUG("Driver %i is already consumed @ %2.2x\r\n", devConfigIndex, devConfig[devConfigIndex]->bAddress);
                                 continue; // consumed
                         }
 
                         if(devConfig[devConfigIndex]->OKtoEnumerate(ei)) {
-                                HOST_DUBUG("Driver %i supports this interface\r\n", devConfigIndex);
+                                HOST_DEBUG("Driver %i supports this interface\r\n", devConfigIndex);
                                 if(!devConfig[devConfigIndex]->SetInterface(ei)) break;
                                 else devConfigIndex = UHS_HOST_MAX_INTERFACE_DRIVERS;
                         }

@@ -2,12 +2,19 @@
    and
 Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
-This software may be distributed and modified under the terms of the GNU
-General Public License version 2 (GPL2) as published by the Free Software
-Foundation and appearing in the file GPL2.TXT included in the packaging of
-this file. Please note that GPL2 Section 2[b] requires that all works based
-on this software must also be made publicly available under the terms of
-the GPL2 ("Copyleft").
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 Contact information
 -------------------
@@ -22,12 +29,12 @@ e-mail   :  support@circuitsathome.com
 
 #if DEBUG_PRINTF_EXTRA_HUGE
 #if DEBUG_PRINTF_EXTRA_HUGE_USB_HID
-#define HID_DUBUG(...) printf(__VA_ARGS__)
+#define HID_DEBUG(...) printf(__VA_ARGS__)
 #else
-#define HID_DUBUG(...) VOID0
+#define HID_DEBUG(...) VOID0
 #endif
 #else
-#define HID_DUBUG(...) VOID0
+#define HID_DEBUG(...) VOID0
 #endif
 
 #ifndef AJK_NI
@@ -123,7 +130,7 @@ uint8_t UHS_NI UHS_HID::SetReport(uint8_t iface, uint8_t report_type, uint8_t re
 }
 
 uint8_t UHS_NI UHS_HID::Start(void) {
-        HID_DUBUG("HID START, A %02x I %02x O %02x\r\n", bAddress, epInfo[epInterruptInIndex].epAddr, epInfo[epInterruptOutIndex].epAddr);
+        HID_DEBUG("HID START, A %02x I %02x O %02x\r\n", bAddress, epInfo[epInterruptInIndex].epAddr, epInfo[epInterruptOutIndex].epAddr);
         uint8_t rcode = pUsb->setEpInfoEntry(bAddress, bIface, 3, epInfo);
         if(rcode) {
                 Release();

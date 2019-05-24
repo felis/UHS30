@@ -118,7 +118,7 @@ void UHS_NI UHS_KINETIS_EHCI::busprobe(void) {
                         speed = 15;
                         break;
         }
-        HOST_DUBUG("USB host speed now %1.1x\r\n", speed);
+        HOST_DEBUG("USB host speed now %1.1x\r\n", speed);
         usb_host_speed = speed;
         if(speed == 2) {
                 UHS_KIO_SETBIT_ATOMIC(USBPHY_CTRL, USBPHY_CTRL_ENHOSTDISCONDETECT);
@@ -164,7 +164,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                 interrupts();
         }
 
-        //HOST_DUBUG("ISRbottom, usb_task_state: 0x%0X \r\n", (uint8_t)usb_task_state);
+        //HOST_DEBUG("ISRbottom, usb_task_state: 0x%0X \r\n", (uint8_t)usb_task_state);
 
         switch(usb_task_state) {
                 case UHS_USB_HOST_STATE_INITIALIZE: /* 0x10 */ // initial state
@@ -211,7 +211,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                         break; // don't fall through
 
                 case UHS_USB_HOST_STATE_CONFIGURING: /* 0x0C */
-                        HOST_DUBUG("ISRbottom, UHS_USB_HOST_STATE_CONFIGURING\r\n");
+                        HOST_DEBUG("ISRbottom, UHS_USB_HOST_STATE_CONFIGURING\r\n");
                         usb_task_state = UHS_USB_HOST_STATE_CHECK;
                         x = Configuring(0, 1, usb_host_speed);
                         if(usb_task_state == UHS_USB_HOST_STATE_CHECK) {
@@ -227,15 +227,17 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                         }
                         break;
                 case UHS_USB_HOST_STATE_CONFIGURING_DONE: /* 0x0D */
-                        HOST_DUBUG("ISRbottom, UHS_USB_HOST_STATE_CONFIGURING_DONE\r\n");
+                        HOST_DEBUG("ISRbottom, UHS_USB_HOST_STATE_CONFIGURING_DONE\r\n");
                         usb_task_state = UHS_USB_HOST_STATE_RUNNING;
                         break;
                 case UHS_USB_HOST_STATE_CHECK: /* 0x0E */
                         break;
+
                 case UHS_USB_HOST_STATE_ERROR: /* 0xF0 */
-                        HOST_DUBUG("ISRbottom, UHS_USB_HOST_STATE_ERROR\r\n");
+                        HOST_DEBUG("ISRbottom, UHS_USB_HOST_STATE_ERROR\r\n");
                         //while(1);
                         break;
+            
                 case UHS_USB_HOST_STATE_RUNNING: /* 0x60 */
                         //printf("ISRbottom, UHS_USB_HOST_STATE_RUNNING\r\n");
                         Poll_Others();
@@ -288,7 +290,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
                 // port change
                 vbusState = ((Pstat & 0x04000000U) ? 1 : 0) | ((Pstat & 0x08000000U) ? 2 : 0);
 #if defined(EHCI_TEST_DEV)
-                HOST_DUBUG("PCI Vbus state changed to %1.1x\r\n", vbusState);
+                HOST_DEBUG("PCI Vbus state changed to %1.1x\r\n", vbusState);
 #endif
                 busprobe();
                 if(!doingreset) condet = true;
@@ -497,12 +499,12 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         OSC0_CR |= OSC_ERCLKEN;
         SIM_SOPT2 |= SIM_SOPT2_USBREGEN; // turn on USB regulator
         SIM_SOPT2 &= ~SIM_SOPT2_USBSLSRC; // use IRC for slow clock
-        HOST_DUBUG("power up USBHS PHY\r\n");
+        HOST_DEBUG("power up USBHS PHY\r\n");
         SIM_USBPHYCTL |= SIM_USBPHYCTL_USBDISILIM; // disable USB current limit
         //SIM_USBPHYCTL = SIM_USBPHYCTL_USBDISILIM | SIM_USBPHYCTL_USB3VOUTTRG(6); // pg 237
         SIM_SCGC3 |= SIM_SCGC3_USBHSDCD | SIM_SCGC3_USBHSPHY | SIM_SCGC3_USBHS;
         USBHSDCD_CLOCK = 33 << 2;
-        HOST_DUBUG("init USBHS PHY & PLL\r\n");
+        HOST_DEBUG("init USBHS PHY & PLL\r\n");
 
         // init process: page 1681-1682
         USBPHY_CTRL_CLR = (USBPHY_CTRL_SFTRST | USBPHY_CTRL_CLKGATE); // // CTRL pg 1698
@@ -514,19 +516,19 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         while((USBPHY_PLL_SIC & USBPHY_PLL_SIC_PLL_LOCK) == 0) {
                 count++;
         }
-        HOST_DUBUG("PLL locked, waited %i\r\n", count);
+        HOST_DEBUG("PLL locked, waited %i\r\n", count);
 
         // turn on power to PHY
         USBPHY_PWD = 0;
         delay(10);
-        HOST_DUBUG("begin ehci reset\r\n");
+        HOST_DEBUG("begin ehci reset\r\n");
 
         USBHS_USBCMD |= USBHS_USBCMD_RST;
         count = 0;
         while(USBHS_USBCMD & USBHS_USBCMD_RST) {
                 count++;
         }
-        HOST_DUBUG("reset waited %i\r\n", count);
+        HOST_DEBUG("reset waited %i\r\n", count);
 
         // turn on the USBHS controller
         USBHS_USBMODE = /* USBHS_USBMODE_TXHSD(5) |*/ USBHS_USBMODE_CM(3); // host mode
@@ -678,7 +680,7 @@ structure.
  */
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t & nak_limit) {
-        HOST_DUBUG("SetAddress, addr=%d, ep=%x\r\n", addr, ep);
+        HOST_DEBUG("SetAddress, addr=%d, ep=%x\r\n", addr, ep);
 
         UHS_Device *p = addrPool.GetUsbDevicePtr(addr);
         if(!p) return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
@@ -718,7 +720,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         // Paul: Never seen this happen, save for a few broken devices.
 
         uint32_t maxlen = (*ppep)->maxPktSize;
-        HOST_DUBUG("SetAddress, speed=%ld, maxlen=%ld\r\n", speed, maxlen);
+        HOST_DEBUG("SetAddress, speed=%ld, maxlen=%ld\r\n", speed, maxlen);
         // maxlen = 16; // uncomment for testing with device having ep0 maxlen=16
 
         // Fixed.
@@ -727,7 +729,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         // have a 0 byte maximum packet length.  That makes no sense at all.
         // if (maxlen == 0) {
         //	maxlen = (speed == 2 && type == 2) ? 512 : 64; // just blind guess!
-        //	HOST_DUBUG("  WARNING: horrible maxlen hack, guessing %ld\r\n", maxlen);
+        //	HOST_DEBUG("  WARNING: horrible maxlen hack, guessing %ld\r\n", maxlen);
         //}
 
         // TODO, bmParent & bmAddress do not seem to always work
@@ -749,7 +751,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
                 // uint8_t port = (bmUSB_DEV_ADDR_ADDRESS & addr);
                 hub_port=(bmUSB_DEV_ADDR_PORT & addr);
         }
-        HOST_DUBUG("SetAddress, parent=%lu, parent_port=%lu\r\n", hub_addr, hub_port);
+        HOST_DEBUG("SetAddress, parent=%lu, parent_port=%lu\r\n", hub_addr, hub_port);
 
         if(type == 0 && speed != 2) {
                 c = 1;
@@ -798,7 +800,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uin
                 // Wait for a state change.
                 // See UHS_KINETIS_FS_HOST_INLINE.h
                 uint32_t status = qTD.transferResults;
-                //HOST_DUBUG("dispatchPkt %lx\r\n", status);
+                //HOST_DEBUG("dispatchPkt %lx\r\n", status);
                 if(!(status & 0x80)) {
                         if(!(status & 0xffu)) {
                                 // no longer active, not halted, no errors... so ok
@@ -837,7 +839,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uin
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data) {
-        HOST_DUBUG("OutTransfer %d\n", nbytes);
+        HOST_DEBUG("OutTransfer %d\n", nbytes);
 
         uint16_t bytes;
         uint8_t rcode = UHS_HOST_ERROR_NONE;
@@ -864,7 +866,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data) {
-        HOST_DUBUG("InTransfer %d\r\n", *nbytesptr);
+        HOST_DEBUG("InTransfer %d\r\n", *nbytesptr);
 
         // WARNING!
         // Potentially unsafe if EHCI DMA > than requested size.
@@ -907,7 +909,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
 }
 
 UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr) {
-        HOST_DUBUG("ctrlReqOpen\r\n");
+        HOST_DEBUG("ctrlReqOpen\r\n");
 
         UHS_EpInfo *pep = NULL;
         uint16_t nak_limit = 0;
@@ -934,16 +936,16 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t * dataptr) {
-        HOST_DUBUG("ctrlReqRead left: %i, nbytes: %i, dataptr: %lx\r\n", *left, nbytes, (uint32_t)dataptr);
+        HOST_DEBUG("ctrlReqRead left: %i, nbytes: %i, dataptr: %lx\r\n", *left, nbytes, (uint32_t)dataptr);
         uint8_t rcode = 0;
         if(*left) {
                 *read = nbytes;
                 rcode = InTransfer(pep, 0, read, dataptr);
                 if(rcode) {
-                        HOST_DUBUG("ctrlReqRead ERROR: %2.2x, left: %i, read %i\r\n", rcode, *left, *read);
+                        HOST_DEBUG("ctrlReqRead ERROR: %2.2x, left: %i, read %i\r\n", rcode, *left, *read);
                 } else {
                         *left -= *read;
-                        HOST_DUBUG("ctrlReqRead left: %i, read %i\r\n", *left, *read);
+                        HOST_DEBUG("ctrlReqRead left: %i, read %i\r\n", *left, *read);
                 }
         }
         return rcode;
@@ -953,7 +955,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType
         uint8_t rcode;
 
         if(((bmReqType & 0x80) == 0x80) && pep && left && dataptr) {
-                HOST_DUBUG("ctrlReqClose Sinking %i\r\n", left);
+                HOST_DEBUG("ctrlReqClose Sinking %i\r\n", left);
                 // TODO: is this needed?
                 // Paul: Yes! otherwise USB will stall and die. -- AJK
                 while(left) {
