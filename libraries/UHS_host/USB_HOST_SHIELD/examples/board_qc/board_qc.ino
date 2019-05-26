@@ -69,7 +69,7 @@ void setup() {
         // Manually initialize ahead of time
         Init_dyn_SWI();
         UHS_printf_HELPER_init();
-        SPIklass.begin();
+        SPIclass.begin();
 
         UHS_Usb.ss_pin = UHS_MAX3421E_SS;
         UHS_Usb.irq_pin = UHS_MAX3421E_INT;

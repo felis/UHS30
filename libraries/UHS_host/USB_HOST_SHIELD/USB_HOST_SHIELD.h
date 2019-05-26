@@ -136,7 +136,7 @@ e-mail   :  support@circuitsathome.com
 #elif defined(ARDUINO_spresense_ast)
 #define UHS_MAX3421E_SS_ 21
 #define UHS_MAX3421E_INT_ 20
-#define SPIklass SPI5
+#define SPIclass SPI5
 //#define UHS_MAX3421E_SPD 100000
 #elif defined(CORE_TEENSY) && (defined(__AVR_AT90USB646__) || defined(__AVR_AT90USB1286__))
 
@@ -469,8 +469,8 @@ public:
 
 
 };
-#if !defined(SPIklass)
-#define SPIklass SPI
+#if !defined(SPIclass)
+#define SPIclass SPI
 #endif
 #if !defined(USB_HOST_SHIELD_LOADED)
 #include "USB_HOST_SHIELD_INLINE.h"

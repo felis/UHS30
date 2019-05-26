@@ -2,12 +2,19 @@
    and
 Copyright (C) 2011 Circuits At Home, LTD. All rights reserved.
 
-This software may be distributed and modified under the terms of the GNU
-General Public License version 2 (GPL2) as published by the Free Software
-Foundation and appearing in the file GPL2.TXT included in the packaging of
-this file. Please note that GPL2 Section 2[b] requires that all works based
-on this software must also be made publicly available under the terms of
-the GPL2 ("Copyleft").
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 Contact information
 -------------------
@@ -29,12 +36,12 @@ e-mail   :  support@circuitsathome.com
 
 #if DEBUG_PRINTF_EXTRA_HUGE
 #if DEBUG_PRINTF_EXTRA_HUGE_USB_HIDBOOT_KEYBOARD
-#define HIDBOOT_KEYBOARD_DUBUG(...) printf(__VA_ARGS__)
+#define HIDBOOT_KEYBOARD_DEBUG(...) printf(__VA_ARGS__)
 #else
-#define HID_DUBUGBOOT_KEYBOARD(...) VOID0
+#define HID_DEBUGBOOT_KEYBOARD(...) VOID0
 #endif
 #else
-#define HID_DUBUGBOOT_KEYBOARD(...) VOID0
+#define HID_DEBUGBOOT_KEYBOARD(...) VOID0
 #endif
 
 class UHS_HIDBOOT_keyboard : public UHS_HID_base {
@@ -59,7 +66,7 @@ public:
                 if(rv == 0) {
                         parent->hidProcessor->onPoll(this, data, length);
                 } else if(rv != UHS_HOST_ERROR_NAK) {
-                        HID_DUBUGBOOT_KEYBOARD("DP %02x A %02x EI %02x EA %02x\r\n", rv, parent->bAddress, parent->epInterruptInIndex, parent->epInfo[parent->epInterruptInIndex].epAddr);
+                        HID_DEBUGBOOT_KEYBOARD("DP %02x A %02x EI %02x EA %02x\r\n", rv, parent->bAddress, parent->epInterruptInIndex, parent->epInfo[parent->epInterruptInIndex].epAddr);
                 }
         }
 
