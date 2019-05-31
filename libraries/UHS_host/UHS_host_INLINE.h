@@ -1006,18 +1006,18 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbyt
                                 HOST_DEBUG("ctrlReq2: left: %i, read:%i, nbytes %i\r\n", left, read, nbytes);
                                 rcode = ctrlReqRead(pep, &left, &read, nbytes, dataptr);
 
-                                if(rcode) {
-                                        return rcode;
-                                }
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
-
                                 // Should only be used for GET_DESCRIPTOR USB_DESCRIPTOR_DEVICE
-                                if(!addr && ((Request & (uint32_t)0xFF00FF00U) == (((uint32_t)USB_REQUEST_GET_DESCRIPTOR << 8) | ((uint32_t)USB_DESCRIPTOR_DEVICE << 24)))) {
+                                if(!addr && read && ((Request & (uint32_t)0xFF00FF00U) == (((uint32_t)USB_REQUEST_GET_DESCRIPTOR << 8) | ((uint32_t)USB_DESCRIPTOR_DEVICE << 24)))) {
                                         HOST_DEBUG("ctrlReq3: acceptBuffer sz %i nbytes %i left %i\n\r", read, nbytes, left);
                                         left = 0;
+                                        rcode = UHS_HOST_ERROR_NONE;
                                         break;
                                 }
 #endif
+                                if(rcode) {
+                                        return rcode;
+                                }
                         }
                 } else {
                         // OUT transfer
