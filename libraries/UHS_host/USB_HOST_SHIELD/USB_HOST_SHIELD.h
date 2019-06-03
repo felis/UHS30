@@ -20,6 +20,8 @@ e-mail   :  support@circuitsathome.com
 #ifndef USB_HOST_SHIELD_H
 #define USB_HOST_SHIELD_H
 
+// uncomment to get 'printf' console debugging. NOT FOR UNO!
+//#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD
 
 #ifdef LOAD_USB_HOST_SHIELD
 #include "UHS_max3421e.h"
