@@ -25,11 +25,6 @@ e-mail   :  support@circuitsathome.com
 #error digitalPinToInterrupt not defined, complain to your board maintainer.
 #endif
 
-
-// uncomment to get 'printf' console debugging. NOT FOR UNO!
-//#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD
-
-
 #if USB_HOST_SHIELD_USE_ISR
 
 // allow two slots. this makes the maximum allowed shield count TWO
