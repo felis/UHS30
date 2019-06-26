@@ -251,8 +251,7 @@ public:
 
         virtual void UHS_NI doHostReset(void) {
 
-                USBTRACE("\r\nBUS RESET.\r\n");
-
+                KINETIS_HOST_DEBUG("\r\nBUS RESET.\r\n");
                 // Issue a bus reset
                 // YOUR CODE HERE to issue a BUS_RESET
                 USB0_CTL |= USB_CTL_RESET;
