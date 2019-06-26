@@ -300,6 +300,9 @@ public:
                 ISRbottom();
         };
 
+        virtual void UHS_NI suspend_host(void) {}; // NOP, AVR only
+        virtual void UHS_NI resume_host(void) {}; // NOP, AVR only
+
 };
 
 

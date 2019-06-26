@@ -166,12 +166,24 @@ public:
                 return (klass == UHS_USB_CLASS_HUB);
         };
 
+        virtual void UHS_NI suspend_host(void) {
+                // Used on MCU that lack control of IRQ priority (AVR).
+                // Suspends ISRs, for critical code. IRQ will be serviced after it is resumed.
+                // NOTE: you must track the state yourself!
+        };
+
+        virtual void UHS_NI resume_host(void) {
+                // Used on MCU that lack control of IRQ priority (AVR).
+                // Resumes ISRs.
+                // NOTE: you must track the state yourself!
+        };
+
         /////////////////////////////////////////////
         //
         // Built-ins, No need to override
         //
         /////////////////////////////////////////////
-
+        // these two probably will go away, and won't be used, TBD
         inline void Poll_Others(void) {
 #if defined(UHS_LOAD_BT)
                 UHS_BT_Poll(this);
@@ -179,9 +191,6 @@ public:
 #if defined(UHS_LOAD_HID)
                 UHS_HID_Poll(this);
 #endif
-                //#if defined(LOAD_UHS_CDC_ACM) || defined(LOAD_UHS_CDC_ACM_FTDI) || defined(LOAD_UHS_CDC_ACM_PROLIFIC) || defined(LOAD_UHS_CDC_ACM_XR21B1411)
-                //                UHS_CDC_ACM_Poll(this);
-                //#endif
         }
 
         inline void DisablePoll(void) {

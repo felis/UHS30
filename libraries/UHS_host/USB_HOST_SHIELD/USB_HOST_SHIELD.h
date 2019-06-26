@@ -289,8 +289,6 @@ e-mail   :  support@circuitsathome.com
 #endif
 #endif
 
-
-
 class MAX3421E_HOST :
 public UHS_USB_HOST_BASE
 #if defined(SWI_IRQ_NUM)
@@ -316,7 +314,7 @@ public:
         UHS_NI MAX3421E_HOST(void) {
                 sof_countdown = 0;
                 busevent = false;
-                doingreset= false;
+                doingreset = false;
                 sofevent = false;
                 condet = false;
                 ss_pin = UHS_MAX3421E_SS;
@@ -330,7 +328,7 @@ public:
         UHS_NI MAX3421E_HOST(uint8_t pss, uint8_t pirq) {
                 sof_countdown = 0;
                 busevent = false;
-                doingreset= false;
+                doingreset = false;
                 sofevent = false;
                 condet = false;
                 ss_pin = pss;
@@ -343,7 +341,7 @@ public:
 
         UHS_NI MAX3421E_HOST(uint8_t pss, uint8_t pirq, uint32_t pspd) {
                 sof_countdown = 0;
-                doingreset= false;
+                doingreset = false;
                 busevent = false;
                 sofevent = false;
                 condet = false;
@@ -399,7 +397,7 @@ public:
 
         virtual void UHS_NI doHostReset(void) {
 #if USB_HOST_SHIELD_USE_ISR
-                        // Enable interrupts
+                // Enable interrupts
                 noInterrupts();
 #endif
                 doingreset = true;
@@ -412,11 +410,11 @@ public:
                 interrupts();
 #endif
                 while(busevent) {
-                DDSB();
+                        DDSB();
                 }
 #endif
 #if USB_HOST_SHIELD_USE_ISR
-                        // Enable interrupts
+                // Enable interrupts
                 noInterrupts();
 #endif
                 sofevent = true;
@@ -429,7 +427,7 @@ public:
                 while(sofevent) {
                 }
 #if USB_HOST_SHIELD_USE_ISR
-                        // Enable interrupts
+                // Enable interrupts
                 noInterrupts();
 #endif
                 doingreset = false;
@@ -461,12 +459,39 @@ public:
 
         // ARM/NVIC specific, used to emulate reentrant ISR.
 #if defined(SWI_IRQ_NUM)
+
         void dyn_SWISR(void) {
                 ISRbottom();
         };
 #endif
 
+        virtual void UHS_NI suspend_host(void) {
+                // Used on MCU that lack control of IRQ priority (AVR).
+                // Suspends ISRs, for critical code. IRQ will be serviced after it is resumed.
+                // NOTE: you must track the state yourself!
+#if defined(__AVR__)
+                noInterrupts();
+                detachInterrupt(UHS_GET_DPI(irq_pin));
+                interrupts();
+#endif
+        };
 
+        virtual void UHS_NI resume_host(void) {
+                // Used on MCU that lack control of IRQ priority (AVR).
+                // Resumes ISRs.
+                // NOTE: you must track the state yourself!
+#if defined(__AVR__)
+                noInterrupts();
+                if(irq_pin & 1) {
+                        ISRodd = this;
+                        attachInterrupt(UHS_GET_DPI(irq_pin), call_ISRodd, IRQ_SENSE);
+                } else {
+                        ISReven = this;
+                        attachInterrupt(UHS_GET_DPI(irq_pin), call_ISReven, IRQ_SENSE);
+                }
+                interrupts();
+#endif
+        };
 
 };
 #if !defined(SPIclass)
