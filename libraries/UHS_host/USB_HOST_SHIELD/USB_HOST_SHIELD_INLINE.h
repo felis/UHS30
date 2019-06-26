@@ -26,10 +26,6 @@ e-mail   :  support@circuitsathome.com
 #endif
 
 
-// uncomment to get 'printf' console debugging. NOT FOR UNO!
-//#define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD
-
-
 #if USB_HOST_SHIELD_USE_ISR
 
 // allow two slots. this makes the maximum allowed shield count TWO
@@ -132,10 +128,16 @@ uint8_t UHS_NI MAX3421E_HOST::gpioRd(void) {
   or zero if PLL haven't stabilized in 65535 cycles */
 uint16_t UHS_NI MAX3421E_HOST::reset(void) {
         uint16_t i = 0;
+
+        // Initiate chip reset
         regWr(rUSBCTL, bmCHIPRES);
         regWr(rUSBCTL, 0x00);
+
         int32_t now;
         uint32_t expires = micros() + 65535;
+
+        // Enable full-duplex SPI so we can read rUSBIRQ
+        regWr(rPINCTL, bmFDUPSPI);
         while((int32_t)(micros() - expires) < 0L) {
                 if((regRd(rUSBIRQ) & bmOSCOKIRQ)) {
                         break;
@@ -305,8 +307,6 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
         uint32_t spd = UHS_MAX3421E_SPD;
 again:
         MAX3421E_SPI_Settings = SPISettings(spd, MSBFIRST, SPI_MODE0);
-        /* MAX3421E - full-duplex SPIclass, interrupt kind, vbus off */
-        regWr(rPINCTL, (bmFDUPSPI | bmIRQ_SENSE | GPX_VBDET));
         if(reset() == 0) {
                 MAX_HOST_DEBUG("Fail SPI speed %lu\r\n", spd);
                 if(spd > 1999999) {
@@ -337,12 +337,14 @@ again:
 
         MAX_HOST_DEBUG("Pass SPI speed %lu\r\n", spd);
 #endif
-        /* MAX3421E - full-duplex SPI, interrupt kind, vbus off */
+
         if(reset() == 0) { //OSCOKIRQ hasn't asserted in time
+                MAX_HOST_DEBUG("OSCOKIRQ hasn't asserted in time");
                 return ( -1);
         }
-        regWr(rPINCTL, (bmFDUPSPI | bmIRQ_SENSE | GPX_VBDET));
 
+        /* MAX3421E - full-duplex SPI, interrupt kind, vbus off */
+        regWr(rPINCTL, (bmFDUPSPI | bmIRQ_SENSE | GPX_VBDET));
 
         // Delay a minimum of 1 second to ensure any capacitors are drained.
         // 1 second is required to make sure we do not smoke a Microdrive!
