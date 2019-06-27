@@ -40,7 +40,7 @@ e-mail   :  support@circuitsathome.com
 #endif
 #if DEBUG_PRINTF_EXTRA_HUGE
 #ifdef DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD
-#define MAX_HOST_DEBUG(...) printf(__VA_ARGS__)
+#define MAX_HOST_DEBUG(...) printf_P(__VA_ARGS__)
 #else
 #define MAX_HOST_DEBUG(...) VOID0
 #endif
@@ -478,23 +478,7 @@ public:
 #endif
         };
 
-        virtual void UHS_NI resume_host(void) {
-                // Used on MCU that lack control of IRQ priority (AVR).
-                // Resumes ISRs.
-                // NOTE: you must track the state yourself!
-#if defined(__AVR__)
-                noInterrupts();
-                if(irq_pin & 1) {
-                        ISRodd = this;
-                        attachInterrupt(UHS_GET_DPI(irq_pin), call_ISRodd, IRQ_SENSE);
-                } else {
-                        ISReven = this;
-                        attachInterrupt(UHS_GET_DPI(irq_pin), call_ISReven, IRQ_SENSE);
-                }
-                interrupts();
-#endif
-        };
-
+        virtual void UHS_NI resume_host(void);
 };
 #if !defined(SPIclass)
 #define SPIclass SPI

@@ -44,6 +44,24 @@ static void UHS_NI call_ISRodd(void) {
 }
 #endif
 
+
+void UHS_NI MAX3421E_HOST::resume_host(void) {
+                // Used on MCU that lack control of IRQ priority (AVR).
+                // Resumes ISRs.
+                // NOTE: you must track the state yourself!
+#if defined(__AVR__)
+                noInterrupts();
+                if(irq_pin & 1) {
+                        ISRodd = this;
+                        attachInterrupt(UHS_GET_DPI(irq_pin), call_ISRodd, IRQ_SENSE);
+                } else {
+                        ISReven = this;
+                        attachInterrupt(UHS_GET_DPI(irq_pin), call_ISReven, IRQ_SENSE);
+                }
+                interrupts();
+#endif
+
+}
 /* write single byte into MAX3421e register */
 void UHS_NI MAX3421E_HOST::regWr(uint8_t reg, uint8_t data) {
         SPIclass.beginTransaction(MAX3421E_SPI_Settings);
@@ -308,7 +326,7 @@ int16_t UHS_NI MAX3421E_HOST::Init(int16_t mseconds) {
 again:
         MAX3421E_SPI_Settings = SPISettings(spd, MSBFIRST, SPI_MODE0);
         if(reset() == 0) {
-                MAX_HOST_DEBUG("Fail SPI speed %lu\r\n", spd);
+                MAX_HOST_DEBUG(PSTR("Fail SPI speed %lu\r\n"), spd);
                 if(spd > 1999999) {
                         spd -= 1000000;
                         goto again;
@@ -323,7 +341,7 @@ again:
                         regWr(rGPINPOL, sample_wr);
                         sample_rd = regRd(rGPINPOL);
                         if(sample_rd != sample_wr) {
-                                MAX_HOST_DEBUG("Fail SPI speed %lu\r\n", spd);
+                                MAX_HOST_DEBUG(PSTR("Fail SPI speed %lu\r\n"), spd);
                                 if(spd > 1999999) {
                                         spd -= 1000000;
                                         goto again;
@@ -335,11 +353,11 @@ again:
                 regWr(rGPINPOL, gpinpol_copy);
         }
 
-        MAX_HOST_DEBUG("Pass SPI speed %lu\r\n", spd);
+        MAX_HOST_DEBUG(PSTR("Pass SPI speed %lu\r\n"), spd);
 #endif
 
         if(reset() == 0) { //OSCOKIRQ hasn't asserted in time
-                MAX_HOST_DEBUG("OSCOKIRQ hasn't asserted in time");
+                MAX_HOST_DEBUG(PSTR("OSCOKIRQ hasn't asserted in time"));
                 return ( -1);
         }
 
@@ -454,7 +472,7 @@ uint8_t UHS_NI MAX3421E_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, ui
         uint8_t pktsize;
 
         uint16_t nbytes = *nbytesptr;
-        MAX_HOST_DEBUG("Requesting %i bytes ", nbytes);
+        MAX_HOST_DEBUG(PSTR("Requesting %i bytes "), nbytes);
         uint8_t maxpktsize = pep->maxPktSize;
 
         *nbytesptr = 0;
@@ -466,7 +484,7 @@ uint8_t UHS_NI MAX3421E_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, ui
 #if 0
                 // This issue should be resolved now.
                 if(rcode == UHS_HOST_ERROR_TOGERR) {
-                        //MAX_HOST_DEBUG("toggle wrong\r\n");
+                        //MAX_HOST_DEBUG(PSTR("toggle wrong\r\n"));
                         // yes, we flip it wrong here so that next time it is actually correct!
                         pep->bmRcvToggle = (regRd(rHRSL) & bmSNDTOGRD) ? 0 : 1;
                         regWr(rHCTL, (pep->bmRcvToggle) ? bmRCVTOG1 : bmRCVTOG0); //set toggle value
@@ -474,21 +492,21 @@ uint8_t UHS_NI MAX3421E_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, ui
                 }
 #endif
                 if(rcode) {
-                        //MAX_HOST_DEBUG(">>>>>>>> Problem! dispatchPkt %2.2x\r\n", rcode);
+                        //MAX_HOST_DEBUG(PSTR(">>>>>>>> Problem! dispatchPkt %2.2x\r\n"), rcode);
                         break; //should be 0, indicating ACK. Else return error code.
                 }
                 /* check for RCVDAVIRQ and generate error if not present */
                 /* the only case when absence of RCVDAVIRQ makes sense is when toggle error occurred. Need to add handling for that */
                 if((regRd(rHIRQ) & bmRCVDAVIRQ) == 0) {
-                        //MAX_HOST_DEBUG(">>>>>>>> Problem! NO RCVDAVIRQ!\r\n");
+                        //MAX_HOST_DEBUG(PSTR(">>>>>>>> Problem! NO RCVDAVIRQ!\r\n"));
                         rcode = 0xf0; //receive error
                         break;
                 }
                 pktsize = regRd(rRCVBC); //number of received bytes
-                MAX_HOST_DEBUG("Got %i bytes \r\n", pktsize);
+                MAX_HOST_DEBUG(PSTR("Got %i bytes \r\n"), pktsize);
 
                 if(pktsize > nbytes) { //certain devices send more than asked
-                        //MAX_HOST_DEBUG(">>>>>>>> Warning: wanted %i bytes but got %i.\r\n", nbytes, pktsize);
+                        //MAX_HOST_DEBUG(PSTR(">>>>>>>> Warning: wanted %i bytes but got %i.\r\n"), nbytes, pktsize);
                         pktsize = nbytes;
                 }
 
@@ -509,7 +527,7 @@ uint8_t UHS_NI MAX3421E_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, ui
                 {
                         // Save toggle value
                         pep->bmRcvToggle = ((regRd(rHRSL) & bmRCVTOGRD)) ? 1 : 0;
-                        //MAX_HOST_DEBUG("\r\n");
+                        //MAX_HOST_DEBUG(PSTR("\r\n"));
                         rcode = 0;
                         break;
                 } // if
@@ -656,7 +674,6 @@ UHS_EpInfo * UHS_NI MAX3421E_HOST::ctrlReqOpen(uint8_t addr, uint64_t Request, u
         uint8_t rcode;
         UHS_EpInfo *pep = NULL;
         uint16_t nak_limit = 0;
-        // MAX_HOST_DEBUG("ctrlReqOpen: addr: 0x%2.2x bmReqType: 0x%2.2x bRequest: 0x%2.2x\r\nctrlReqOpen: wValLo: 0x%2.2x  wValHi: 0x%2.2x wInd: 0x%4.4x total: 0x%4.4x dataptr: 0x%4.4p\r\n", addr, bmReqType, bRequest, wValLo, wValHi, wInd, total, dataptr);
         rcode = SetAddress(addr, 0, &pep, nak_limit);
 
         if(!rcode) {
@@ -673,11 +690,6 @@ UHS_EpInfo * UHS_NI MAX3421E_HOST::ctrlReqOpen(uint8_t addr, uint64_t Request, u
                                 }
                         }
                 } else {
-                        //                        Serial.println(">>>>>>>>>>>> dispatchPkt Failed <<<<<<<<<<<<<<");
-                        //                        Serial.println(rcode, HEX);
-                        //                        Serial.println(bmReqType, HEX);
-                        //                        Serial.println(bRequest, HEX);
-                        //                        Serial.println(">>>>>>>>>>>> dispatchPkt Failed <<<<<<<<<<<<<<");
                         pep = NULL;
                 }
         }
@@ -687,7 +699,7 @@ UHS_EpInfo * UHS_NI MAX3421E_HOST::ctrlReqOpen(uint8_t addr, uint64_t Request, u
 uint8_t UHS_NI MAX3421E_HOST::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t *dataptr) {
         *read = 0;
         uint16_t nak_limit = 0;
-        MAX_HOST_DEBUG("ctrlReqRead left: %i\r\n", *left);
+        MAX_HOST_DEBUG(PSTR("ctrlReqRead left: %i\r\n"), *left);
         if(*left) {
 again:
                 *read = nbytes;
@@ -699,11 +711,11 @@ again:
                 }
 
                 if(rcode) {
-                        MAX_HOST_DEBUG("ctrlReqRead ERROR: %2.2x, left: %i, read %i\r\n", rcode, *left, *read);
+                        MAX_HOST_DEBUG(PSTR("ctrlReqRead ERROR: %2.2x, left: %i, read %i\r\n"), rcode, *left, *read);
                         return rcode;
                 }
                 *left -= *read;
-                MAX_HOST_DEBUG("ctrlReqRead left: %i, read %i\r\n", *left, *read);
+                MAX_HOST_DEBUG(PSTR("ctrlReqRead left: %i, read %i\r\n"), *left, *read);
         }
         return 0;
 }
@@ -711,11 +723,9 @@ again:
 uint8_t UHS_NI MAX3421E_HOST::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr) {
         uint8_t rcode = 0;
 
-        //Serial.println("Closing");
-        //Serial.flush();
+        //MAX_HOST_DEBUG(PSTR("Closing"));
         if(((bmReqType & 0x80) == 0x80) && pep && left && dataptr) {
-                //Serial.println("Drain");
-                MAX_HOST_DEBUG("ctrlReqRead Sinking %i\r\n", left);
+                MAX_HOST_DEBUG(PSTR("ctrlReqRead Sinking %i\r\n"), left);
                 // If reading, sink the rest of the data.
                 while(left) {
                         uint16_t read = nbytes;
@@ -729,8 +739,6 @@ uint8_t UHS_NI MAX3421E_HOST::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, u
                         left -= read;
                         if(read < nbytes) break;
                 }
-                //        } else {
-                //                Serial.println("Nothing to drain");
         }
         if(!rcode) {
                 //               Serial.println("Dispatching");
@@ -765,33 +773,33 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
         switch(usb_task_state) {
                 case UHS_USB_HOST_STATE_INITIALIZE:
                         // should never happen...
-                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_INITIALIZE\r\n");
+                        MAX_HOST_DEBUG(PSTR("UHS_USB_HOST_STATE_INITIALIZE\r\n"));
                         busprobe();
                         VBUS_changed();
                         break;
                 case UHS_USB_HOST_STATE_DEBOUNCE:
-                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_DEBOUNCE\r\n");
+                        MAX_HOST_DEBUG(PSTR("UHS_USB_HOST_STATE_DEBOUNCE\r\n"));
                         // This seems to not be needed. The host controller has debounce built in.
                         sof_countdown = UHS_HOST_DEBOUNCE_DELAY_MS;
                         usb_task_state = UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE;
                         break;
                 case UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE:
-                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE\r\n");
+                        MAX_HOST_DEBUG(PSTR("UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE\r\n"));
                         if(!sof_countdown) usb_task_state = UHS_USB_HOST_STATE_RESET_DEVICE;
                         break;
                 case UHS_USB_HOST_STATE_RESET_DEVICE:
-                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_RESET_DEVICE\r\n");
+                        MAX_HOST_DEBUG(PSTR("UHS_USB_HOST_STATE_RESET_DEVICE\r\n"));
                         busevent = true;
                         usb_task_state = UHS_USB_HOST_STATE_RESET_NOT_COMPLETE;
                         regWr(rHIRQ, bmBUSEVENTIRQ); // see data sheet.
                         regWr(rHCTL, bmBUSRST); // issue bus reset
                         break;
                 case UHS_USB_HOST_STATE_RESET_NOT_COMPLETE:
-                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_RESET_NOT_COMPLETE\r\n");
+                        MAX_HOST_DEBUG(PSTR("UHS_USB_HOST_STATE_RESET_NOT_COMPLETE\r\n"));
                         if(!busevent) usb_task_state = UHS_USB_HOST_STATE_WAIT_BUS_READY;
                         break;
                 case UHS_USB_HOST_STATE_WAIT_BUS_READY:
-                        MAX_HOST_DEBUG("UHS_USB_HOST_STATE_WAIT_BUS_READY\r\n");
+                        MAX_HOST_DEBUG(PSTR("UHS_USB_HOST_STATE_WAIT_BUS_READY\r\n"));
                         usb_task_state = UHS_USB_HOST_STATE_CONFIGURING;
                         break; // don't fall through
 
@@ -801,7 +809,7 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
                         usb_error = x;
                         if(usb_task_state == UHS_USB_HOST_STATE_CHECK) {
                                 if(x) {
-                                        MAX_HOST_DEBUG("Error 0x%2.2x", x);
+                                        MAX_HOST_DEBUG(PSTR("Error 0x%2.2x"), x);
                                         if(x == UHS_HOST_ERROR_JERR) {
                                                 usb_task_state = UHS_USB_HOST_STATE_IDLE;
                                         } else if(x != UHS_HOST_ERROR_DEVICE_INIT_INCOMPLETE) {
@@ -875,7 +883,7 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
 
                 if((HIRQ & bmCONDETIRQ) || (HIRQ & bmBUSEVENTIRQ)) {
                         MAX_HOST_DEBUG
-                                ("\r\nBEFORE CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n",
+                                (PSTR("\r\nBEFORE CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n"),
                                 (HIRQ & bmCONDETIRQ) ? "T" : "F",
                                 (HIRQ & bmBUSEVENTIRQ) ? "T" : "F",
                                 doingreset ? "T" : "F",
@@ -899,7 +907,7 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
 #if 1
                 if((HIRQ & bmCONDETIRQ) || (HIRQ & bmBUSEVENTIRQ)) {
                         MAX_HOST_DEBUG
-                                ("\r\nAFTER CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n",
+                                (PSTR("\r\nAFTER CDIRQ %s BEIRQ %s resetting %s state 0x%2.2x\r\n"),
                                 (HIRQ & bmCONDETIRQ) ? "T" : "F",
                                 (HIRQ & bmBUSEVENTIRQ) ? "T" : "F",
                                 doingreset ? "T" : "F",
@@ -914,14 +922,10 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
                                 sof_countdown--;
                                 counted = true;
                         }
-                        //if(sofevent && usb_task_state == UHS_USB_HOST_STATE_WAIT_SOF) {
-                        //        sof_countdown = 20;
-                        //        usb_task_state = UHS_USB_HOST_STATE_WAIT_BUS_READY;
-                        //}
                         sofevent = false;
                 }
 
-                //MAX_HOST_DEBUG("\r\n%s%s%s\r\n",
+                //MAX_HOST_DEBUG(PSTR("\r\n%s%s%s\r\n"),
                 //        sof_countdown ? "T" : "F",
                 //        counted ? "T" : "F",
                 //        usb_task_polling_disabled? "T" : "F");
@@ -937,8 +941,7 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
 #endif
 
 #if defined(SWI_IRQ_NUM)
-                        // Serial.println("--------------- Doing SWI ----------------");
-                        // Serial.flush();
+                        // MAX_HOST_DEBUG(PSTR("--------------- Doing SWI ----------------"));
                         exec_SWI(this);
 #else
 #if USB_HOST_SHIELD_USE_ISR
