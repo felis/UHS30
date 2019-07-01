@@ -562,6 +562,7 @@ uint8_t UHS_NI MAX3421E_HOST::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, u
         regWr(rHCTL, (pep->bmSndToggle) ? bmSNDTOG1 : bmSNDTOG0); //set toggle value
 
         while(bytes_left) {
+                SYSTEM_OR_SPECIAL_YIELD();
                 retry_count = 0;
                 nak_count = 0;
                 bytes_tosend = (bytes_left >= maxpktsize) ? maxpktsize : bytes_left;
@@ -601,6 +602,7 @@ uint8_t UHS_NI MAX3421E_HOST::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, u
                         while(!(regRd(rHIRQ) & bmHXFRDNIRQ)); //wait for the completion IRQ
                         regWr(rHIRQ, bmHXFRDNIRQ); //clear IRQ
                         rcode = (regRd(rHRSL) & 0x0f);
+                        SYSTEM_OR_SPECIAL_YIELD();
                 }//while( rcode && ....
                 bytes_left -= bytes_tosend;
                 data_p += bytes_tosend;
@@ -636,6 +638,7 @@ uint8_t UHS_NI MAX3421E_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint16_t na
                 regWr(rHXFR, (token | ep)); //launch the transfer
                 while((long)(millis() - timeout) < 0L) //wait for transfer completion
                 {
+                        SYSTEM_OR_SPECIAL_YIELD();
                         tmpdata = regRd(rHIRQ);
 
                         if(tmpdata & bmHXFRDNIRQ) {

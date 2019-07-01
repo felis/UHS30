@@ -33,6 +33,13 @@ e-mail   :  support@circuitsathome.com
 #define                UHS_HOST_MAX_INTERFACE_DRIVERS 0x10U // Default maximum number of USB interface drivers
 #endif
 
+#if !defined(SYSTEM_OR_SPECIAL_YIELD)
+#define SYSTEM_OR_SPECIAL_YIELD(...) VOID0
+#endif
+
+#if !defined(SYSTEM_OR_SPECIAL_YIELD_FROM_ISR)
+#define SYSTEM_OR_SPECIAL_YIELD_FROM_ISR(...) SYSTEM_OR_SPECIAL_YIELD
+#endif
 
 // As we make extensions to a target interface add to UHS_HOST_MAX_INTERFACE_DRIVERS
 // This offset gets calculated for supporting wide subclasses, such as HID, BT, etc.

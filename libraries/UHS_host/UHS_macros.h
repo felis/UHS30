@@ -94,6 +94,7 @@ e-mail   :  support@circuitsathome.com
 
 #elif defined(ESP8266)
 #define UHS_BIG_FLASH 1
+#define SYSTEM_OR_SPECIAL_YIELD(...) yield()
 
 #elif defined(__arm__) && defined(CORE_TEENSY)
 #define UHS_BIG_FLASH 1
