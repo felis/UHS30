@@ -878,6 +878,14 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
 {
         DDSB();
 
+#if !defined(SWI_IRQ_NUM)
+        suspend_host();
+#if USB_HOST_SHIELD_USE_ISR
+        // Enable interrupts
+        interrupts();
+#endif
+#endif
+
         counted = false;
         if(!UHS_PIN_READ(irq_pin)) {
                 uint8_t HIRQALL = regRd(rHIRQ); //determine interrupt source
@@ -934,6 +942,13 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
                 //        usb_task_polling_disabled? "T" : "F");
                 DDSB();
                 regWr(rHIRQ, HIRQ_sendback);
+#if !defined(SWI_IRQ_NUM)
+        resume_host();
+#if USB_HOST_SHIELD_USE_ISR
+        // Disable interrupts
+        noInterrupts();
+#endif
+#endif
                 if(!sof_countdown && !counted && !usb_task_polling_disabled) {
                         DisablePoll();
                         //usb_task_polling_disabled++;
