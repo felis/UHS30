@@ -27,7 +27,10 @@ void UHS_ByteBuffer::init() {
 }
 
 void UHS_ByteBuffer::init(unsigned int buf_length) {
-        data = (byte*)malloc(sizeof (byte) * buf_length);
+        deAllocate();
+        if(buf_length > 0) {
+                data = (byte*)malloc(sizeof (byte) * buf_length);
+        }
         capacity = buf_length;
         position = 0;
         length = 0;
@@ -37,7 +40,13 @@ void UHS_ByteBuffer::init(unsigned int buf_length) {
 // Arduino 1.0: free() doesn't free.  :-(  This is a no-op as of 11/2012.
 
 void UHS_ByteBuffer::deAllocate() {
-        free(data);
+        if(length > 0) {
+                free(data);
+                capacity = 0;
+                position = 0;
+                length = 0;
+                fillError = false;
+        }
 }
 
 void UHS_ByteBuffer::clear() {

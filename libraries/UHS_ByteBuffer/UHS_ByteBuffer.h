@@ -101,11 +101,11 @@ public:
         float getFloatFromBack();
 
 private:
-        byte* data;
+        byte* data=NULL;
 
-        volatile unsigned int capacity;
-        volatile unsigned int position;
-        volatile unsigned int length;
+        volatile unsigned int capacity=0;
+        volatile unsigned int position=0;
+        volatile unsigned int length=0;
         volatile boolean fillError;
 };
 
