@@ -356,7 +356,7 @@ public:
         virtual bool UHS_NI sof_delay(uint16_t x) {
                 sof_countdown = x;
                 while((sof_countdown != 0) && !condet) {
-
+                        SYSTEM_OR_SPECIAL_YIELD();
 #if !USB_HOST_SHIELD_USE_ISR
                         Task();
 #endif
@@ -413,6 +413,7 @@ public:
 #endif
                 while(busevent) {
                         DDSB();
+                        SYSTEM_OR_SPECIAL_YIELD();
                 }
 #endif
 #if USB_HOST_SHIELD_USE_ISR
