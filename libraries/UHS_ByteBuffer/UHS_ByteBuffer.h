@@ -18,7 +18,9 @@
 #ifndef UHS_ByteBuffer_h
 #define UHS_ByteBuffer_h
 
-#include <Arduino.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <stdlib.h>
 
 #define DEFAULTBUFSIZE 32
 
@@ -47,7 +49,7 @@ public:
 
         // This method tells you if your buffer overflowed at some time since the last
         // check.  The error state will be reset to false.
-        boolean checkError();
+        bool checkError();
 
         // This releases resources for this buffer, after this has been called the buffer should NOT be used
         void deAllocate();
@@ -62,13 +64,13 @@ public:
         int getCapacity();
 
         // This method returns the byte that is located at index in the buffer but doesn't modify the buffer like the get methods (doesn't remove the retured byte from the buffer)
-        byte peek(unsigned int index);
+        uint8_t peek(unsigned int index);
 
         //
         // Put methods, either a regular put in back or put in front
         //
-        uint8_t putInFront(byte in);
-        uint8_t put(byte in);
+        uint8_t putInFront(uint8_t in);
+        uint8_t put(uint8_t in);
         uint8_t putString(const char *in);
         uint8_t putString(char *in);
 
@@ -88,8 +90,8 @@ public:
         //
         // Get methods, either a regular get from front or from back
         //
-        byte get();
-        byte getFromBack();
+        uint8_t get();
+        uint8_t getFromBack();
 
         int getInt();
         int getIntFromBack();
@@ -101,12 +103,12 @@ public:
         float getFloatFromBack();
 
 private:
-        byte* data=NULL;
+        uint8_t* data=NULL;
 
         volatile unsigned int capacity=0;
         volatile unsigned int position=0;
         volatile unsigned int length=0;
-        volatile boolean fillError;
+        volatile bool fillError;
 };
 
 #endif

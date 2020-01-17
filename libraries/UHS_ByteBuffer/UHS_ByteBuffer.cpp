@@ -29,7 +29,7 @@ void UHS_ByteBuffer::init() {
 void UHS_ByteBuffer::init(unsigned int buf_length) {
         deAllocate();
         if(buf_length > 0) {
-                data = (byte*)malloc(sizeof (byte) * buf_length);
+                data = (uint8_t*)malloc(sizeof (uint8_t) * buf_length);
         }
         capacity = buf_length;
         position = 0;
@@ -58,7 +58,7 @@ void UHS_ByteBuffer::resetError() {
         fillError = false;
 }
 
-boolean UHS_ByteBuffer::checkError() {
+bool UHS_ByteBuffer::checkError() {
         /*
         if (fillError) {
                 Serial.print("E: checkError: length ");
@@ -66,7 +66,7 @@ boolean UHS_ByteBuffer::checkError() {
         }
          */
 
-        boolean result = fillError;
+        bool result = fillError;
         fillError = false;
         return (result);
 }
@@ -83,12 +83,12 @@ int UHS_ByteBuffer::getCapacity() {
         return capacity;
 }
 
-byte UHS_ByteBuffer::peek(unsigned int index) {
-        byte b = data[(position + index) % capacity];
+uint8_t UHS_ByteBuffer::peek(unsigned int index) {
+        uint8_t b = data[(position + index) % capacity];
         return b;
 }
 
-uint8_t UHS_ByteBuffer::put(byte in) {
+uint8_t UHS_ByteBuffer::put(uint8_t in) {
         if(length < capacity) {
                 // save data byte at end of buffer
                 data[(position + length) % capacity] = in;
@@ -131,7 +131,7 @@ uint8_t UHS_ByteBuffer::putString(char *in) {
         return count;
 }
 
-uint8_t UHS_ByteBuffer::putInFront(byte in) {
+uint8_t UHS_ByteBuffer::putInFront(uint8_t in) {
         if(length < capacity) {
                 // save data byte at end of buffer
                 if(position == 0)
@@ -151,8 +151,8 @@ uint8_t UHS_ByteBuffer::putInFront(byte in) {
 
 // Returns 0 if length of data is 0.
 
-byte UHS_ByteBuffer::get() {
-        byte b = 0;
+uint8_t UHS_ByteBuffer::get() {
+        uint8_t b = 0;
 
         if(length > 0) {
                 b = data[position];
@@ -163,8 +163,8 @@ byte UHS_ByteBuffer::get() {
         return b;
 }
 
-byte UHS_ByteBuffer::getFromBack() {
-        byte b = 0;
+uint8_t UHS_ByteBuffer::getFromBack() {
+        uint8_t b = 0;
         if(length > 0) {
                 b = data[(position + length - 1) % capacity];
                 length--;
@@ -178,20 +178,20 @@ byte UHS_ByteBuffer::getFromBack() {
 //
 
 void UHS_ByteBuffer::putIntInFront(int in) {
-        byte *pointer = (byte *) & in;
+        uint8_t *pointer = (uint8_t *) & in;
         putInFront(pointer[0]);
         putInFront(pointer[1]);
 }
 
 void UHS_ByteBuffer::putInt(int in) {
-        byte *pointer = (byte *) & in;
+        uint8_t *pointer = (uint8_t *) & in;
         put(pointer[1]);
         put(pointer[0]);
 }
 
 int UHS_ByteBuffer::getInt() {
         int ret;
-        byte *pointer = (byte *) & ret;
+        uint8_t *pointer = (uint8_t *) & ret;
         pointer[1] = get();
         pointer[0] = get();
         return ret;
@@ -199,7 +199,7 @@ int UHS_ByteBuffer::getInt() {
 
 int UHS_ByteBuffer::getIntFromBack() {
         int ret;
-        byte *pointer = (byte *) & ret;
+        uint8_t *pointer = (uint8_t *) & ret;
         pointer[0] = getFromBack();
         pointer[1] = getFromBack();
         return ret;
@@ -256,7 +256,7 @@ void UHS_ByteBuffer::putDec(int8_t number) {
 //
 
 void UHS_ByteBuffer::putLongInFront(long in) {
-        byte *pointer = (byte *) & in;
+        uint8_t *pointer = (uint8_t *) & in;
         putInFront(pointer[0]);
         putInFront(pointer[1]);
         putInFront(pointer[2]);
@@ -264,7 +264,7 @@ void UHS_ByteBuffer::putLongInFront(long in) {
 }
 
 void UHS_ByteBuffer::putLong(long in) {
-        byte *pointer = (byte *) & in;
+        uint8_t *pointer = (uint8_t *) & in;
         put(pointer[3]);
         put(pointer[2]);
         put(pointer[1]);
@@ -273,7 +273,7 @@ void UHS_ByteBuffer::putLong(long in) {
 
 long UHS_ByteBuffer::getLong() {
         long ret;
-        byte *pointer = (byte *) & ret;
+        uint8_t *pointer = (uint8_t *) & ret;
         pointer[3] = get();
         pointer[2] = get();
         pointer[1] = get();
@@ -283,7 +283,7 @@ long UHS_ByteBuffer::getLong() {
 
 long UHS_ByteBuffer::getLongFromBack() {
         long ret;
-        byte *pointer = (byte *) & ret;
+        uint8_t *pointer = (uint8_t *) & ret;
         pointer[0] = getFromBack();
         pointer[1] = getFromBack();
         pointer[2] = getFromBack();
@@ -297,7 +297,7 @@ long UHS_ByteBuffer::getLongFromBack() {
 //
 
 void UHS_ByteBuffer::putFloatInFront(float in) {
-        byte *pointer = (byte *) & in;
+        uint8_t *pointer = (uint8_t *) & in;
         putInFront(pointer[0]);
         putInFront(pointer[1]);
         putInFront(pointer[2]);
@@ -305,7 +305,7 @@ void UHS_ByteBuffer::putFloatInFront(float in) {
 }
 
 void UHS_ByteBuffer::putFloat(float in) {
-        byte *pointer = (byte *) & in;
+        uint8_t *pointer = (uint8_t *) & in;
         put(pointer[3]);
         put(pointer[2]);
         put(pointer[1]);
@@ -314,7 +314,7 @@ void UHS_ByteBuffer::putFloat(float in) {
 
 float UHS_ByteBuffer::getFloat() {
         float ret;
-        byte *pointer = (byte *) & ret;
+        uint8_t *pointer = (uint8_t *) & ret;
         pointer[3] = get();
         pointer[2] = get();
         pointer[1] = get();
@@ -324,7 +324,7 @@ float UHS_ByteBuffer::getFloat() {
 
 float UHS_ByteBuffer::getFloatFromBack() {
         float ret;
-        byte *pointer = (byte *) & ret;
+        uint8_t *pointer = (uint8_t *) & ret;
         pointer[0] = getFromBack();
         pointer[1] = getFromBack();
         pointer[2] = getFromBack();
