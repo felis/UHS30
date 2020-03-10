@@ -1,12 +1,12 @@
 #include <Arduino.h>
-#include <ByteBuffer.h>
+#include <UHS_ByteBuffer.h>
 
 /*
   Silly program that emulates buffered processing
   using a circular bytebuffer
  */
 
-ByteBuffer buffer;
+UHS_ByteBuffer buffer;
 
 void setup() {
         // Initialize the buffer with a capacity for 256 bytes
