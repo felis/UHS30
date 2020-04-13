@@ -387,12 +387,12 @@ public:
                 hub_present = 0;
         };
 
-        virtual bool IsHub(uint8_t klass) {
-                if(klass == UHS_USB_CLASS_HUB) {
+        virtual void IsHub(bool p) {
+                if(p) {
                         hub_present = bmHUBPRE;
-                        return true;
+                } else {
+                        hub_present = 0;
                 }
-                return false;
         };
 
         virtual void VBUS_changed(void);

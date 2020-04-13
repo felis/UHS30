@@ -60,29 +60,15 @@ struct UHS_EpInfo {
         };
 } __attribute__((packed));
 
-// TODO: embed parent address and port into epinfo struct,
-// and nuke this address stupidity.
-// This is a compact scheme. Should also support full spec.
-// This produces a 7 hub limit, 49 devices + 7 hubs, 56 total.
-//
-//    7   6   5   4   3   2   1   0
-//  ---------------------------------
-//  |   | H | P | P | P | A | A | A |
-//  ---------------------------------
-//
-// H - if 1 the address is a hub address
-// P - parent hub number
-// A - port number of parent
-//
-
 struct UHS_DeviceAddress {
 
         union {
 
                 struct {
-                        uint8_t bmAddress : 3; // port number
-                        uint8_t bmParent : 3; // parent hub address
-                        uint8_t bmHub : 1; // hub flag
+//                        uint8_t bmAddress : 3; // port number
+//                        uint8_t bmParent : 3; // parent hub address
+//                        uint8_t bmHub : 1; // hub flag
+                        uint8_t bmAddress : 7; // address
                         uint8_t bmReserved : 1; // reserved, must be zero
                 } __attribute__((packed));
                 uint8_t devAddress;
@@ -92,6 +78,8 @@ struct UHS_DeviceAddress {
 struct UHS_Device {
         volatile UHS_EpInfo *epinfo[UHS_HOST_MAX_INTERFACE_DRIVERS]; // endpoint info pointer
         UHS_DeviceAddress address;
+        UHS_DeviceAddress parent;
+        uint8_t port;
         uint8_t epcount; // number of endpoints
         uint8_t speed; // indicates device speed
 } __attribute__((packed));
@@ -101,9 +89,6 @@ typedef void (*UsbDeviceHandleFunc)(UHS_Device *pdev);
 class AddressPool {
         UHS_EpInfo dev0ep; //Endpoint data structure used during enumeration for uninitialized device
 
-        // In order to avoid hub address duplication, this should use bits
-        uint8_t hubCounter; // hub counter
-
         UHS_Device thePool[UHS_HOST_MAX_INTERFACE_DRIVERS];
 
         // Initializes address pool entry
@@ -112,13 +97,35 @@ class AddressPool {
                 thePool[index].address.devAddress = 0;
                 thePool[index].epcount = 1;
                 thePool[index].speed = 0;
+                thePool[index].parent.devAddress = 0;
+                thePool[index].port = 0;
                 for(uint8_t i = 0; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
                         thePool[index].epinfo[i] = &dev0ep;
                 }
         };
 
-        // Returns thePool index for a given address
+        // find a new lowest unused address number.
+        uint8_t UHS_NI FindNewAddress() {
+                uint8_t rv = 0;
+                bool got = false;
+                // scan low to high
+                for(uint8_t i = 1; i < 127; i++) {
+                        got = false;
+                        for(uint8_t j = 1; j < UHS_HOST_MAX_INTERFACE_DRIVERS; j++) {
+                                if(thePool[i].address.devAddress == i) {
+                                        got = true;
+                                        break;
+                                }
+                        }
+                        if(!got) {
+                                rv=i;
+                                break;
+                        }
+                }
+                return rv;
+        }
 
+        // Returns thePool index for a given address
         uint8_t UHS_NI FindAddressIndex(uint8_t address = 0) {
                 for(uint8_t i = 1; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
                         if(thePool[i].address.devAddress == address)
@@ -128,44 +135,42 @@ class AddressPool {
         };
 
         // Returns thePool child index for a given parent
-
         uint8_t UHS_NI FindChildIndex(UHS_DeviceAddress addr, uint8_t start = 1) {
                 for(uint8_t i = (start < 1 || start >= UHS_HOST_MAX_INTERFACE_DRIVERS) ? 1 : start; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
-                        if(thePool[i].address.bmParent == addr.bmAddress)
+                        //if(thePool[i].address.bmParent == addr.bmAddress)
+                        //        return i;
+                        if(thePool[i].parent.bmAddress == addr.bmAddress) {
                                 return i;
+                        }
                 }
                 return 0;
         };
 
         // Frees address entry specified by index parameter
-
         void UHS_NI FreeAddressByIndex(uint8_t index) {
                 // Zero field is reserved and should not be affected
                 if(index == 0)
                         return;
 
                 UHS_DeviceAddress uda = thePool[index].address;
-                // If a hub was switched off all port addresses should be freed
-                if(uda.bmHub == 1) {
-                        for(uint8_t i = 1; (i = FindChildIndex(uda, i));)
-                                FreeAddressByIndex(i);
 
-                        // FIXME: use BIT MASKS
-                        // If the hub had the last allocated address, hubCounter should be decremented
-                        if(hubCounter == uda.bmAddress)
-                                hubCounter--;
+                // If a hub was switched off all port addresses should be freed
+                for(uint8_t i=1; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
+                        uint8_t q=FindChildIndex(uda,i);
+                        if(q != 0) {
+                                FreeAddressByIndex(q);
+                        }
                 }
+
                 InitEntry(index);
         }
 
         void InitAllAddresses(void) {
                 for(uint8_t i = 1; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) InitEntry(i);
-                hubCounter = 0;
         };
 public:
 
         AddressPool() {
-                hubCounter = 0;
                 // Zero address is reserved
                 InitEntry(0);
 
@@ -194,40 +199,35 @@ public:
 
 
         // Allocates new address
-
-        uint8_t UHS_NI AllocAddress(uint8_t parent, bool is_hub = false, uint8_t port = 1) {
+        // No longer depends on parent silliness.
+        uint8_t UHS_NI AllocAddress(uint8_t parent, uint8_t port) {
                 /* if (parent != 0 && port == 0)
                         USB_HOST_SERIAL.println("PRT:0"); */
-                UHS_DeviceAddress _parent;
-                _parent.devAddress = parent;
-                if(_parent.bmReserved || port > 7)
-                        //if(parent > 127 || port > 7)
-                        return 0;
-
-                // FIXME: use BIT MASKS
-                if(is_hub && hubCounter == 7)
+                //UHS_DeviceAddress _parent;
+                //_parent.devAddress = parent;
+                if(port > 7)
                         return 0;
 
                 // finds first empty address entry starting from one
                 uint8_t index = FindAddressIndex(0);
 
-                if(!index) // if empty entry is not found
+                if(!index) {
+                        // if empty entry is not found
                         return 0;
+                }
 
                 UHS_DeviceAddress addr;
-                addr.devAddress = port;
-                addr.bmParent = _parent.bmAddress;
-
-                // FIXME: use BIT MASKS
-                if(is_hub) {
-                        hubCounter++;
-                        addr.bmHub = 1;
-                        addr.bmAddress = hubCounter;
+                addr.devAddress = FindNewAddress();
+                if(addr.devAddress == 0) {
+                        return 0;
                 }
                 thePool[index].address = addr;
+                thePool[index].port = port;
+                thePool[index].parent.devAddress = parent;
 #if DEBUG_PRINTF_EXTRA_HUGE
 #if defined(UHS_DEBUG_USB_ADDRESS)
-                printf("Address: %x (%x.%x.%x)\r\n", addr.devAddress, addr.bmHub, addr.bmParent, addr.bmAddress);
+                //printf("Address: %x (%x.%x.%x)\r\n", addr.devAddress, addr.bmHub, addr.bmParent, addr.bmAddress);
+                printf_P(PSTR("Address: %x\r\n"), addr.devAddress);
 #endif
 #endif
                 return thePool[index].address.devAddress;
@@ -235,14 +235,24 @@ public:
 
         void UHS_NI FreeAddress(uint8_t addr) {
                 // if the root hub is disconnected all the addresses should be initialized
-                if(addr == 0x41) {
-                        InitAllAddresses();
-                        return;
+                //if(addr == 0x41) {
+                //        InitAllAddresses();
+                //        return;
+                //}
+                if(addr >0) {
+                        uint8_t index = FindAddressIndex(addr);
+                        FreeAddressByIndex(index);
                 }
-                uint8_t index = FindAddressIndex(addr);
-                FreeAddressByIndex(index);
         };
 
+        uint8_t UHS_NI FindPortChildAddress(uint8_t addr, uint8_t port) {
+                for(uint8_t i = 1; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
+                        if((thePool[i].parent.bmAddress == addr) && (thePool[i].port == port)) {
+                                return thePool[i].address.devAddress;
+                        }
+                }
+                return 0;
+        };
 };
 
 #endif // __ADDRESS_H__

@@ -32,12 +32,14 @@ e-mail   :  support@circuitsathome.com
 #endif
 
 #if DEBUG_PRINTF_EXTRA_HUGE
+#define HOST_DEBUGx(...) printf(__VA_ARGS__)
 #if DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST
 #define HOST_DEBUG(...) printf(__VA_ARGS__)
 #else
 #define HOST_DEBUG(...) VOID0
 #endif
 #else
+#define HOST_DEBUGx(...) VOID0
 #define HOST_DEBUG(...) VOID0
 #endif
 
@@ -156,7 +158,7 @@ uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t add
                 HOST_DEBUG("%i retries.\r\n", retries);
         } else {
 #if DEBUG_PRINTF_EXTRA_HUGE
-                printf("\r\ndoSoftReset called with address == 0.\r\n");
+                printf_P(PSTR("\r\ndoSoftReset called with address == 0.\r\n"));
 #endif
         }
         return rcode;
@@ -221,7 +223,7 @@ uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t add
  */
 uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t speed) {
         //uint8_t bAddress = 0;
-        HOST_DEBUG("\r\n\r\n\r\nConfiguring: parent = %i, port = %i, speed = %i\r\n", parent, port, speed);
+        HOST_DEBUGx("\r\n\r\n\r\nConfiguring: parent = %i, port = %i, speed = %i\r\n", parent, port, speed);
         uint8_t rcode = 0;
         uint8_t retries = 0;
         uint8_t numinf = 0;
@@ -260,7 +262,7 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
                 sof_delay(200);
                 p = addrPool.GetUsbDevicePtr(0);
                 if(!p) {
-                        HOST_DEBUG("Configuring error: USB_ERROR_ADDRESS_NOT_FOUND_IN_POOL\r\n");
+                        HOST_DEBUGx("Configuring error: USB_ERROR_ADDRESS_NOT_FOUND_IN_POOL\r\n");
                         return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
                 }
 
@@ -275,7 +277,7 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
 #endif
 again:
                 memset((void *)buf, 0, biggest);
-                HOST_DEBUG("\r\n\r\nConfiguring PktSize 0x%2.2x,  rcode: 0x%2.2x, retries %i,\r\n", p->epinfo[0][0].maxPktSize, rcode, retries);
+                HOST_DEBUGx("\r\n\r\nConfiguring PktSize 0x%2.2x,  rcode: 0x%2.2x, retries %i\r\n", p->epinfo[0][0].maxPktSize, rcode, retries);
                 rcode = getDevDescr(0, biggest, (uint8_t*)buf);
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
                 if(rcode || udd->bMaxPacketSize0 < 8)
@@ -286,7 +288,7 @@ again:
                         if(rcode == UHS_HOST_ERROR_JERR && retries < 4) {
                                 //
                                 // Some devices return JERR when plugged in.
-                                // Attempts to reinitialize the device usually works.
+                                // Attempts to reinitialize the device, usually works.
                                 //
                                 // I have a hub that will refuse to work and acts like
                                 // this unless external power is supplied.
@@ -303,19 +305,19 @@ again:
                         } else if((rcode == UHS_HOST_ERROR_DMA || rcode == UHS_HOST_ERROR_MEM_LAT) && retries < 4) {
                                 if(p->epinfo[0][0].maxPktSize < 32) p->epinfo[0][0].maxPktSize = p->epinfo[0][0].maxPktSize << 1;
 #endif
-                                HOST_DEBUG("Configuring error: 0x%2.2x UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", rcode, p->epinfo[0][0].maxPktSize);
+                                HOST_DEBUGx("Configuring error: 0x%2.2x UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", rcode, p->epinfo[0][0].maxPktSize);
                                 doSoftReset(parent, port, 0);
                                 retries++;
                                 sof_delay(200);
                                 goto again;
                         }
-                        HOST_DEBUG("Configuring error: 0x%2.2x Can't get USB_DEVICE_DESCRIPTOR\r\n", rcode);
+                        HOST_DEBUGx("*** Configuring error: 0x%2.2x Can't get USB_DEVICE_DESCRIPTOR\r\n", rcode);
                         return rcode;
                 }
 
 
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
-                ei.address = addrPool.AllocAddress(parent, false, port);
+                ei.address = addrPool.AllocAddress(parent, port);
 
                 if(!ei.address) {
                         return UHS_HOST_ERROR_ADDRESS_POOL_FULL;
@@ -381,7 +383,7 @@ again:
         USB_CONFIGURATION_DESCRIPTOR *ucd = reinterpret_cast<USB_CONFIGURATION_DESCRIPTOR *>(buf);
 #endif
 
-        ei.address = addrPool.AllocAddress(parent, IsHub(ei.klass), port);
+        ei.address = addrPool.AllocAddress(parent, port);
 
         if(!ei.address) {
                 return UHS_HOST_ERROR_ADDRESS_POOL_FULL;

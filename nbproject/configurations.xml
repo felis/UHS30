@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="95">
+<configurationDescriptor version="100">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="0">
       <df name="libraries">
@@ -203,6 +203,13 @@
             <in>UHS_CDC_ACM_XR21B1411.h</in>
           </df>
           <df name="UHS_HID">
+            <df name="examples">
+              <df name="USB_HOST_SHIELD">
+                <df name="UHS_HID_KB_MOUSE">
+                  <in>UHS_HID_KB_MOUSE.ino</in>
+                </df>
+              </df>
+            </df>
             <df name="HIDBOOT">
               <in>UHS_HIDRAWBOOT_KEYBOARD.h</in>
               <in>UHS_HIDRAWBOOT_MOUSE.h</in>
@@ -311,7 +318,7 @@
           <cTool>
             <incDir>
               <pElem>.</pElem>
-              <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino/avr</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/variants/mega</pElem>
               <pElem>libraries/UHS_ByteBuffer</pElem>
               <pElem>../libraries/RTClib</pElem>
@@ -327,6 +334,8 @@
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI/src</pElem>
               <pElem>libraries/ISR_safe_memory</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino</pElem>
+              <pElem>/opt/Arduino/hardware/tools/avr/avr/include</pElem>
             </incDir>
             <preprocessorList>
               <Elem>ARDUINO=10609</Elem>
@@ -339,8 +348,9 @@
           <ccTool>
             <incDir>
               <pElem>.</pElem>
-              <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino/avr</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/variants/mega</pElem>
+              <pElem>libraries/UHS_ByteBuffer</pElem>
               <pElem>../libraries/RTClib</pElem>
               <pElem>../libraries/UHS_host</pElem>
               <pElem>../libraries/USB_HOST_SHIELD</pElem>
@@ -349,12 +359,13 @@
               <pElem>../libraries/UHS_FS</pElem>
               <pElem>libraries/UHS_CDC</pElem>
               <pElem>libraries/UHS_CDC_ACM</pElem>
-              <pElem>libraries/UHS_ByteBuffer</pElem>
               <pElem>libraries/UHS_host/UHS_MIDI</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/SPI/src</pElem>
               <pElem>libraries/ISR_safe_memory</pElem>
+              <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino</pElem>
+              <pElem>/opt/Arduino/hardware/tools/avr/avr/include</pElem>
             </incDir>
             <preprocessorList>
               <Elem>ARDUINO=10609</Elem>
@@ -365,6 +376,10 @@
             </preprocessorList>
           </ccTool>
         </makeTool>
+        <preBuild>
+          <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>
+          <preBuildCommand></preBuildCommand>
+        </preBuild>
       </makefileType>
       <item path="libraries/ISR_safe_memory/ISR_safe_memory.h"
             ex="false"
@@ -433,6 +448,11 @@
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_CDC_ACM/examples/USB_HOST_SHIELD/buffered_acm_terminal/buffered_acm_terminal.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HID/examples/USB_HOST_SHIELD/UHS_HID_KB_MOUSE/UHS_HID_KB_MOUSE.ino"
             ex="false"
             tool="1"
             flavor2="0">
@@ -524,6 +544,10 @@
             </incDir>
           </ccTool>
         </makeTool>
+        <preBuild>
+          <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>
+          <preBuildCommand></preBuildCommand>
+        </preBuild>
       </makefileType>
       <item path="libraries/ISR_safe_memory/ISR_safe_memory.h"
             ex="false"
@@ -713,6 +737,10 @@
             </incDir>
           </ccTool>
         </makeTool>
+        <preBuild>
+          <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>
+          <preBuildCommand></preBuildCommand>
+        </preBuild>
       </makefileType>
       <item path="libraries/ISR_safe_memory/ISR_safe_memory.h"
             ex="false"

@@ -48,7 +48,7 @@ public:
 
 void MY_ACM::OnRelease(void) {
         // Tell the user that the device has disconnected
-        if(bAddress) printf("\r\n\r\nDisconnected.\r\n\r\n");
+        if(bAddress) printf_P(PSTR("\r\n\r\nDisconnected.\r\n\r\n"));
 }
 
 uint8_t MY_ACM::OnStart(void) {
@@ -74,7 +74,7 @@ uint8_t MY_ACM::OnStart(void) {
                 return rcode;
         }
         // Tell the user that the device has connected
-        printf("\r\n\r\nConnected.\r\n\r\n");
+        printf_P(PSTR("\r\n\r\nConnected.\r\n\r\n"));
         return 0;
 }
 

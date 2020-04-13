@@ -199,9 +199,9 @@ void show_dir(PFAT_DIRINFO *de) {
                                         numlo = de->fsize % 100000000llu;
                                         numhi = de->fsize / 100000000llu;
                                         if(numhi) {
-                                                printf(" %lu%08lu", numhi, numlo);
+                                                printf_P(PSTR(" %lu%08lu"), numhi, numlo);
                                         } else {
-                                                printf(" %12lu", numlo);
+                                                printf_P(PSTR(" %12lu"), numlo);
                                         }
                                         printf_P(PSTR(" %.4u-%.2u-%.2u"), tstamp.year(), tstamp.month(), tstamp.day());
                                         printf_P(PSTR(" %.2u:%.2u:%.2u"), tstamp.hour(), tstamp.minute(), tstamp.second());
@@ -221,9 +221,9 @@ void show_dir(PFAT_DIRINFO *de) {
                 numhi = fre / 100000000llu;
 
                 if(numhi) {
-                        printf("%lu%08lu", numhi, numlo);
+                        printf_P(PSTR("%lu%08lu"), numhi, numlo);
                 } else {
-                        printf("%lu", numlo);
+                        printf_P(PSTR("%lu"), numlo);
                 }
                 printf_P(PSTR(" bytes available on disk.\r\n"));
         }
@@ -244,9 +244,9 @@ void setup() {
         Init_Generic_Storage(&UHS_Usb);
         while(UHS_Usb.Init(1000) != 0);
 #if defined(SWI_IRQ_NUM)
-        printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
+        printf_P(PSTR("\r\n\r\nSWI_IRQ_NUM %i\r\n"), SWI_IRQ_NUM);
 #endif
-        printf("\r\n\r\nUSB HOST READY.\r\n");
+        printf_P(PSTR("\r\n\r\nUSB HOST READY.\r\n"));
 }
 
 uint8_t current_state = 128;
@@ -259,7 +259,7 @@ void loop() {
         current_state = UHS_Usb.getUsbTaskState();
         if(current_state != last_state) {
                 last_state = current_state;
-                printf("USB HOST state %2.2x\r\n", current_state);
+                printf_P(PSTR("USB HOST state %2.2x\r\n"), current_state);
         }
 #endif
         mounted = fs_ready(VOL_LABEL);
@@ -383,12 +383,12 @@ void loop() {
                                 fflush(stdout);
 
                         } else {
-                                printf("Not enough space to run tests.\r\n");
+                                printf_P(PSTR("Not enough space to run tests.\r\n"));
                         }
 #endif
 
                 } else {
-                        printf("No media. Waiting to mount "  VOL_LABEL "\r\n");
+                        printf_P(PSTR("No media. Waiting to mount "  VOL_LABEL "\r\n"));
                 }
         }
 }

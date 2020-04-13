@@ -247,12 +247,7 @@ public:
         virtual uint8_t ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t *dataptr);
         virtual uint8_t dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit);
 
-        bool UHS_NI IsHub(uint8_t klass) {
-                if(klass == UHS_USB_CLASS_HUB) {
-                        //                        hub_present = UHS_KINETIS_FS_bmHUBPRE;
-                        return true;
-                }
-                return false;
+        void UHS_NI IsHub(NOTUSED(bool p)) {
         };
 
         void UHS_NI ReleaseChildren(void) {

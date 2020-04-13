@@ -162,8 +162,7 @@ public:
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual bool IsHub(uint8_t klass) {
-                return (klass == UHS_USB_CLASS_HUB);
+        virtual void IsHub(NOTUSED(bool p)) {
         };
 
         virtual void UHS_NI suspend_host(void) {
@@ -290,7 +289,7 @@ public:
          * your driver if it requires extra class variable cleanup.
          */
         virtual void DriverDefaults(void) {
-                printf("Default driver defaults.\r\n");
+                printf_P(PSTR("Default driver defaults.\r\n"));
                 pUsb->DeviceDefaults(bNumEP, this);
         };
 

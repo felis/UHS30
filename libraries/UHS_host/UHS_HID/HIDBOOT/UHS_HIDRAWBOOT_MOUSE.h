@@ -87,7 +87,7 @@ public:
         }
 
         void AJK_NI driverStart() {
-                printf("BOOT_MOUSE\r\n");
+                printf_P(PSTR("BOOT_MOUSE\r\n"));
                 {
                         uint16_t length = 128;
                         uint8_t buffer[length];

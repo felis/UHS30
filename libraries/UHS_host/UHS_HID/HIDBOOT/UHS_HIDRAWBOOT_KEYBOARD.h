@@ -84,7 +84,7 @@ public:
         }
 
         void AJK_NI driverStart() {
-                printf("BOOT_KEYBOARD\r\n");
+                printf_P(PSTR("BOOT_KEYBOARD\r\n"));
                 {
                         uint16_t length = 128;
                         uint8_t buffer[length];

@@ -647,7 +647,7 @@ uint8_t UHS_NI MAX3421E_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint16_t na
                                 break;
                         }//if( tmpdata & bmHXFRDNIRQ
 
-                }//while ( millis() < timeout
+                }//while ( millis() < timeouthttps://www.mouser.com/Search/Refine.aspx?Keyword=
 
                 rcode = (regRd(rHRSL) & 0x0f); //analyze transfer result
 

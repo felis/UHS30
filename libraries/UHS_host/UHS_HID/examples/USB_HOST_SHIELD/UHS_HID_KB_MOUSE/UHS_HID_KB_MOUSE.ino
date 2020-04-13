@@ -10,6 +10,7 @@
 #define DEBUG_PRINTF_EXTRA_HUGE 0
 #define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 0
 #define DEBUG_PRINTF_EXTRA_HUGE_USB_HID 0
+#define DEBUG_PRINTF_EXTRA_HUGE_USB_HUB  0
 
 #define LOAD_UHS_HID
 #define LOAD_UHS_HIDRAWBOOT_KEYBOARD
@@ -71,13 +72,13 @@
 
 const uint8_t scantoascii[] PROGMEM = {
         /*        0     1     2     3     4     5     6     7     8     9     a     b     c     d     e     f */
-        /* 0 */ 0x00, 0x00, 0x00, 0x00,  'a',  'b',  'c',  'd',  'e',  'f',  'g',  'h',  'i',  'j',  'k',  'l',
-        /* 1 */  'm',  'n',  'o',  'p', 'q',   'r',  's',  't',  'u',  'v',  'w',  'x',  'y',  'z',  '1',  '2',
-        /* 2 */  '3',  '4',  '5',  '6', '7',   '8',  '9',  '0', 0x0d, 0x1b, 0x08, 0x09,  ' ',  '-',  '=',  '[',
-        /* 3 */  ']', 0x5c, 0xa3,  ';', 0x27,  '`',  ',',  '.',  '/', 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6,
+        /* 0 */ 0x00, 0x00, 0x00, 0x00, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
+        /* 1 */ 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '1', '2',
+        /* 2 */ '3', '4', '5', '6', '7', '8', '9', '0', 0x0d, 0x1b, 0x08, 0x09, ' ', '-', '=', '[',
+        /* 3 */ ']', 0x5c, 0xa3, ';', 0x27, '`', ',', '.', '/', 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6,
         /* 4 */ 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0x03, INST, HOME, PGUP, 0x7f, 0x04, 0x0c, CRRT,
-        /* 5 */ CRLT, CRDN, CRUP, 0xff,  '/',  '*',  '-',  '+', 0x0a, 0x04, CRDN, 0x0c, CRLT, 0x00, CRRT, HOME,
-        /* 6 */ CRUP, PGUP, INST, 0x7f, 0x27, KAPP, POWR,  '=', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        /* 5 */ CRLT, CRDN, CRUP, 0xff, '/', '*', '-', '+', 0x0a, 0x04, CRDN, 0x0c, CRLT, 0x00, CRRT, HOME,
+        /* 6 */ CRUP, PGUP, INST, 0x7f, 0x27, KAPP, POWR, '=', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 7 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 8 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 9 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -90,13 +91,13 @@ const uint8_t scantoascii[] PROGMEM = {
 
         // shift
         /*        0     1     2     3     4     5     6     7     8     9     a     b     c     d     e     f */
-        /* 0 */ 0x00, 0x00, 0x00, 0x00,  'A',  'B',  'C',  'D',  'E',  'F',  'G',  'H',  'I',  'J',  'K',  'L',
-        /* 1 */  'M',  'N',  'O',  'P',  'Q',  'R',  'S',  'T',  'U',  'V',  'W',  'X',  'Y',  'Z',  '!',  '@',
-        /* 2 */  '#',  '$',  '%',  '^',  '&',  '*',  '(',  ')', 0x0d, 0x1b, 0x08, 0x89,  ' ',  '_',  '+',  '{',
-        /* 3 */  '}',  '|', 0xa3,  ':',  '"',  '~',  '<',  '>',  '?', 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6,
+        /* 0 */ 0x00, 0x00, 0x00, 0x00, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+        /* 1 */ 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '!', '@',
+        /* 2 */ '#', '$', '%', '^', '&', '*', '(', ')', 0x0d, 0x1b, 0x08, 0x89, ' ', '_', '+', '{',
+        /* 3 */ '}', '|', 0xa3, ':', '"', '~', '<', '>', '?', 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6,
         /* 4 */ 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0x03, INST, HOME, PGUP, 0x7f, 0x04, 0x0c, CRRT,
-        /* 5 */ CRLT, CRDN, CRUP, 0xff,  '/',  '*',  '-',  '+', 0x0a, 0x04, CRDN, 0x0c, CRLT, 0x00, CRRT, HOME,
-        /* 6 */ CRUP, PGUP, INST, 0x7f, 0x27, KAPP, POWR,  '=', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        /* 5 */ CRLT, CRDN, CRUP, 0xff, '/', '*', '-', '+', 0x0a, 0x04, CRDN, 0x0c, CRLT, 0x00, CRRT, HOME,
+        /* 6 */ CRUP, PGUP, INST, 0x7f, 0x27, KAPP, POWR, '=', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 7 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 8 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 9 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -110,13 +111,13 @@ const uint8_t scantoascii[] PROGMEM = {
 
         // numlock-noshift
         /*        0     1     2     3     4     5     6     7     8     9     a     b     c     d     e     f */
-        /* 0 */ 0x00, 0x00, 0x00, 0x00,  'a',  'b',  'c',  'd',  'e',  'f',  'g',  'h',  'i',  'j',  'k',  'l',
-        /* 1 */  'm',  'n',  'o',  'p',  'q',  'r',  's',  't',  'u',  'v',  'w',  'x',  'y',  'z',  '1',  '2',
-        /* 2 */  '3',  '4',  '5',  '6',  '7',  '8',  '9',  '0', 0x0d, 0x1b, 0x08, 0x09,  ' ',  '-',  '=',  '[',
-        /* 3 */  ']', 0x5c, 0xa3,  ';', 0x27,  '`',  ',',  '.',  '/', 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6,
+        /* 0 */ 0x00, 0x00, 0x00, 0x00, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
+        /* 1 */ 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '1', '2',
+        /* 2 */ '3', '4', '5', '6', '7', '8', '9', '0', 0x0d, 0x1b, 0x08, 0x09, ' ', '-', '=', '[',
+        /* 3 */ ']', 0x5c, 0xa3, ';', 0x27, '`', ',', '.', '/', 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6,
         /* 4 */ 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0x03, INST, HOME, PGUP, 0x7f, 0x04, 0x0c, CRRT,
-        /* 5 */ CRLT, CRDN, CRUP, 0xff,  '/',  '*',  '-',  '+', 0x0a,  '1',  '2',  '3',  '4',  '5',  '6',  '7',
-        /* 6 */  '8',  '9',  '0',  '.', 0x27, KAPP, POWR,  '=', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        /* 5 */ CRLT, CRDN, CRUP, 0xff, '/', '*', '-', '+', 0x0a, '1', '2', '3', '4', '5', '6', '7',
+        /* 6 */ '8', '9', '0', '.', 0x27, KAPP, POWR, '=', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 7 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 8 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 9 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -129,13 +130,13 @@ const uint8_t scantoascii[] PROGMEM = {
 
         // numlock shift
         /*        0     1     2     3     4     5     6     7     8     9     a     b     c     d     e     f */
-        /* 0 */ 0x00, 0x00, 0x00, 0x00,  'A',  'B',  'C',  'D',  'E',  'F',  'G',  'H',  'I',  'J',  'K',  'L',
-        /* 1 */  'M',  'N',  'O',  'P',  'Q',  'R',  'S',  'T',  'U',  'V',  'W' , 'X',  'Y',  'Z',  '!',  '@',
-        /* 2 */  '#',  '$',  '%',  '^',  '&',  '*',  '(',  ')', 0x0d, 0x1b, 0x08, 0x89,  ' ',  '_',  '+',  '{',
-        /* 3 */  '}',  '|', 0xa3,  ':',  '"',  '~',  '<',  '>',  '?', 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6,
+        /* 0 */ 0x00, 0x00, 0x00, 0x00, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+        /* 1 */ 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '!', '@',
+        /* 2 */ '#', '$', '%', '^', '&', '*', '(', ')', 0x0d, 0x1b, 0x08, 0x89, ' ', '_', '+', '{',
+        /* 3 */ '}', '|', 0xa3, ':', '"', '~', '<', '>', '?', 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6,
         /* 4 */ 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0x03, INST, HOME, PGUP, 0x7f, 0x04, 0x0c, CRRT,
-        /* 5 */ CRLT, CRDN, CRUP, 0xff,  '/',  '*',  '-',  '+', 0x0a,  '1',  '2',  '3',  '4',  '5',  '6',  '7',
-        /* 6 */  '8',  '9',  '0',  '.',  '|', KAPP, POWR,  '=', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        /* 5 */ CRLT, CRDN, CRUP, 0xff, '/', '*', '-', '+', 0x0a, '1', '2', '3', '4', '5', '6', '7',
+        /* 6 */ '8', '9', '0', '.', '|', KAPP, POWR, '=', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 7 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 8 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* 9 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -163,11 +164,11 @@ public:
         }
 
         void onRelease(UHS_HID_base *d) {
-                printf_P("HID device unplugged driver type %d no longer available.\r\n", d->driver);
+                printf_P(PSTR("HID device unplugged driver type %d no longer available.\r\n"), d->driver);
         }
 
         void onStart(UHS_HID_base *d) {
-                printf_P("HID driver type %d started, Subclass %02x, Protocol %02x ", d->driver, d->parent->bSubClass, d->parent->bProtocol);
+                printf_P(PSTR("HID driver type %d started, Subclass %02x, Protocol %02x "), d->driver, d->parent->bSubClass, d->parent->bProtocol);
                 switch(d->driver) {
                         case UHS_HID_raw:
                                 printf_P(PSTR("HID-RAW"));
@@ -315,8 +316,11 @@ public:
 };
 
 myHID_processor HID_processor1;
+myHID_processor HID_processor2;
 MAX3421E_HOST UHS_Usb;
+UHS_USBHub hub1(&UHS_Usb);
 UHS_HID hid1(&UHS_Usb, &HID_processor1);
+UHS_HID hid2(&UHS_Usb, &HID_processor2);
 
 void setup() {
         USB_HOST_SERIAL.begin(115200);
@@ -325,10 +329,37 @@ void setup() {
 
 }
 
-void loop() {
-        int available=HID_processor1.keybuffer.getSize();
-        for(;available >0; available--) {
-                uint8_t q=HID_processor1.keybuffer.get();
-                printf_P(PSTR("%c"),q);
+void check_keyboards() {
+        int available = HID_processor1.keybuffer.getSize();
+        for(; available > 0; available--) {
+                uint8_t q = HID_processor1.keybuffer.get();
+                printf_P(PSTR("%c"), q);
         }
+
+        available = HID_processor2.keybuffer.getSize();
+        for(; available > 0; available--) {
+                uint8_t q = HID_processor2.keybuffer.get();
+                printf_P(PSTR("%c"), q);
+        }
+}
+
+uint8_t stat1 = 128;
+uint8_t stat2 = 128;
+uint8_t stat3 = 128;
+
+void loop() {
+        check_keyboards();
+        if(hub1.GetAddress() != stat1) {
+                stat1 = hub1.GetAddress();
+                printf_P(PSTR("Hub address %u\r\n"), stat1);
+        }
+        if(hid1.GetAddress() != stat2) {
+                stat2 = hid1.GetAddress();
+                printf_P(PSTR("hid1 address %u\r\n"), stat2);
+        }
+        if(hid2.GetAddress() != stat3) {
+                stat3 = hid1.GetAddress();
+                printf_P(PSTR("hid2 address %u\r\n"), stat3);
+        }
+
 }

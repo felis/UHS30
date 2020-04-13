@@ -24,16 +24,19 @@ Web      :  http://www.circuitsathome.com
 e-mail   :  support@circuitsathome.com
  */
 
-// uncomment to get 'printf' console debugging. NOT FOR UNO!
-// #define DEBUG_PRINTF_EXTRA_HUGE_USB_HUB
+#if !defined(DEBUG_PRINTF_EXTRA_HUGE_USB_HUB)
+#define DEBUG_PRINTF_EXTRA_HUGE_USB_HUB 0
+#endif
 
 #if DEBUG_PRINTF_EXTRA_HUGE
-#ifdef DEBUG_PRINTF_EXTRA_HUGE_USB_HUB
+#define HUB_DEBUGx(...) printf(__VA_ARGS__)
+#if DEBUG_PRINTF_EXTRA_HUGE_USB_HUB
 #define HUB_DEBUG(...) printf(__VA_ARGS__)
 #else
 #define HUB_DEBUG(...) VOID0
 #endif
 #else
+#define HUB_DEBUGx(...) VOID0
 #define HUB_DEBUG(...) VOID0
 #endif
 
@@ -69,7 +72,7 @@ void UHS_NI UHS_USBHub::DriverDefaults(void) {
 
 uint8_t UHS_NI UHS_USBHub::SetInterface(ENUMERATION_INFO *ei) {
         //DriverDefaults();
-        HUB_DEBUG("USBHub Accepting address assignment %2.2x\r\n", ei->address);
+        HUB_DEBUGx("USBHub Accepting address assignment %2.2x\r\n", ei->address);
         bNumEP = 2;
         bAddress = ei->address;
         epInfo[0].epAddr = 0;
@@ -116,6 +119,12 @@ uint8_t UHS_NI UHS_USBHub::Start(void) {
                 //printf("Address 0x%2.2x Port %i rcode 0x%2.2x\r\n", bAddress, j, rcode);
         }
 
+        if(bAddress == 1) {
+                if(pUsb) {
+                        // Tell host a hub is present on root.
+                        pUsb->IsHub(true);
+                }
+        }
         qNextPollTime = millis() + 100;
         bPollEnable = true;
         return 0;
@@ -126,12 +135,22 @@ Fail:
 
 void UHS_NI UHS_USBHub::Release(void) {
         UHS_DeviceAddress a;
-        a.devAddress = 0;
-        a.bmHub = 0;
-        a.bmParent = bAddress;
+        //UHS_DeviceAddress me;
+        //me.devAddress= bAddress;
+        AddressPool *apool = pUsb->GetAddressPool();
+        //a.devAddress = pUsb->addrPool->FindPortChildAddress(bAddress, port);
+        //a.devAddress = 0;
+        //a.bmHub = 0;
+        //a.bmParent = bAddress;
         for(uint8_t j = 1; j <= bNbrPorts; j++) {
-                a.bmAddress = j;
-                pUsb->ReleaseDevice(a.devAddress);
+                a.devAddress = apool->FindPortChildAddress(bAddress, j);
+                if(a.bmAddress != 0) pUsb->ReleaseDevice(a.devAddress);
+        }
+        if(bAddress == 1) {
+                if(pUsb) {
+                        // Tell host hub on root is gone.
+                        pUsb->IsHub(false);
+                }
         }
         DriverDefaults();
         bNbrPorts = 0;
@@ -231,11 +250,12 @@ void UHS_NI UHS_USBHub::ResetHubPort(uint8_t port) {
 
 uint8_t UHS_NI UHS_USBHub::PortStatusChange(uint8_t port, UHS_HubEvent &evt) {
         UHS_DeviceAddress a;
-        a.devAddress = 0;
-        a.bmHub = 0;
+
+        a.devAddress = pUsb->GetAddressPool()->FindPortChildAddress(bAddress, port);
+        //a.bmHub = 0;
         // This isn't correct.
-        a.bmParent = bAddress;
-        a.bmAddress = port;
+        //a.bmParent = bAddress;
+        //a.bmAddress = port;
 
         switch(evt.bmEvent) {
                         // Device connected event
@@ -269,8 +289,8 @@ uint8_t UHS_NI UHS_USBHub::PortStatusChange(uint8_t port, UHS_HubEvent &evt) {
                                 UHS_SLEEP_MS(200);
 
                                 a.devAddress = bAddress;
-                                HUB_DEBUG("USBHub configure %2.2x %2.2x %2.2x\r\n", a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED)==UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED?0:1));
-                                pUsb->Configuring(a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED)==UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED?0:1));
+                                HUB_DEBUGx("USBHub configure %2.2x %2.2x %2.2x\r\n", a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED) == UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED ? 0 : 1));
+                                pUsb->Configuring(a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED) == UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED ? 0 : 1));
                                 bResetInitiated = false;
                         }
                         break;
