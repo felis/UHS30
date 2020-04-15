@@ -343,23 +343,23 @@ void check_keyboards() {
         }
 }
 
+uint8_t stat0 = 128;
 uint8_t stat1 = 128;
 uint8_t stat2 = 128;
-uint8_t stat3 = 128;
 
 void loop() {
         check_keyboards();
-        if(hub1.GetAddress() != stat1) {
-                stat1 = hub1.GetAddress();
-                printf_P(PSTR("Hub address %u\r\n"), stat1);
+        if(hub1.GetAddress() != stat0) {
+                stat0 = hub1.GetAddress();
+                printf_P(PSTR("Hub address %u\r\n"), stat0);
         }
-        if(hid1.GetAddress() != stat2) {
-                stat2 = hid1.GetAddress();
-                printf_P(PSTR("hid1 address %u\r\n"), stat2);
+        if(hid1.GetAddress() != stat1) {
+                stat1 = hid1.GetAddress();
+                printf_P(PSTR("hid1 address %u\r\n"), stat1);
         }
-        if(hid2.GetAddress() != stat3) {
-                stat3 = hid1.GetAddress();
-                printf_P(PSTR("hid2 address %u\r\n"), stat3);
+        if(hid2.GetAddress() != stat2) {
+                stat2 = hid2.GetAddress();
+                printf_P(PSTR("hid2 address %u\r\n"), stat2);
         }
 
 }
