@@ -256,6 +256,15 @@
             <in>UHS_MIDI.h</in>
             <in>UHS_MIDI_INLINE.h</in>
           </df>
+          <df name="UHS_PRINTER">
+            <df name="examples">
+              <df name="USB_HOST_SHIELD">
+                <df name="printer_demo">
+                  <in>printer_demo.ino</in>
+                </df>
+              </df>
+            </df>
+          </df>
           <df name="USB_HOST_SHIELD">
             <df name="examples">
               <df name="board_qc">
@@ -321,14 +330,14 @@
               <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino/avr</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/variants/mega</pElem>
               <pElem>libraries/UHS_ByteBuffer</pElem>
-              <pElem>libraries/RTClib</pElem>
-              <pElem>libraries/UHS_host</pElem>
-              <pElem>libraries/UHS_host/USB_HOST_SHIELD</pElem>
-              <pElem>libraries/UHS_host/UHS_HUB</pElem>
-              <pElem>libraries/UHS_host/UHS_BULK_STORAGE</pElem>
-              <pElem>libraries/UHS_FS</pElem>
-              <pElem>libraries/UHS_host/UHS_HUB</pElem>
-              <pElem>libraries/UHS_host/UHS_CDC_ACM</pElem>
+              <pElem>../libraries/RTClib</pElem>
+              <pElem>../libraries/UHS_host</pElem>
+              <pElem>../libraries/USB_HOST_SHIELD</pElem>
+              <pElem>../libraries/UHS_HUB</pElem>
+              <pElem>../libraries/UHS_BULK_STORAGE</pElem>
+              <pElem>../libraries/UHS_FS</pElem>
+              <pElem>libraries/UHS_CDC</pElem>
+              <pElem>libraries/UHS_CDC_ACM</pElem>
               <pElem>libraries/UHS_host/UHS_MIDI</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</pElem>
@@ -336,7 +345,6 @@
               <pElem>libraries/ISR_safe_memory</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino</pElem>
               <pElem>/opt/Arduino/hardware/tools/avr/avr/include</pElem>
-              <pElem>libraries/UHS_host/UHS_CDC</pElem>
             </incDir>
             <preprocessorList>
               <Elem>ARDUINO=10609</Elem>
@@ -352,14 +360,14 @@
               <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino/avr</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/variants/mega</pElem>
               <pElem>libraries/UHS_ByteBuffer</pElem>
-              <pElem>libraries/RTClib</pElem>
-              <pElem>libraries/UHS_host</pElem>
-              <pElem>libraries/UHS_host/USB_HOST_SHIELD</pElem>
-              <pElem>libraries/UHS_host/UHS_HUB</pElem>
-              <pElem>libraries/UHS_host/UHS_BULK_STORAGE</pElem>
-              <pElem>libraries/UHS_FS</pElem>
-              <pElem>libraries/UHS_host/UHS_HUB</pElem>
-              <pElem>libraries/UHS_host/UHS_CDC_ACM</pElem>
+              <pElem>../libraries/RTClib</pElem>
+              <pElem>../libraries/UHS_host</pElem>
+              <pElem>../libraries/USB_HOST_SHIELD</pElem>
+              <pElem>../libraries/UHS_HUB</pElem>
+              <pElem>../libraries/UHS_BULK_STORAGE</pElem>
+              <pElem>../libraries/UHS_FS</pElem>
+              <pElem>libraries/UHS_CDC</pElem>
+              <pElem>libraries/UHS_CDC_ACM</pElem>
               <pElem>libraries/UHS_host/UHS_MIDI</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/libraries/Wire/src/utility</pElem>
@@ -367,7 +375,6 @@
               <pElem>libraries/ISR_safe_memory</pElem>
               <pElem>/opt/Arduino/hardware/arduino/avr/cores/arduino</pElem>
               <pElem>/opt/Arduino/hardware/tools/avr/avr/include</pElem>
-              <pElem>libraries/UHS_host/UHS_CDC</pElem>
             </incDir>
             <preprocessorList>
               <Elem>ARDUINO=10609</Elem>
@@ -685,12 +692,22 @@
             tool="1"
             flavor2="0">
       </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_EHCI/examples/KINETIS_EHCI_TEST/KINETIS_EHCI_TEST.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
       <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/KINETIS_DEV_DESC/KINETIS_DEV_DESC.ino"
             ex="false"
             tool="1"
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/UHS_MIDI/examples/UHS_KINETIS_EHCI/USB_MIDI_Converter/USB_MIDI_Converter.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_PRINTER/examples/USB_HOST_SHIELD/printer_demo/printer_demo.ino"
             ex="false"
             tool="1"
             flavor2="0">

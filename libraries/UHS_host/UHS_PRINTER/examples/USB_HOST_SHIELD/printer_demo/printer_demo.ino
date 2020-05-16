@@ -4,14 +4,14 @@
 #define LOAD_USB_HOST_SYSTEM
 // Load USB Host Shield
 #define LOAD_USB_HOST_SHIELD
-// Load Printer class driver
-#define LOAD_UHS_Printer
+// Load PRINTER class driver
+#define LOAD_UHS_PRINTER
 
 #define ENABLE_UHS_DEBUGGING 1
 #define DEBUG_PRINTF_EXTRA_HUGE 1
 #define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
 #define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD 1
-#define DEBUG_PRINTF_EXTRA_HUGE_Printer_HOST 1
+#define DEBUG_PRINTF_EXTRA_HUGE_PRINTER_HOST 1
 #define UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE 1
 
 #define PRINTER_CLEAR_COMMAND_LEN    65
@@ -27,11 +27,11 @@
 #include <UHS_host.h>
 
 MAX3421E_HOST *UHS_Usb;
-UHS_Printer *Printer;
+UHS_PRINTER *my_printer;
 bool connected;
 String s;
 bool isReady1;
-// Poll USB Printer Controller and send to serial Printer
+// Poll USB PRINTER
 
 void PRINTER_request(String str) {
         unsigned int f, a, i = 0, cnt, len;
@@ -50,7 +50,7 @@ void PRINTER_request(String str) {
         {
                 d = 0;
                 if(cnt < 65) {
-                        byte_array[cnt] = (char)str.charAt(f); //pgm_read_byte_near(Courier_15 + d);
+                        byte_array[cnt] = (char)str.charAt(f);
                         Serial.println(byte_array[cnt]);
                 }
                 cnt++;
@@ -59,7 +59,7 @@ void PRINTER_request(String str) {
         byte_array[strlen(byte_array)] = 0x0A;
         byte_array[strlen(byte_array)] = 0x1B;
 
-        rcode1 = Printer->SendRawData(PRINTER_CLEAR_COMMAND_LEN, (uint8_t*)byte_array);
+        rcode1 = my_printer->SendRawData(PRINTER_CLEAR_COMMAND_LEN, (uint8_t*)byte_array);
 
         if(rcode1) {
                 Serial.println("rcode1 Failed");
@@ -71,7 +71,7 @@ void PRINTER_request(String str) {
         return;
 }
 
-void Printer_write() {
+void PRINTER_write() {
         if(Serial.available()) {
                 s = Serial.readStringUntil('\n');
                 if(s.length() > 0) {
@@ -99,23 +99,23 @@ void setup() {
         }
         Serial.begin(115200);
         delay(100);
-        Serial.println(F("USB Printer Converter example."));
+        Serial.println(F("USB PRINTER example."));
         UHS_Usb = new MAX3421E_HOST();
-        Printer = new UHS_Printer(UHS_Usb);
+        my_printer = new UHS_PRINTER(UHS_Usb);
         while(UHS_Usb->Init(1000) != 0);
 }
 
 void loop() {
-        if(Printer->isReady()) {
+        if(my_printer->isReady()) {
                 if(!connected) {
                         connected = true;
-                        Serial.println(F("Connected to Printer\r\n"));
+                        Serial.println(F("Connected to PRINTER\r\n"));
                 }
-                Printer_write();
+                PRINTER_write();
         } else {
                 if(connected) {
                         connected = false;
-                        Serial.println(F("\r\nDisconnected from Printer\r\n"));
+                        Serial.println(F("\r\nDisconnected from PRINTER\r\n"));
                 }
         }
 }

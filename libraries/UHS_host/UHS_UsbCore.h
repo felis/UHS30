@@ -98,6 +98,8 @@ e-mail   :  support@circuitsathome.com
 ////////////////////////////////////////////////////////////////////////////////
 // Printer
 #define                         UHS_USB_CLASS_PRINTER 0x07U
+// Subclass There's only one.
+#define                      UHS_PRINTER_USB_SUBCLASS 0x01U
 
 ////////////////////////////////////////////////////////////////////////////////
 // Mass Storage
@@ -220,6 +222,7 @@ e-mail   :  support@circuitsathome.com
 #define                    ADDR_ERROR_INVALID_ADDRESS 0xA1U
 
 // Common Interface Driver error codes
+#define            UHS_HOST_ERROR_UNSUPPORTED_REQUEST 0xD0U // Indicates that the interface can't do what was asked, but not fatal. Usually indicates a bug not checking features.
 #define           UHS_HOST_ERROR_DEVICE_NOT_SUPPORTED 0xD1U // Driver doesn't support the device or interfaces
 #define         UHS_HOST_ERROR_DEVICE_INIT_INCOMPLETE 0xD2U // Init partially finished, but died.
 #define     UHS_HOST_ERROR_CANT_REGISTER_DEVICE_CLASS 0xD3U // There was no driver for the interface requested.

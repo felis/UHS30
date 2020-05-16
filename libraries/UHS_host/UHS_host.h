@@ -104,6 +104,10 @@ e-mail   :  support@circuitsathome.com
 #include "UHS_MIDI/UHS_MIDI.h"
 #endif
 
+#if defined(LOAD_UHS_PRINTER)
+#include "UHS_PRINTER/UHS_PRINTER.h"
+#endif
+
 #endif // System code loaded
 
 #endif // _UHS_host_h_
