@@ -1434,7 +1434,7 @@ extern "C" {
          * @param flags Zero is treated as O_RDONLY, one of [0 | O_RDONLY | O_WRONLY | O_RDWR] is mandatory.
          *              Additional flags are  O_CREAT, O_APPEND and O_TRUNC.
          *              If you use O_RDONLY and O_CREAT together, it will be opened as O_RDWR.
-         * @return file file system descriptor
+         * @return file file system descriptor, Zero is Error
          */
         uint8_t AJK_NI fs_open(const char *pathname, int flags) {
                 int rv;
@@ -1463,7 +1463,7 @@ extern "C" {
                                 break;
 
                         default:
-                                return -1;
+                                return 0;
                 }
                 rv = _fs_open(pathname, &mode);
                 if((rv == 0) && (flags & O_CREAT)) {
@@ -1478,7 +1478,7 @@ extern "C" {
                                                 s = fs_lseek(rv, 0, SEEK_END);
                                                 if(s) {
                                                         fs_close(rv);
-                                                        rv = -1;
+                                                        rv = 0;
                                                 }
                                                 break;
                                         case O_TRUNC:
@@ -1486,13 +1486,13 @@ extern "C" {
                                                 s = fs_truncate(rv);
                                                 if(s) {
                                                         fs_close(rv);
-                                                        rv = -1;
+                                                        rv = 0;
                                                 }
                                                 break;
                                 }
                         }
-                } else {
-                        rv = -1;
+                //} else {
+                //        rv = 0;
                 }
                 return rv;
         }
