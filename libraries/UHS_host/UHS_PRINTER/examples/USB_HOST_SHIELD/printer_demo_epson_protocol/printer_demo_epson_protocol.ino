@@ -8,12 +8,14 @@
 #define LOAD_UHS_PRINTER
 #define LOAD_UHS_HUB
 #define DEBUG_PRINTF_EXTRA_HUGE_USB_HUB 0
-#define ENABLE_UHS_DEBUGGING 0
+#define ENABLE_UHS_DEBUGGING 0 
 #define DEBUG_PRINTF_EXTRA_HUGE 0
 #define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 0
 #define DEBUG_PRINTF_EXTRA_HUGE_USB_HOST_SHIELD 0
 #define DEBUG_PRINTF_EXTRA_HUGE_PRINTER_HOST 0
 #define UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE 0
+
+#define PRINTER_CLEAR_COMMAND_LEN    65
 
 #include <Arduino.h>
 #ifdef true
@@ -35,6 +37,11 @@ bool connected;
 String s;
 bool isReady1;
 
+
+uint8_t data[512];
+
+#include "test_image.h"
+
 void setup() {
         connected = false;
         while(!Serial) {
@@ -48,7 +55,6 @@ void setup() {
         while(UHS_Usb.Init(1000) != 0);
 }
 
-char message[] = "Hello World!\r\n";
 
 void loop() {
         if(my_printer.isReady()) {
@@ -56,7 +62,17 @@ void loop() {
                         connected = true;
                         printf_P(PSTR("Connected to PRINTER\r\n"));
                         my_printer.select_printer();
-                        my_printer.write(strlen(message), (uint8_t *)message);
+                        uint16_t q=test_image_size;
+                        size_t p = 0;
+                        while(q) {
+                                uint16_t i=q;
+                                if(i>512) i=512;
+                                memcpy_P(&data, &test_image[p], i);
+                                uint8_t rv = my_printer.write(i, data);
+                                if(rv) break;
+                                q-=i;
+                                p+=i;
+                        }
                 }
         } else {
                 if(connected) {

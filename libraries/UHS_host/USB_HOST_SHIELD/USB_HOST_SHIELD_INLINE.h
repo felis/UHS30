@@ -421,6 +421,7 @@ again:
  * @return 0 on success
  */
 uint8_t UHS_NI MAX3421E_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t &nak_limit) {
+        MAX_HOST_DEBUG(PSTR("Looking for address 0x%2.2x\r\n"), addr);
         UHS_Device *p = addrPool.GetUsbDevicePtr(addr);
 
         if(!p)
@@ -429,6 +430,7 @@ uint8_t UHS_NI MAX3421E_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **
         if(!p->epinfo)
                 return UHS_HOST_ERROR_NULL_EPINFO;
 
+        MAX_HOST_DEBUG(PSTR("Looking for endpoint 0x%2.2x at address 0x%2.2x\r\n"), ep, addr);
         *ppep = getEpInfoEntry(addr, ep);
 
         if(!*ppep)

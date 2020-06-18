@@ -1,7 +1,7 @@
 #if defined(LOAD_UHS_PRINTER) && defined(__UHS_PRINTER_H__) && !defined(UHS_PRINTER_LOADED)
 #define UHS_PRINTER_LOADED
 
-uint8_t UHS_NI UHS_PRINTER::quirk_check(void) {
+uint8_t UHS_NI UHS_PRINTER::quirk_check(ENUMERATION_INFO *ei) {
         uint8_t q = 0x00U;
         size_t s = 0;
         quirk_printer_struct r;
@@ -21,6 +21,8 @@ uint8_t UHS_NI UHS_PRINTER::quirk_check(void) {
  */
 void UHS_NI UHS_PRINTER::DriverDefaults(void) {
         ready = false;
+        bAlternateSetting = 255;
+        Interface = 255;
         pUsb->DeviceDefaults(UHS_PRINTER_MAX_ENDPOINTS, this);
 }
 
@@ -44,12 +46,9 @@ bool UHS_NI UHS_PRINTER::OKtoEnumerate(ENUMERATION_INFO *ei) {
                 ei->vid, ei->pid, ei->interface.klass, ei->interface.subklass);
 
         // Check if vid:pid has UHS_PRINTER_QUIRK_BAD_CLASS, and skip the subclass test.
-        uint8_t q = quirk_check();
+        uint8_t q = quirk_check(ei);
         if(q == UHS_PRINTER_QUIRK_BAD_CLASS) return true;
         return ((ei->interface.klass == UHS_USB_CLASS_PRINTER && ei->interface.subklass == UHS_PRINTER_USB_SUBCLASS) && ((ei->interface.protocol > 0) &&(ei->interface.protocol < 4)));
-        // This is not optimal, needs to pick highest rank with best features,
-        // so perhaps we need another test with a numeric ranking to promote the best one.
-        // This needs to happen in core. I'll implement it later if this becomes an issue.
 }
 
 /**
@@ -70,13 +69,17 @@ uint8_t UHS_NI UHS_PRINTER::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
                         bNumEP++;
-
+                        UHS_PRINTER_HOST_DEBUG("PRINTER: index 0x%2.2x epAddr 0x%2.2x maxPktSize 0x%2.2x\r\n", index, epInfo[index].epAddr, epInfo[index].maxPktSize);
                         if(qPollRate == 0 && ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_INTERRUPT) {
                                 qPollRate = ei->interface.epInfo[ep].bInterval;
                         }
                 }
         }
+        UHS_PRINTER_HOST_DEBUG("PRINTER: bAlternateSetting %d bInterfaceNumber %d\r\n", ei->interface.bAlternateSetting, ei->interface.bInterfaceNumber);
         UHS_PRINTER_HOST_DEBUG("PRINTER: found %i endpoints\r\n", bNumEP);
+
+        Interface = ei->interface.bInterfaceNumber;
+        bAlternateSetting = ei->interface.bAlternateSetting;
         bAddress = ei->address;
         epInfo[0].epAddr = 0;
         epInfo[0].maxPktSize = ei->bMaxPacketSize0;
@@ -86,11 +89,11 @@ uint8_t UHS_NI UHS_PRINTER::SetInterface(ENUMERATION_INFO *ei) {
         vid = ei->vid;
         pid = ei->pid;
 
-        quirks = quirk_check(); // note any strange crap.
+        quirks = quirk_check(ei); // note any strange crap.
 
         UHS_PRINTER_HOST_DEBUG("PRINTER: address %i, config %i, iface %i with %i endpoints\r\n", bAddress, bConfNum, bIface, bNumEP);
 
-        if(qPollRate == 0) qPollRate = 8; // Sane default for bad polling rate.
+        if(qPollRate <= 99) qPollRate = 100; // Sane default for bad polling rate.
         return 0;
 }
 
@@ -102,7 +105,7 @@ uint8_t UHS_NI UHS_PRINTER::Start(void) {
         uint8_t rcode;
         UHS_PRINTER_HOST_DEBUG("PRINTER: Start\r\n");
         UHS_PRINTER_HOST_DEBUG("PRINTER: device detected\r\n");
-        // Assign epInfo to epinfo pointer - this time all 3 endpoints
+        // Assign epInfo to epinfo pointer - this time all endpoints
         rcode = pUsb->setEpInfoEntry(bAddress, bIface, bNumEP, epInfo);
         if(!rcode) {
                 UHS_PRINTER_HOST_DEBUG("PRINTER: EpInfoEntry OK\r\n");
@@ -150,17 +153,59 @@ void UHS_NI UHS_PRINTER::Poll(void) {
 }
 
 /**
- * rx data from bi-dir or 1284
+ *
+ * @return 1 == uni-directional, 2 == bidirectional, ZERO is unknown
+ */
+uint8_t UHS_NI UHS_PRINTER::printer_type(void) {
+        uint8_t rv = 0;
+        if(bNumEP == 2) {
+                rv = 1;
+        } else if(bNumEP == 3) {
+                rv = 2;
+        }
+        return rv;
+}
+
+/**
+ *
+ * @return 0 for OK
+ */
+uint8_t UHS_NI UHS_PRINTER::select_printer(void) {
+        uint8_t rv = 0;
+        pUsb->DisablePoll();                       //bmReqType,     bRequest,              wVal, wInd,           total
+        rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(USB_SETUP_RECIPIENT_INTERFACE, USB_REQUEST_SET_INTERFACE, bAlternateSetting, Interface, 0), 0, NULL);
+        pUsb->EnablePoll();
+        return rv;
+}
+
+/**
+ *
+ * @return -1 for not selected, 0 for selected, or error
+ */
+int16_t UHS_NI UHS_PRINTER::printer_selected(void) {
+        uint16_t rv = 0;
+        uint8_t check = 0xffu;
+        pUsb->DisablePoll();
+        rv = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(USB_SETUP_DEVICE_TO_HOST | USB_SETUP_RECIPIENT_INTERFACE, USB_REQUEST_GET_INTERFACE, 0, Interface, 1), 1, &check);
+        pUsb->EnablePoll();
+        if(!rv) {
+                if(check != bAlternateSetting) rv = -1;
+        }
+        return rv;
+
+}
+
+/**
+ * rx data from bi-dir or, possibly 1284?
  *
  * @param len maximum length of the data buffer, returns with amount read.
  * @param data the data buffer.
  * @return  0 for success, otherwise return error code.
  */
-uint8_t UHS_NI UHS_PRINTER::read(uint16_t *len, uint8_t *data) {
-        // TO-DO: If not bi-dir or 1284, return an unimplemented error
+uint8_t UHS_NI UHS_PRINTER::read(uint16_t *len, NOTUSED(uint8_t *data)) { // suppress warning for now
         if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         if((quirks & UHS_PRINTER_QUIRK_BIDIR) == UHS_PRINTER_QUIRK_BIDIR) return UHS_HOST_ERROR_UNSUPPORTED_REQUEST;
-
+        if(printer_type() != 2) return UHS_HOST_ERROR_UNSUPPORTED_REQUEST;
         uint8_t rv = 0;
 
         // TO-DO: implement. For now, we return no data.
@@ -178,6 +223,11 @@ uint8_t UHS_NI UHS_PRINTER::read(uint16_t *len, uint8_t *data) {
  */
 uint8_t UHS_NI UHS_PRINTER::write(uint16_t len, uint8_t *data) {
         if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
+        int16_t ck = printer_selected();
+        if(ck) {
+                if(ck < 0) return UHS_HOST_ERROR_UNSUPPORTED_REQUEST;
+                return (ck&0xffu);
+        }
         uint8_t rv = 0;
         uint16_t t;
         while(len) {
@@ -186,21 +236,21 @@ uint8_t UHS_NI UHS_PRINTER::write(uint16_t len, uint8_t *data) {
                 if(t > epInfo[epDataOutIndex].maxPktSize) t = epInfo[epDataOutIndex].maxPktSize;
                 pUsb->DisablePoll();
                 rv = check_status();
+                pUsb->EnablePoll();
                 if(rv && rv != UHS_HOST_ERROR_NAK) {
-                        pUsb->DisablePoll();
                         Release();
-                        pUsb->EnablePoll();
                         break;
                 }
+                pUsb->DisablePoll();
                 OnPoll();
                 rv = pUsb->outTransfer(bAddress, epInfo[epDataOutIndex].epAddr, t, data);
                 pUsb->EnablePoll();
                 if(rv && rv != UHS_HOST_ERROR_NAK) {
-                        pUsb->DisablePoll();
+                        printf("death 2: 0x%2.2x\r\n", rv);
                         Release();
-                        pUsb->EnablePoll();
                         break;
                 }
+                if(rv == UHS_HOST_ERROR_NAK) t = 0;
                 len -= t;
                 data += t;
         }

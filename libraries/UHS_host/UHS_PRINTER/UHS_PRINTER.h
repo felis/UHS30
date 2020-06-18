@@ -1,7 +1,7 @@
 #if !defined(__UHS_PRINTER_H__)
 #define __UHS_PRINTER_H__
 
-#define UHS_PRINTER_MAX_ENDPOINTS 3 //endpoint 0, bulk_IN(PRINTER), bulk_OUT(PRINTER)
+#define UHS_PRINTER_MAX_ENDPOINTS 4 //endpoint 0, bulk_IN(PRINTER), bulk_OUT(PRINTER), 1284
 #define UHS_PRINTER_EVENT_PACKET_SIZE 64
 
 #define UHS_PRINTER_POLL_RATE    8
@@ -64,11 +64,13 @@ protected:
         uint16_t pid; //Product ID
 
 public:
-        static const uint8_t epDataInIndex = 1; // DataIn endpoint index(PRINTER)
-        static const uint8_t epDataOutIndex = 2; // DataOUT endpoint index(PRINTER)
+        static const uint8_t epDataOutIndex = 1; // DataOUT endpoint index(PRINTER)
+        static const uint8_t epDataInIndex = 2; // DataIn endpoint index(PRINTER)
         volatile UHS_EpInfo epInfo[UHS_PRINTER_MAX_ENDPOINTS];
         volatile UHS_PRINTER_STATUS status;
         uint8_t quirks;
+        uint8_t bAlternateSetting = 255; // impossible?
+        uint8_t Interface = 255; // impossible?
 
         UHS_PRINTER(UHS_USB_HOST_BASE *p);
 
@@ -102,7 +104,10 @@ public:
                 return rv;
         };
 
-        uint8_t quirk_check(void);
+        uint8_t printer_type(void);
+        uint8_t select_printer(void);
+        int16_t printer_selected(void);
+        uint8_t quirk_check(ENUMERATION_INFO *ei);
         uint8_t check_status(void);
         // Methods for receiving and sending data
         uint8_t write(uint16_t len, uint8_t *data);
