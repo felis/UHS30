@@ -88,6 +88,7 @@ extern "C" {
          */
         extern uint8_t fs_err;
 
+        extern void fs_simplify_path(char *path);
         extern uint8_t fs_ready(const char *path);
         extern uint8_t fs_open(const char *path, int flags);
         extern uint8_t fs_opendir(const char *path);

@@ -604,7 +604,7 @@ void UHS_FS_SD_DRIVER::IRQ(void) {
                                 SPI.endTransaction();
                                 ok = true;
                                 break;
-                                fail:
+fail:
                                 digitalWrite(cs, HIGH);
                                 SPI.endTransaction();
                         }
@@ -765,7 +765,7 @@ extern "C" {
                                 attachInterrupt(intr, UHS_FS_SD_ISR[i], CHANGE);
                         }
 #endif
-                // YOUR INIT HERE
+                        // YOUR INIT HERE
                 }
         }
 
@@ -781,6 +781,62 @@ extern "C" {
                 fs_err = rc;
 
                 return lbl;
+        }
+
+        /**
+         * Simplify provided path in-place.
+         * The returned path will be equal or less than the original.
+         * Path returned is not guaranteed to be an actual path.
+         * Replace leading "./" or "../" to /
+         *
+         * @param path This must be a writable object. Can't exist in flash.
+         */
+        void fs_simplify_path(char *path) {
+                if(path == NULL) return;
+
+                char *found = path;
+                char *move = found + 1;
+                size_t l = strlen(found);
+
+                if(l > 1) {
+                        // start with ./ ?
+                        if(found[0] == '.' && found[1] == '/') {
+                                memmove(found, move, l);
+                        }
+                }
+
+                move = found + 2;
+                l = strlen(found);
+
+                if(l > 2) {
+                        // start with ../ ?
+                        if(found[0] == '.' && found[0] == '/' && found[2] == '/') {
+                                l -= 1;
+                                memmove(found, move, l);
+                        }
+                }
+
+                //  '//' ?
+                while((found = strstr(path, "//"))) {
+                        // move string over
+                        l = strlen(found);
+                        move = found + 1;
+                        memmove(found, move, l);
+                }
+                // '/./'?
+                while((found = strstr(path, "/./"))) {
+                        // move string over
+                        l = strlen(found) - 1;
+                        move = found + 2;
+                        memmove(found, move, l);
+                }
+                // '/../' ?
+                while((found = strstr(path, "/../"))) {
+                        // move string over
+                        l = strlen(found) - 2;
+                        move = found + 3;
+                        memmove(found, move, l);
+                }
         }
 
         /**
@@ -1491,8 +1547,8 @@ extern "C" {
                                                 break;
                                 }
                         }
-                //} else {
-                //        rv = 0;
+                        //} else {
+                        //        rv = 0;
                 }
                 return rv;
         }

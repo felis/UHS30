@@ -253,7 +253,7 @@ char name2[30];
 
 void loop() {
 
-// change to 1 to show usb task state
+        // change to 1 to show usb task state
 #if 0
         current_state = UHS_Usb.getUsbTaskState();
         if(current_state != last_state) {
@@ -278,23 +278,27 @@ void loop() {
                         int fd;
                         printf_P(PSTR("%s mounted.\r\n"), VOL_LABEL);
 #if MAKE_BIG_DEMO
-                        *name1=0;
+                        *name1 = 0;
                         strcat(name1, VOL_LABEL);
                         strcat(name1, "/");
+                        fs_simplify_path(name1);
                         fre = fs_getfree(name1);
                         if(fre > 2097152) {
-                                *name1=0;
+                                *name1 = 0;
                                 strcat(name1, VOL_LABEL);
                                 strcat(name1, "/hello.txt");
-                                *name2=0;
+                                fs_simplify_path(name1);
+
+                                *name2 = 0;
                                 strcat(name2, VOL_LABEL);
                                 strcat(name2, "/HeLlO.tXt");
+                                fs_simplify_path(name2);
                                 printf_P(PSTR("Removing '%s' file... "), name1);
                                 fflush(stdout);
                                 res = fs_unlink(name1);
                                 printf_P(PSTR("completed with %i\r\n"), res);
                                 printf_P(PSTR("\r\nStarting Write test...\r\n"));
-                                fd = fs_open( name2, O_WRONLY | O_CREAT);
+                                fd = fs_open(name2, O_WRONLY | O_CREAT);
                                 if(fd > 0) {
                                         printf_P(PSTR("File opened OK, fd = %i\r\n"), fd);
                                         char hi[] = "]-[ello \\/\\/orld!\r\n";
@@ -307,7 +311,7 @@ void loop() {
                                         printf_P(PSTR("Error %d (%u)\r\n"), fd, fs_err);
                                 }
                                 printf_P(PSTR("\r\nStarting Read test...\r\n"));
-                                fd = fs_open( name1, O_RDONLY);
+                                fd = fs_open(name1, O_RDONLY);
                                 if(fd > 0) {
                                         res = 1;
                                         printf_P(PSTR("File opened OK, fd = %i, displaying contents...\r\n"), fd);
@@ -325,19 +329,21 @@ void loop() {
                                         res = fs_close(fd);
                                         printf_P(PSTR("file close result = %i.\r\n"), res);
                                         printf_P(PSTR("Testing rename\r\n"));
-                                        *name2=0;
+                                        *name2 = 0;
                                         strcat(name2, VOL_LABEL);
                                         strcat(name2, "/newtest.txt");
+                                        fs_simplify_path(name2);
                                         fs_unlink(name2);
-                                        res = fs_rename( name1, name2);
+                                        res = fs_rename(name1, name2);
                                         printf_P(PSTR("file rename result = %i.\r\n"), res);
                                 } else {
                                         printf_P(PSTR("File not found.\r\n"));
                                 }
-                                
-                                *name2=0;
+
+                                *name2 = 0;
                                 strcat(name2, VOL_LABEL);
                                 strcat(name2, "/1MB.bin");
+                                fs_simplify_path(name2);
                                 printf_P(PSTR("\r\nRemoving '%s' file... "), name2);
                                 fflush(stdout);
                                 res = fs_unlink(name2);
@@ -347,7 +353,7 @@ void loop() {
                                 fflush(stdout);
 
                                 //for (int i = 0; i < 128; i++) data[i] = i & 0xff;
-                                fd = fs_open( name2, O_WRONLY | O_CREAT);
+                                fd = fs_open(name2, O_WRONLY | O_CREAT);
                                 if(fd > 0) {
                                         int i = 0;
                                         delay(500);
@@ -373,7 +379,7 @@ void loop() {
                                 printf_P(PSTR("1MB read timing test "));
                                 fflush(stdout);
 
-                                fd = fs_open( name2, O_RDONLY);
+                                fd = fs_open(name2, O_RDONLY);
                                 if(fd > 0) {
                                         delay(500);
                                         start = millis();
