@@ -770,73 +770,15 @@ extern "C" {
         }
 
         char * AJK_NI fs_mount_lbl(uint8_t vol) {
-                uint8_t rc;
+                uint8_t rc = FR_NO_PATH;
                 char *lbl = NULL;
-                rc = FR_NO_PATH;
                 if(Fats[vol]) {
                         rc = FR_OK;
                         lbl = (char *)malloc(1 + strlen((char *)(Fats[vol]->label)));
                         strcpy(lbl, (char *)(Fats[vol]->label));
                 }
                 fs_err = rc;
-
                 return lbl;
-        }
-
-        /**
-         * Simplify provided path in-place.
-         * The returned path will be equal or less than the original.
-         * Path returned is not guaranteed to be an actual path.
-         * Replace leading "./" or "../" to /
-         *
-         * @param path This must be a writable object. Can't exist in flash.
-         */
-        void fs_simplify_path(char *path) {
-                if(path == NULL) return;
-
-                char *found = path;
-                char *move = found + 1;
-                size_t l = strlen(found);
-
-                if(l > 1) {
-                        // start with ./ ?
-                        if(found[0] == '.' && found[1] == '/') {
-                                memmove(found, move, l);
-                        }
-                }
-
-                move = found + 2;
-                l = strlen(found);
-
-                if(l > 2) {
-                        // start with ../ ?
-                        if(found[0] == '.' && found[0] == '/' && found[2] == '/') {
-                                l -= 1;
-                                memmove(found, move, l);
-                        }
-                }
-
-                //  '//' ?
-                while((found = strstr(path, "//"))) {
-                        // move string over
-                        l = strlen(found);
-                        move = found + 1;
-                        memmove(found, move, l);
-                }
-                // '/./'?
-                while((found = strstr(path, "/./"))) {
-                        // move string over
-                        l = strlen(found) - 1;
-                        move = found + 2;
-                        memmove(found, move, l);
-                }
-                // '/../' ?
-                while((found = strstr(path, "/../"))) {
-                        // move string over
-                        l = strlen(found) - 2;
-                        move = found + 3;
-                        memmove(found, move, l);
-                }
         }
 
         /**
@@ -848,9 +790,9 @@ extern "C" {
          * @return pointer to path name
          */
         const char * AJK_NI _fs_util_trunkpath(const char *path, uint8_t vol) {
-
                 const char *pathtrunc = path;
                 char *s = fs_mount_lbl(vol);
+
                 if(s != NULL) {
 
                         pathtrunc += strlen(s);
@@ -867,9 +809,7 @@ extern "C" {
          */
         uint8_t AJK_NI fs_ready(const char *path) {
                 // path -> volume number
-                uint8_t vol;
-
-                vol = PFAT_VOLUMES;
+                uint8_t vol = PFAT_VOLUMES;
                 fs_err = FR_NO_PATH;
                 for(uint8_t x = 0; x < PFAT_VOLUMES; x++) {
                         if(Fats[x]) {
@@ -935,14 +875,15 @@ extern "C" {
         const char * AJK_NI _fs_util_FATpath(const char *path, uint8_t vol) {
                 char *FATpath = (char *)malloc(3 + strlen(path));
                 char *ptr = FATpath;
+
                 *ptr = '0' + vol;
                 ptr++;
                 *ptr = ':';
                 ptr++;
                 *ptr = 0;
                 strcat(FATpath, path);
-                const char *rv = FATpath;
 
+                const char *rv = FATpath;
                 return rv;
         }
 
@@ -950,34 +891,30 @@ extern "C" {
 
         uint8_t AJK_NI fs_opendir(const char *path) {
 
-                uint8_t fd;
+                int i;
+                uint8_t fd = 0;
                 uint8_t rc;
                 const char *pathtrunc;
                 uint8_t vol = _fs_util_vol(path);
 
                 if(vol == PFAT_VOLUMES) {
                         fs_err = FR_NO_PATH;
-                        return 0;
-                }
+                } else {
+                        pathtrunc = _fs_util_trunkpath(path, vol);
+                        for(i = 0; i < _FS_LOCK; i++) {
+                                if(dhandles[i]->fs == NULL) break;
+                        }
+                        if(i < _FS_LOCK) {
+                                fd = 1 + i + _FS_LOCK;
+                                const char *ptr = _fs_util_FATpath(pathtrunc, vol);
+                                rc = f_opendir(dhandles[i], (TCHAR *)ptr);
+                                free((void *)ptr);
+                                if(rc != FR_OK) {
 
-
-                pathtrunc = _fs_util_trunkpath(path, vol);
-                fd = 0;
-                int i;
-
-                for(i = 0; i < _FS_LOCK; i++) {
-                        if(dhandles[i]->fs == NULL) break;
-                }
-                if(i < _FS_LOCK) {
-                        fd = 1 + i + _FS_LOCK;
-                        const char *ptr = _fs_util_FATpath(pathtrunc, vol);
-                        rc = f_opendir(dhandles[i], (TCHAR *)ptr);
-                        free((void *)ptr);
-                        if(rc != FR_OK) {
-
-                                dhandles[i]->fs = NULL;
-                                fd = 0;
-                                fs_err = FR_NO_PATH;
+                                        dhandles[i]->fs = NULL;
+                                        fd = 0;
+                                        fs_err = FR_NO_PATH;
+                                }
                         }
                 }
                 return fd;
@@ -992,16 +929,14 @@ extern "C" {
          * @return returns file handle number, or 0 on error
          */
         uint8_t AJK_NI _fs_open(const char *path, const char *mode) {
+                int i;
+                const char *pathtrunc;
                 uint8_t fd = 0;
                 uint8_t rc = FR_NO_PATH;
-                const char *pathtrunc;
-
                 uint8_t vol = _fs_util_vol(path);
 
                 if(vol != PFAT_VOLUMES) {
                         pathtrunc = _fs_util_trunkpath(path, vol);
-
-                        int i;
 
                         for(i = 0; i < _FS_LOCK; i++) {
                                 if(fhandles[i]->fs == NULL) break;
@@ -1034,7 +969,6 @@ extern "C" {
                         }
                 }
                 fs_err = rc;
-
                 return fd;
         }
 
@@ -1045,15 +979,15 @@ extern "C" {
          * @return FRESULT, 0 = success
          */
         int AJK_NI fs_close(uint8_t fd) {
-                uint8_t rc;
-                fd--;
-
-                if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
-                        rc = f_close(fhandles[fd]);
-                        fhandles[fd]->fs = NULL;
-                } else rc = FR_INVALID_PARAMETER;
+                uint8_t rc = FR_INVALID_PARAMETER;
+                if(fd > 0) {
+                        fd--;
+                        if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
+                                rc = f_close(fhandles[fd]);
+                                fhandles[fd]->fs = NULL;
+                        }
+                }
                 fs_err = rc;
-
                 return rc;
         }
 
@@ -1072,12 +1006,12 @@ extern "C" {
                         rv = FR_INVALID_PARAMETER;
                 }
                 fs_err = rv;
-
                 return rv;
         }
 
         int AJK_NI fs_readdir(uint8_t fd, PFAT_DIRINFO *data) {
                 uint8_t rc;
+
                 fd -= _FS_LOCK + 1;
                 fs_err = FR_EOF;
                 if(fd < _FS_LOCK && dhandles[fd]->fs != NULL) {
@@ -1119,12 +1053,13 @@ extern "C" {
          */
         uint8_t AJK_NI fs_sync(void) {
                 uint8_t rc;
-                for(int i = 0; i < _FS_LOCK; i++) {
+                int i=0;
+                for(; i < _FS_LOCK; i++) {
                         if(fhandles[i]->fs != NULL) {
                                 f_sync(fhandles[i]);
                         }
                 }
-                for(int i = 0; i < PFAT_VOLUMES; i++) {
+                for(i = 0; i < PFAT_VOLUMES; i++) {
                         if(Fats[i] != NULL) {
                                 f_sync_fs(Fats[i]->ffs);
                                 commit_fs(Fats[i]->ffs);
@@ -1132,7 +1067,6 @@ extern "C" {
                 }
                 rc = FR_OK;
                 fs_err = rc;
-
                 return rc;
         }
 
@@ -1143,15 +1077,16 @@ extern "C" {
          * @return FRESULT, 0 = success
          */
         uint8_t AJK_NI fs_flush(uint8_t fd) {
-                uint8_t rc;
-                fd--;
-                rc = FR_INVALID_PARAMETER;
-                if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
-                        rc = FR_OK;
-                        f_sync(fhandles[fd]);
+                uint8_t rc = FR_INVALID_PARAMETER;
+
+                if(fd > 0) {
+                        fd--;
+                        if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
+                                rc = FR_OK;
+                                f_sync(fhandles[fd]);
+                        }
                 }
                 fs_err = rc;
-
                 return rc;
         }
 
@@ -1162,14 +1097,15 @@ extern "C" {
          * @return 0 = not eof, 1 = eof
          */
         uint8_t AJK_NI fs_eof(uint8_t fd) {
-                uint8_t rc;
-                fd--;
-                rc = FR_INVALID_PARAMETER;
-                if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
-                        rc = f_eof(fhandles[fd]);
+                uint8_t rc = FR_INVALID_PARAMETER;
+
+                if(fd > 0) {
+                        fd--;
+                        if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
+                                rc = f_eof(fhandles[fd]);
+                        }
                 }
                 fs_err = rc;
-
                 return rc;
         }
 
@@ -1180,16 +1116,15 @@ extern "C" {
          * @return FRESULT, 0 = success
          */
         uint8_t AJK_NI fs_truncate(uint8_t fd) {
-                uint8_t rc;
+                uint8_t rc = FR_INVALID_PARAMETER;
 
-                fd--;
-
-                rc = FR_INVALID_PARAMETER;
-                if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
-                        rc = f_truncate(fhandles[fd]);
+                if(fd > 0) {
+                        fd--;
+                        if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
+                                rc = f_truncate(fhandles[fd]);
+                        }
                 }
                 fs_err = rc;
-
                 return rc;
         }
 
@@ -1200,18 +1135,19 @@ extern "C" {
          * @return current position in file, 0xfffffffflu == error
          */
         unsigned long AJK_NI fs_tell(uint8_t fd) {
-                uint8_t rc;
+                uint8_t rc = FR_INVALID_PARAMETER;
                 unsigned long offset = 0xfffffffflu;
-                fd--;
 
-                rc = FR_INVALID_PARAMETER;
-                if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
-                        rc = FR_OK;
-                        // f_tell is a macro...
-                        offset = f_tell(fhandles[fd]);
+                if(fd > 0) {
+                        fd--;
+
+                        if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
+                                rc = FR_OK;
+                                // f_tell is a macro...
+                                offset = f_tell(fhandles[fd]);
+                        }
                 }
                 fs_err = rc;
-
                 return offset;
         }
 
@@ -1227,14 +1163,15 @@ extern "C" {
          * @return FRESULT, 0 = success
          */
         uint8_t AJK_NI fs_lseek(uint8_t fd, unsigned long offset, int whence) {
-                uint8_t rc;
-                fd--;
-                rc = FR_INVALID_PARAMETER;
-                if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
-                        rc = f_clseek(fhandles[fd], offset, whence);
+                uint8_t rc = FR_INVALID_PARAMETER;
+
+                if(fd > 0) {
+                        fd--;
+                        if(fd < _FS_LOCK && fhandles[fd]->fs != NULL) {
+                                rc = f_clseek(fhandles[fd], offset, whence);
+                        }
                 }
                 fs_err = rc;
-
                 return rc;
         }
 
@@ -1247,22 +1184,22 @@ extern "C" {
          * @return amount actually read in, less than 0 is an error
          */
         int AJK_NI fs_read(uint8_t fd, void *data, uint16_t amount) {
-                uint8_t rc;
-                int count = 0;
-                fd--;
+                uint8_t rc = FR_INVALID_PARAMETER;
+                int count = -1;
 
-                rc = FR_INVALID_PARAMETER;
-                if((fd < PFAT_VOLUMES) && (fhandles[fd]->fs != NULL)) {
-                        UINT bc;
-                        rc = f_read(fhandles[fd], data, amount, &bc);
-                        if(bc != amount) rc = FR_EOF;
-                        count = bc;
-                        if(rc) {
-                                if(!count) count = -1;
+                if(fd > 0) {
+                        fd--;
+                        if((fd < _FS_LOCK) && (fhandles[fd]->fs != NULL)) {
+                                UINT bc;
+                                rc = f_read(fhandles[fd], data, amount, &bc);
+                                if(bc != amount) rc = FR_EOF;
+                                count = bc;
+                                if(rc) {
+                                        if(!count) count = -1;
+                                }
                         }
                 }
                 fs_err = rc;
-
                 return count;
         }
 
@@ -1275,21 +1212,21 @@ extern "C" {
          * @return amount of data actually written, less than 0 is an error.
          */
         int AJK_NI fs_write(uint8_t fd, const void *data, uint16_t amount) {
-                uint8_t rc;
                 UINT bc;
-                int count = 0;
-                fd--;
+                uint8_t rc = FR_INVALID_PARAMETER;
+                int count = -1;
 
-                rc = FR_INVALID_PARAMETER;
-                if((fd < PFAT_VOLUMES) && (fhandles[fd]->fs != NULL)) {
-                        rc = f_write(fhandles[fd], data, amount, &bc);
-                        count = bc;
-                        if(rc) {
-                                if(!count) count = -1;
+                if(fd > 0) {
+                        fd--;
+                        if((fd < _FS_LOCK) && (fhandles[fd]->fs != NULL)) {
+                                rc = f_write(fhandles[fd], data, amount, &bc);
+                                count = bc;
+                                if(rc) {
+                                        if(!count) count = -1;
+                                }
                         }
                 }
                 fs_err = rc;
-
                 return count;
         }
 
@@ -1301,7 +1238,6 @@ extern "C" {
          * @return FRESULT, 0 = success
          */
         uint8_t AJK_NI fs_unlink(const char *path) {
-
                 const char *pathtrunc;
                 uint8_t vol = _fs_util_vol(path);
                 uint8_t rc;
@@ -1316,7 +1252,6 @@ extern "C" {
 
                 }
                 fs_err = rc;
-
                 return rc;
         }
 
@@ -1339,7 +1274,6 @@ extern "C" {
                         free((void *)name);
                 }
                 fs_err = rc;
-
                 return rc;
         }
 
@@ -1353,7 +1287,6 @@ extern "C" {
         uint8_t AJK_NI fs_mkdir(const char *path, uint8_t mode) {
                 uint8_t rc = FR_NO_PATH;
                 const char *pathtrunc;
-
                 uint8_t vol = _fs_util_vol(path);
 
                 if(vol != PFAT_VOLUMES) {
@@ -1391,9 +1324,7 @@ extern "C" {
                         free((void *)name);
                 }
                 fs_err = rc;
-
                 return rc;
-
         }
 
         /**
@@ -1407,6 +1338,7 @@ extern "C" {
                 uint8_t rc = FR_NO_PATH;
                 const char *pathtrunc;
                 uint8_t vol = _fs_util_vol(path);
+
                 if(vol != PFAT_VOLUMES) {
 
                         pathtrunc = _fs_util_trunkpath(path, vol);
@@ -1415,7 +1347,6 @@ extern "C" {
                         free((void *)name);
                 }
                 fs_err = rc;
-
                 return rc;
         }
 
@@ -1429,8 +1360,8 @@ extern "C" {
          */
         uint8_t AJK_NI fs_rename(const char *oldpath, const char *newpath) {
                 uint8_t rc = FR_NO_PATH;
-
                 uint8_t vol = _fs_util_vol(oldpath);
+
                 if(vol != PFAT_VOLUMES && vol == _fs_util_vol(newpath)) {
                         const char *oldpathtrunc = _fs_util_trunkpath(oldpath, vol);
                         const char *newpathtrunc = _fs_util_trunkpath(newpath, vol);
@@ -1441,7 +1372,6 @@ extern "C" {
                         free((void *)oldname);
                 }
                 fs_err = rc;
-
                 return rc;
         }
 
@@ -1455,6 +1385,7 @@ extern "C" {
                 uint8_t rc = FR_NO_PATH;
                 uint8_t vol = _fs_util_vol(path);
                 uint64_t rv = 0llu;
+
                 if(vol != PFAT_VOLUMES) {
                         FATFS *fs;
                         uint32_t tv = 0;
@@ -1467,7 +1398,6 @@ extern "C" {
                         if(rc) rv = 0llu;
                 }
                 fs_err = rc;
-
                 return (uint64_t)rv;
         }
 
@@ -1477,7 +1407,6 @@ extern "C" {
                 fs_err = FR_OK;
                 for(uint8_t x = 0; x < PFAT_VOLUMES; x++) {
                         if(Fats[x]) {
-
                                 message++;
                         }
                 }
@@ -1497,6 +1426,7 @@ extern "C" {
                 char mode;
                 char mode2;
                 uint8_t s;
+
                 // mode r
                 // mode w/W
                 // mode x/X (r/w)
@@ -1547,8 +1477,6 @@ extern "C" {
                                                 break;
                                 }
                         }
-                        //} else {
-                        //        rv = 0;
                 }
                 return rv;
         }

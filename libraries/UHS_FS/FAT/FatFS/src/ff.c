@@ -3557,8 +3557,8 @@ FRESULT f_unlink(
         FRESULT res;
         DIR dj;
         DIR sdj;
-        FBYTE *dir;
-        DWORD dclst;
+        FBYTE *dir = NULL;
+        DWORD dclst = 0;
         DEF_NAMEBUF;
 
 

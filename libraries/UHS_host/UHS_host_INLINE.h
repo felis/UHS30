@@ -53,7 +53,7 @@ UHS_EpInfo* UHS_USB_HOST_BASE::getEpInfoEntry(uint8_t addr, uint8_t ep) {
         UHS_EpInfo *pep;
         for(uint8_t j = 0; j < UHS_HOST_MAX_INTERFACE_DRIVERS; j++) {
                 pep = (UHS_EpInfo *)(p->epinfo[j]);
-                HOST_DEBUG("PEP @ 0x%x\r\n", pep);
+                HOST_DEBUG("PEP @ 0x%x\r\n",(unsigned int) pep);
                 for(uint8_t i = 0; i < p->epcount; i++) {
                         if((pep)->epAddr == ep) {
                                 HOST_DEBUG("ep entry for interface %d ep %d max packet size = %d\r\n\r\n", pep->bIface, ep, pep->maxPktSize);
