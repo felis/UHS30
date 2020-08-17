@@ -25,6 +25,10 @@
                     <name>KE1xF512</name>
                     <type>0</type>
                 </confElem>
+                <confElem>
+                    <name>k20</name>
+                    <type>0</type>
+                </confElem>
             </confList>
             <formatting>
                 <project-formatting-style>false</project-formatting-style>

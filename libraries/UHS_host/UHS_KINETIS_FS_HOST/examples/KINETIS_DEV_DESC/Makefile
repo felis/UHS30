@@ -4,6 +4,7 @@ BOARD=teensy:avr:teensy31:usb=disable,speed=96,opt=o1std,keys=en-us
 #BOARD=teensy:avr:teensy34:usb=disable,speed=96,opt=o1std,keys=en-us
 #BOARD=teensy:avr:teensy35:usb=disable,speed=96,opt=o1std,keys=en-us
 #BOARD=teensy:avr:teensy36:usb=disable,speed=96,opt=o1std,keys=en-us
+#BOARD=k2x:avr:K20DX256VLH7:usb=disable,speed=96,opt=o2std,keys=en-us
 
 PORT = /dev/ttyACM0
 CPORT = /dev/ttyUSB0

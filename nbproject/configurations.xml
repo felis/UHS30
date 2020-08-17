@@ -102,6 +102,9 @@
               </df>
             </df>
             <df name="USB_HOST_SHIELD">
+              <df name="UHS_FS_ANY_LABEL">
+                <in>UHS_FS_ANY_LABEL.ino</in>
+              </df>
               <df name="UHS_FS_NEW_DEMO">
                 <in>UHS_FS_NEW_DEMO.ino</in>
               </df>
@@ -179,6 +182,11 @@
           </df>
           <df name="UHS_CDC_ACM">
             <df name="examples">
+              <df name="UHS_KINETIS_EHCI">
+                <df name="acm_terminal">
+                  <in>acm_terminal.ino</in>
+                </df>
+              </df>
               <df name="UHS_KINETIS_FS_HOST">
                 <df name="acm_terminal">
                   <in>acm_terminal.ino</in>
@@ -207,6 +215,9 @@
               <df name="USB_HOST_SHIELD">
                 <df name="UHS_HID_KB_MOUSE">
                   <in>UHS_HID_KB_MOUSE.ino</in>
+                </df>
+                <df name="UHS_HID_RAW">
+                  <in>UHS_HID_RAW.ino</in>
                 </df>
               </df>
             </df>
@@ -251,6 +262,25 @@
                 <df name="USB_MIDI_Converter">
                   <in>USB_MIDI_Converter.ino</in>
                 </df>
+                <df name="USB_MIDI_dump">
+                  <in>USB_MIDI_dump.ino</in>
+                </df>
+              </df>
+              <df name="UHS_KINETIS_FS_HOST">
+                <df name="USB_MIDI_Converter">
+                  <in>USB_MIDI_Converter.ino</in>
+                </df>
+                <df name="USB_MIDI_dump">
+                  <in>USB_MIDI_dump.ino</in>
+                </df>
+              </df>
+              <df name="USB_HOST_SHIELD">
+                <df name="USB_MIDI_Converter">
+                  <in>USB_MIDI_Converter.ino</in>
+                </df>
+                <df name="USB_MIDI_dump">
+                  <in>USB_MIDI_dump.ino</in>
+                </df>
               </df>
             </df>
             <in>UHS_MIDI.h</in>
@@ -262,8 +292,18 @@
                 <df name="printer_demo">
                   <in>printer_demo.ino</in>
                 </df>
+                <df name="printer_demo_epson_protocol">
+                  <in>printer_demo_epson_protocol.ino</in>
+                  <in>test_image.h</in>
+                </df>
+                <df name="printer_demo_escP2_protocol">
+                  <in>printer_demo_escP2_protocol.ino</in>
+                  <in>test_image.h</in>
+                </df>
               </df>
             </df>
+            <in>UHS_PRINTER.h</in>
+            <in>UHS_PRINTER_INLINE.h</in>
           </df>
           <df name="USB_HOST_SHIELD">
             <df name="examples">
@@ -1215,6 +1255,650 @@
       <item path="libraries/UHS_host/USB_HOST_SHIELD/USB_HOST_SHIELD_INLINE.h"
             ex="false"
             tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/macro_logic.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/dyn_SWI/SWI_INLINE.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/dyn_SWI/dyn_SWI.h" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+    <conf name="k20" type="0">
+      <toolsSet>
+        <compilerSet>MK20DX256|GNU</compilerSet>
+        <dependencyChecking>false</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <codeAssistance>
+      </codeAssistance>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommand>${MAKE}</buildCommand>
+          <cleanCommand>${MAKE} clean</cleanCommand>
+          <executablePath></executablePath>
+          <cTool>
+            <incDir>
+              <pElem>/home/xxxajk/Arduino/libraries/RTClib</pElem>
+              <pElem>/home/xxxajk/Arduino/libraries/UHS_host</pElem>
+              <pElem>libraries/ISR_safe_memory</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/libraries/Wire</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/libraries/SPI</pElem>
+              <pElem>/home/xxxajk/Arduino/libraries/UHS_ByteBuffer</pElem>
+              <pElem>/home/xxxajk/Arduino/libraries/UHS_FS</pElem>
+              <pElem>/home/xxxajk/Arduino/libraries/dyn_SWI</pElem>
+            </incDir>
+            <preprocessorList>
+              <Elem>LOAD_GENERIC_STORAGE</Elem>
+              <Elem>LOAD_RTCLIB</Elem>
+              <Elem>LOAD_UHS_BULK_STORAGE</Elem>
+              <Elem>LOAD_UHS_HUB</Elem>
+              <Elem>LOAD_UHS_KINETIS_FS_HOST</Elem>
+              <Elem>LOAD_UHS_PRINTF_HELPER</Elem>
+              <Elem>LOAD_USB_HOST_SYSTEM</Elem>
+              <Elem>USB_HOST_SERIAL=Serial1</Elem>
+              <Elem>_FS_LOCK 2</Elem>
+            </preprocessorList>
+          </cTool>
+          <ccTool>
+            <incDir>
+              <pElem>/home/xxxajk/Arduino/libraries/RTClib</pElem>
+              <pElem>/home/xxxajk/Arduino/libraries/UHS_host</pElem>
+              <pElem>libraries/ISR_safe_memory</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/libraries/Wire</pElem>
+              <pElem>/opt/Arduino/hardware/teensy/avr/libraries/SPI</pElem>
+              <pElem>/home/xxxajk/Arduino/libraries/UHS_ByteBuffer</pElem>
+              <pElem>/home/xxxajk/Arduino/libraries/UHS_FS</pElem>
+              <pElem>/home/xxxajk/Arduino/libraries/dyn_SWI</pElem>
+            </incDir>
+            <preprocessorList>
+              <Elem>LOAD_GENERIC_STORAGE</Elem>
+              <Elem>LOAD_RTCLIB</Elem>
+              <Elem>LOAD_UHS_BULK_STORAGE</Elem>
+              <Elem>LOAD_UHS_HUB</Elem>
+              <Elem>LOAD_UHS_KINETIS_FS_HOST</Elem>
+              <Elem>LOAD_UHS_PRINTF_HELPER</Elem>
+              <Elem>LOAD_USB_HOST_SYSTEM</Elem>
+              <Elem>USB_HOST_SERIAL=Serial1</Elem>
+              <Elem>_FS_LOCK 2</Elem>
+            </preprocessorList>
+          </ccTool>
+        </makeTool>
+        <preBuild>
+          <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>
+          <preBuildCommand></preBuildCommand>
+        </preBuild>
+      </makefileType>
+      <item path="libraries/ISR_safe_memory/ISR_safe_memory.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/ISR_safe_memory/malloc.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/ISR_safe_memory/mlock.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/ISR_safe_memory/sectionname.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/ISR_safe_memory/stdlib_private.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/RTClib/ARM_ATOMIC.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/ATOMIC.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/PIC32_ATOMIC.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/RTClib.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/RTClib.h" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/asc_store.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/asctime.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/asctime_r.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/ctime.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/ctime_r.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/daylight_seconds.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="libraries/RTClib/difftime.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/dst_pointer.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/ephemera_common.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/equation_of_time.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="libraries/RTClib/examples/RTC/RTC.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/RTClib/examples/datecalc/datecalc.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/RTClib/examples/ds1307Memory/ds1307Memory.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/RTClib/examples/ds1307SqwPin/ds1307SqwPin.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/RTClib/fatfs_time.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/geo_location.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/gm_sidereal.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/gmtime.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/gmtime_r.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/isLeap.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/iso_week_date.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/iso_week_date_r.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/isotime.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/isotime_r.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/lm_sidereal.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/localtime.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/localtime_r.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/mk_gmtime.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/mktime.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/month_length.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/moon_phase.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/print_lz.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/set_dst.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/set_position.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/set_system_time.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/RTClib/set_zone.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/solar_declination.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="libraries/RTClib/solar_noon.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/strftime.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/sun_rise.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/sun_set.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/system_time.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/time.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/time.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/tm_store.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/utc_offset.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/week_of_month.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/RTClib/week_of_year.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="libraries/UHS_ByteBuffer/UHS_ByteBuffer.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_ByteBuffer/UHS_ByteBuffer.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_ByteBuffer/examples/ByteBufferExample.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FAT.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FAT.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/diskio.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/ff.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/ff.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/ffconf.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/integer.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/option/cc932.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/option/cc936.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/option/cc949.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/option/cc950.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/option/ccsbcs.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/option/syscall.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/FAT/FatFS/src/option/unicode.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/PCpartition/PCPartition.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/PCpartition/PCPartition.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/UHS_FS.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/UHS_FS_INLINE.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/examples/UHS_FS_SPI_SDCARD_DEMO/UHS_FS_SPI_SDCARD_DEMO.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/examples/UHS_KINETIS_EHCI/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/examples/UHS_KINETIS_FS_HOST/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/examples/USB_HOST_SHIELD/UHS_FS_ANY_LABEL/UHS_FS_ANY_LABEL.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/examples/USB_HOST_SHIELD/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/fcntl.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_ADK/UHS_ADK.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_ADK/UHS_ADK_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_BULK_STORAGE/UHS_BULK_STORAGE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_BULK_STORAGE/UHS_BULK_STORAGE_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_BULK_STORAGE/UHS_SCSI.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC/UHS_CDC.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/UHS_CDC_ACM.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/UHS_CDC_ACM_FTDI.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/UHS_CDC_ACM_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/UHS_CDC_ACM_PROLIFIC.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/UHS_CDC_ACM_XR21B1411.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/UHS_KINETIS_EHCI/acm_terminal/acm_terminal.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/UHS_KINETIS_FS_HOST/acm_terminal/acm_terminal.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/UHS_KINETIS_FS_HOST/buffered_acm_terminal/buffered_acm_terminal.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/USB_HOST_SHIELD/acm_terminal/acm_terminal.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_CDC_ACM/examples/USB_HOST_SHIELD/buffered_acm_terminal/buffered_acm_terminal.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HID/HIDBOOT/UHS_HIDRAWBOOT_KEYBOARD.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HID/HIDBOOT/UHS_HIDRAWBOOT_MOUSE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HID/UHS_HID.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HID/UHS_HID_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HID/examples/USB_HOST_SHIELD/UHS_HID_KB_MOUSE/UHS_HID_KB_MOUSE.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HID/examples/USB_HOST_SHIELD/UHS_HID_RAW/UHS_HID_RAW.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HUB/UHS_HUB.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_HUB/UHS_HUB_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_EHCI/UHS_KINETIS_EHCI.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_EHCI/UHS_KINETIS_EHCI_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_EHCI/examples/KINETIS_EHCI_TEST/KINETIS_EHCI_TEST.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/UHS_KINETIS_FS_HOST.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/UHS_KINETIS_FS_HOST_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/KINETIS_DEV_DESC/KINETIS_DEV_DESC.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/KINETIS_TEST/KINETIS_TEST.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_KINETIS_FS_HOST/examples/TEST_KINETIS_BULK/TEST_KINETIS_BULK.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_MIDI/UHS_MIDI.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_MIDI/UHS_MIDI_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_MIDI/examples/UHS_KINETIS_EHCI/USB_MIDI_Converter/USB_MIDI_Converter.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_MIDI/examples/UHS_KINETIS_EHCI/USB_MIDI_dump/USB_MIDI_dump.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_MIDI/examples/UHS_KINETIS_FS_HOST/USB_MIDI_Converter/USB_MIDI_Converter.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_MIDI/examples/UHS_KINETIS_FS_HOST/USB_MIDI_dump/USB_MIDI_dump.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_MIDI/examples/USB_HOST_SHIELD/USB_MIDI_Converter/USB_MIDI_Converter.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_MIDI/examples/USB_HOST_SHIELD/USB_MIDI_dump/USB_MIDI_dump.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_PRINTER/UHS_PRINTER.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_PRINTER/UHS_PRINTER_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_PRINTER/examples/USB_HOST_SHIELD/printer_demo/printer_demo.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_PRINTER/examples/USB_HOST_SHIELD/printer_demo_epson_protocol/printer_demo_epson_protocol.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_PRINTER/examples/USB_HOST_SHIELD/printer_demo_epson_protocol/test_image.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_PRINTER/examples/USB_HOST_SHIELD/printer_demo_escP2_protocol/printer_demo_escP2_protocol.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_PRINTER/examples/USB_HOST_SHIELD/printer_demo_escP2_protocol/test_image.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_UNOFFICIAL_IDs.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_USB_IDs.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_UsbCore.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_address.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_hexdump.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_host.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_host_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_macros.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_message.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_printf_HELPER.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_printhex.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_settings.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_usb_ch9.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_usbhost.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/UHS_util_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/USB_HOST_SHIELD/UHS_max3421e.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/USB_HOST_SHIELD/USB_HOST_SHIELD.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/USB_HOST_SHIELD/USB_HOST_SHIELD_INLINE.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/USB_HOST_SHIELD/examples/TWO_HOSTS_BULK/TWO_HOSTS_BULK.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="libraries/UHS_host/USB_HOST_SHIELD/examples/board_qc/board_qc.ino"
+            ex="false"
+            tool="1"
             flavor2="0">
       </item>
       <item path="libraries/UHS_host/macro_logic.h" ex="false" tool="3" flavor2="0">
