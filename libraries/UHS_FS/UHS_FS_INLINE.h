@@ -1340,7 +1340,6 @@ extern "C" {
                 uint8_t vol = _fs_util_vol(path);
 
                 if(vol != PFAT_VOLUMES) {
-
                         pathtrunc = _fs_util_trunkpath(path, vol);
                         const char *name = _fs_util_FATpath(pathtrunc, vol);
                         rc = f_stat((TCHAR *)name, buf);
