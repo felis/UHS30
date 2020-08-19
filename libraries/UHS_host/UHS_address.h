@@ -234,11 +234,6 @@ public:
         };
 
         void UHS_NI FreeAddress(uint8_t addr) {
-                // if the root hub is disconnected all the addresses should be initialized
-                //if(addr == 0x41) {
-                //        InitAllAddresses();
-                //        return;
-                //}
                 if(addr >0) {
                         uint8_t index = FindAddressIndex(addr);
                         FreeAddressByIndex(index);

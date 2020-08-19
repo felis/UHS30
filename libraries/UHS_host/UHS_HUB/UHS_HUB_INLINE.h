@@ -135,13 +135,7 @@ Fail:
 
 void UHS_NI UHS_USBHub::Release(void) {
         UHS_DeviceAddress a;
-        //UHS_DeviceAddress me;
-        //me.devAddress= bAddress;
         AddressPool *apool = pUsb->GetAddressPool();
-        //a.devAddress = pUsb->addrPool->FindPortChildAddress(bAddress, port);
-        //a.devAddress = 0;
-        //a.bmHub = 0;
-        //a.bmParent = bAddress;
         for(uint8_t j = 1; j <= bNbrPorts; j++) {
                 a.devAddress = apool->FindPortChildAddress(bAddress, j);
                 if(a.bmAddress != 0) pUsb->ReleaseDevice(a.devAddress);
