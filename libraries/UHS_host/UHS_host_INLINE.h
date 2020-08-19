@@ -587,7 +587,6 @@ void UHS_USB_HOST_BASE::ReleaseDevice(uint8_t addr) {
                         if(!devConfig[i]) continue;
                         if(devConfig[i]->bAddress == addr) {
                                 devConfig[i]->Release();
-                                break;
                         }
                 }
         }
