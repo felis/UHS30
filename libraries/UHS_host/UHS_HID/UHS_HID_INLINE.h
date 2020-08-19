@@ -44,6 +44,7 @@ e-mail   :  support@circuitsathome.com
 UHS_NI UHS_HID::UHS_HID(UHS_USB_HOST_BASE *p, UHS_HID_PROCESSOR *hp) {
         hidProcessor = hp;
         pUsb = p;
+        hiddriver = NULL;
         if(pUsb) {
                 DriverDefaults();
                 pUsb->RegisterDeviceClass(this);
