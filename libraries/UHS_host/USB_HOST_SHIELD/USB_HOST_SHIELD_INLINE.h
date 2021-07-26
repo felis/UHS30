@@ -649,7 +649,7 @@ uint8_t UHS_NI MAX3421E_HOST::dispatchPkt(uint8_t token, uint8_t ep, uint16_t na
                                 break;
                         }//if( tmpdata & bmHXFRDNIRQ
 
-                }//while ( millis() < timeouthttps://www.mouser.com/Search/Refine.aspx?Keyword=
+                }//while ( millis() < timeout
 
                 rcode = (regRd(rHRSL) & 0x0f); //analyze transfer result
 
@@ -688,6 +688,7 @@ UHS_EpInfo * UHS_NI MAX3421E_HOST::ctrlReqOpen(uint8_t addr, uint64_t Request, u
                 rcode = dispatchPkt(MAX3421E_tokSETUP, 0, nak_limit); //dispatch packet
                 if(!rcode) {
                         if(dataptr != NULL) {
+                                //pep->bmRcvToggle = 1; //bmRCVTOG1;
                                 if(((Request)/* bmReqType*/ & 0x80) == 0x80) {
                                         pep->bmRcvToggle = 1; //bmRCVTOG1;
                                 } else {

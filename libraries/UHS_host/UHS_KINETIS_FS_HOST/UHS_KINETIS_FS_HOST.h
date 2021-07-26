@@ -129,14 +129,9 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         // Basically I use it as a name-space qualifier by declaring it here.
         // That helps to avoid name collisions in other code as it is a member.
         //
-        __attribute__ ((section(".usbdescriptortable_hosts"), used)) static bdt_t table[4];
-        // two buffers for tx and rx so we can do ping-pong buffering
-        // Not used right now, but they will be used in the future
-        uint8_t ep0_rx0_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
-        uint8_t ep0_rx1_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
-        uint8_t ep0_tx0_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
-        uint8_t ep0_tx1_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));
-        uint8_t data_in_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to receive data in as host
+        __attribute__ ((section(".usbdescriptortable"), used)) static bdt_t table[4];
+        __attribute__ ((section(".usbdescriptortable"), used)) static uint8_t data_in_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to receive data in as host
+        __attribute__ ((section(".usbdescriptortable"), used)) static uint8_t data_out_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to send data in as host
         // mark that a token was done and store its pid while inside the isr
         volatile bool newToken;
         volatile uint8_t isrPid;
@@ -146,9 +141,9 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         volatile bdt_t b_newToken;
 
         // last transfer: byte count and address
-        uint32_t last_count;
-        void *last_address;
-        bool last_tx;
+        //uint32_t last_count;
+        //void *last_address;
+        //bool last_tx;
 
         uint8_t sof_threshold; // depending on the max packet size this number will be different, set at init.
 
@@ -192,9 +187,9 @@ public:
                 newError = false;
                 newToken = false;
 
-                last_count = 0;
-                last_address = nullptr;
-                last_tx = false;
+                //last_count = 0;
+                //last_address = nullptr;
+                //last_tx = false;
         };
 
         void ISRTask(void);
@@ -288,6 +283,8 @@ public:
 // For some odd reason GCC is not smart enough to pull this into existence.
 // Perhaps this is a bug?
 bdt_t UHS_KINETIS_FS_HOST::table[];
+uint8_t UHS_KINETIS_FS_HOST::data_in_buf[];
+uint8_t UHS_KINETIS_FS_HOST::data_out_buf[];
 
 
 #include "UHS_KINETIS_FS_HOST_INLINE.h"

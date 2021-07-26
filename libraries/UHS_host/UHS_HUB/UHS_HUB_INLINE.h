@@ -53,12 +53,13 @@ UHS_NI UHS_USBHub::UHS_USBHub(UHS_USB_HOST_BASE *p) {
 }
 
 bool UHS_NI UHS_USBHub::OKtoEnumerate(ENUMERATION_INFO *ei) {
-        HUB_DEBUG("USBHub: checking numep %i, klass %2.2x, interface.klass %2.2x\r\n", ei->interface.numep, ei->klass, ei->interface.klass);
-        return ((ei->interface.numep == 1) && ((ei->klass == UHS_USB_CLASS_HUB) || (ei->interface.klass == UHS_USB_CLASS_HUB)));
+        HUB_DEBUG("USBHub: checking numep %i, klass %2.2x, interface.klass %2.2x, protocol %2.2x\r\n", ei->interface.numep, ei->klass, ei->interface.klass,ei->interface.protocol );
+        return ((ei->interface.numep == 1) && ((ei->klass == UHS_USB_CLASS_HUB) && (ei->interface.klass == UHS_USB_CLASS_HUB) && (ei->interface.protocol == ei->protocol)));
 }
 
 void UHS_NI UHS_USBHub::DriverDefaults(void) {
         bNbrPorts = 0;
+        bAlternateSetting = 255;
         pUsb->DeviceDefaults(2, this);
         epInfo[0].maxPktSize = 8;
         epInfo[0].bmNakPower = UHS_USB_NAK_MAX_POWER;
@@ -83,6 +84,7 @@ uint8_t UHS_NI UHS_USBHub::SetInterface(ENUMERATION_INFO *ei) {
         epInfo[1].epAttribs = ei->interface.epInfo[0].bmAttributes;
         epInfo[1].bmNakPower = UHS_USB_NAK_NOWAIT;
         bIface = ei->interface.bInterfaceNumber;
+        bAlternateSetting = ei->interface.bAlternateSetting;
         return 0;
 }
 
@@ -92,12 +94,29 @@ uint8_t UHS_NI UHS_USBHub::Finalize(void) {
         UHS_HubDescriptor* hd = reinterpret_cast<UHS_HubDescriptor*>(buf);
         // Get hub descriptor
         rcode = GetHubDescriptor(0, 8, buf);
+        // Save number of ports for future use
+        bNbrPorts = hd->bNbrPorts;
+
+        if(rcode)
+                goto Fail;
+        rcode = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(USB_SETUP_RECIPIENT_INTERFACE, USB_REQUEST_SET_INTERFACE, bAlternateSetting, bIface, 0), 0, NULL);
 
         if(rcode)
                 goto Fail;
 
-        // Save number of ports for future use
-        bNbrPorts = hd->bNbrPorts;
+        // delay a bit...
+        if(!UHS_SLEEP_MS(50)) goto Fail;
+
+        rcode  = pUsb->getDevStatus(bAddress, 2, buf);
+
+        if(rcode)
+                goto Fail;
+
+        //rcode  = GetHubStatus(4, buf);
+
+        if(rcode)
+                goto Fail;
+
         return 0;
 
 Fail:
@@ -107,11 +126,14 @@ Fail:
 
 uint8_t UHS_NI UHS_USBHub::Start(void) {
         uint8_t rcode;
-
+        //uint8_t buf[8];
         rcode = pUsb->setEpInfoEntry(bAddress, bIface, 2, epInfo);
 
         if(rcode)
                 goto Fail;
+
+        //rcode  = GetHubStatus(4, buf);
+
 
         for(uint8_t j = 1; j <= bNbrPorts; j++) {
                 //rcode =
@@ -134,6 +156,7 @@ Fail:
 }
 
 void UHS_NI UHS_USBHub::Release(void) {
+        pUsb->DisablePoll();
         UHS_DeviceAddress a;
         AddressPool *apool = pUsb->GetAddressPool();
         for(uint8_t j = 1; j <= bNbrPorts; j++) {
@@ -148,26 +171,17 @@ void UHS_NI UHS_USBHub::Release(void) {
         }
         DriverDefaults();
         bNbrPorts = 0;
+        pUsb->EnablePoll();
         return;
-}
-
-void UHS_NI UHS_USBHub::Poll(void) {
-        if(bPollEnable) {
-                if(((long)(millis() - qNextPollTime) >= 0L)) {
-                        qNextPollTime = millis() + 100;
-                        CheckHubStatus();
-                        // BUG! if(((long)(millis() - qNextPollTime) >= 0L)) qNextPollTime = millis() + 100;
-                }
-        }
 }
 
 void UHS_NI UHS_USBHub::CheckHubStatus(void) {
         uint8_t rcode;
         uint8_t buf[8];
         uint16_t read = 1;
-
+        UHS_HubEvent evt;
+        evt.bmEvent = 0;
         rcode = pUsb->inTransfer(bAddress, 1, &read, buf);
-
         if(rcode) {
                 HUB_DEBUG("UHS_USBHub::CheckHubStatus %2.2x\r\n", rcode);
                 return;
@@ -175,7 +189,6 @@ void UHS_NI UHS_USBHub::CheckHubStatus(void) {
 
         for(uint8_t port = 1, mask = 0x02; port < 8; mask <<= 1, port++) {
                 if(buf[0] & mask) {
-                        UHS_HubEvent evt;
                         evt.bmEvent = 0;
 
                         rcode = GetPortStatus(port, 4, evt.evtBuff);
@@ -219,11 +232,21 @@ void UHS_NI UHS_USBHub::CheckHubStatus(void) {
         return;
 }
 
+void UHS_NI UHS_USBHub::Poll(void) {
+        if(bPollEnable) {
+                if(((long)(millis() - qNextPollTime) >= 0L)) {
+                        CheckHubStatus();
+                        //printf("Tick\r\n");
+                        qNextPollTime = millis() + 100;
+                        // BUG! if(((long)(millis() - qNextPollTime) >= 0L)) qNextPollTime = millis() + 100;
+                }
+        }
+}
+
 void UHS_NI UHS_USBHub::ResetHubPort(uint8_t port) {
         UHS_HubEvent evt;
         evt.bmEvent = 0;
         uint8_t rcode;
-
         ClearPortFeature(UHS_HUB_FEATURE_C_PORT_ENABLE, port, 0);
         ClearPortFeature(UHS_HUB_FEATURE_C_PORT_CONNECTION, port, 0);
         SetPortFeature(UHS_HUB_FEATURE_PORT_RESET, port, 0);
@@ -237,6 +260,7 @@ void UHS_NI UHS_USBHub::ResetHubPort(uint8_t port) {
                 }
                 if(!UHS_SLEEP_MS(100)) return; // simulate polling, bail out early if parent state changes
         }
+
         ClearPortFeature(UHS_HUB_FEATURE_C_PORT_RESET, port, 0);
         ClearPortFeature(UHS_HUB_FEATURE_C_PORT_CONNECTION, port, 0);
         UHS_SLEEP_MS(20);
@@ -283,8 +307,12 @@ uint8_t UHS_NI UHS_USBHub::PortStatusChange(uint8_t port, UHS_HubEvent &evt) {
                                 UHS_SLEEP_MS(200);
 
                                 a.devAddress = bAddress;
-                                HUB_DEBUGx("USBHub configure %2.2x %2.2x %2.2x\r\n", a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED) == UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED ? 0 : 1));
-                                pUsb->Configuring(a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED) == UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED ? 0 : 1));
+                                HOST_DEBUGx("USBHub configure %2.2x %2.2x %2.2x\r\n", a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED) == UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED ? 0 : 1));
+#if DEBUG_PRINTF_EXTRA_HUGE
+                                uint8_t rcode =
+#endif
+                                        pUsb->Configuring(a.bmAddress, port, ((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED) == UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED ? 0 : 1));
+                                HOST_DEBUGx("Configuring returned %2.2x\r\n", rcode);
                                 bResetInitiated = false;
                         }
                         break;

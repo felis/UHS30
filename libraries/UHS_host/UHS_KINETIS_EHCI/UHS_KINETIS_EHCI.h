@@ -166,6 +166,7 @@ class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
         volatile uint8_t vbusState;
         volatile uint16_t sof_countdown;
         volatile uint16_t timer_countdown;
+        volatile uint16_t nak_countdown;
 
         // TO-DO: pack into a struct/union and use one byte
         volatile bool insidetask;
@@ -192,6 +193,7 @@ class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
 public:
 
         UHS_NI UHS_KINETIS_EHCI(void) {
+                nak_countdown = 0;
                 sof_countdown = 0;
                 timer_countdown = 0;
                 insidetask = false;
@@ -304,4 +306,3 @@ public:
 #include "UHS_KINETIS_EHCI_INLINE.h"
 #endif
 #endif	/* UHS_KINETIS_EHCI_H */
-

@@ -51,6 +51,12 @@ e-mail   :  support@circuitsathome.com
 
 #include <RTClib.h>
 
+#if defined(__MK66FX1M0__)
+#define UHS_SDSPI SPI1
+#else
+#define UHS_SDSPI SPI
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -117,17 +123,17 @@ extern "C" {
         extern uint8_t fs_mountcount(void);
         // Initialize every sub-system
 
-        extern void Init_Generic_Storage(
-#ifdef __UHS_BULK_STORAGE_H__
-                void *
+#if defined(__UHS_BULK_STORAGE_H__) && defined(UHS_USE_SDCARD)
+        void Init_Generic_Storage(void *hd, int _pr[], int _cs[]);
+#else
+#if defined(UHS_USE_SDCARD) && !defined(__UHS_BULK_STORAGE_H__)
+        void Init_Generic_Storage(int _pr[], int _cs[]);
+#else
+#if defined(__UHS_BULK_STORAGE_H__) && !defined(UHS_USE_SDCARD)
+        void Init_Generic_Storage(void *hd);
 #endif
-#ifdef UHS_USE_SDCARD
-#ifdef __UHS_BULK_STORAGE_H__
-                ,
 #endif
-                int [], int []
 #endif
-                );
 #ifdef __cplusplus
 }
 #endif

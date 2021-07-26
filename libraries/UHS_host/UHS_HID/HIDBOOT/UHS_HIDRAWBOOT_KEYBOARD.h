@@ -76,7 +76,8 @@ public:
                 led_states = leds;
                 rv = parent->SetReport(parent->bIface, 2, 0, 1, &leds);
                 parent->pUsb->EnablePoll();
-                return rv;
+                //return rv;
+                return 0;
         }
 
         uint8_t AJK_NI getLEDs(void) {
@@ -84,21 +85,26 @@ public:
         }
 
         void AJK_NI driverStart() {
-                printf_P(PSTR("BOOT_KEYBOARD\r\n"));
+                //printf_P(PSTR("BOOT_KEYBOARD\r\n"));
                 {
-                        uint16_t length = 128;
+                        // to-do: actually properly read it.
+                        uint16_t length = 64;
                         uint8_t buffer[length];
                         parent->ReportDescr(parent->bIface, length, buffer);
                 }
+                //printf_P(PSTR("SET_KEYBOARD\r\n"));
                 parent->SetProtocol(parent->bIface, 0);
                 uint8_t rv;
                 uint8_t led = 0x40U;
+
+                //printf_P(PSTR("TWINKLE_KEYBOARD\r\n"));
                 while(led) {
                         led >>= 1;
                         rv = SetLEDs(led);
                         if(rv != 0) return; // skip onStart if unplugged.
                         if(!parent->UHS_SLEEP_MS(50)) return; // skip onStart if unplugged.
                 }
+
                 parent->SetIdle(parent->bIface, 0, 0);
 
                 parent->hidProcessor->onStart(this);

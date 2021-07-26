@@ -159,6 +159,7 @@ struct UHS_HubEvent {
 class UHS_USBHub :  public UHS_USBInterface {
         bool bResetInitiated; // True when reset is triggered
 
+        uint8_t bAlternateSetting = 255; // impossible?
 
         uint8_t bNbrPorts; // number of ports
 

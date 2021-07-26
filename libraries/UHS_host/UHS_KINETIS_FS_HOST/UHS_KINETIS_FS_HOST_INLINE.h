@@ -467,9 +467,9 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpI
 
         // Disable automatic retries for NAK < 2, Set hub for low-speed device
         USB0_ENDPT0 = USB_ENDPT_EPRXEN | USB_ENDPT_EPTXEN | USB_ENDPT_EPHSHK |
-                //((nak_limit != 1U) ? 0 : USB_ENDPT_RETRYDIS) |
                 ((nak_limit > 1U) ? 0 : USB_ENDPT_RETRYDIS) |
-                ((p->speed) ? 0 : USB_ENDPT_HOSTWOHUB);
+                // ((p->speed) ? 0 : USB_ENDPT_HOSTWOHUB
+                ((hub_present)? USB_ENDPT_HOSTWOHUB : 0);
 
         // set USB0_SOFTHLD depending on the maxPktSize
         // NOTE: This should actually be set per-packet, however this works.
@@ -602,13 +602,14 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::OutTransfer(UHS_EpInfo *pep, uint16_t nak_li
                 HOST_DEBUG(", maxpktsize: %i, bytes_left: %i\r\n", maxpktsize, bytes_left);
 
                 bytes_tosend = (bytes_left >= maxpktsize) ? maxpktsize : bytes_left;
-                endpoint0_transmit(p_buffer, bytes_tosend); // setup internal buffer
+                memcpy(data_out_buf, p_buffer, bytes_tosend); // copy packet into buffer
+                endpoint0_transmit(data_out_buf, bytes_tosend); // setup internal buffer
                 rcode = dispatchPkt(UHS_KINETIS_FS_TOKEN_DATA_OUT, ep, nak_limit); //dispatch packet to ep
                 if(rcode == UHS_HOST_ERROR_MEM_LAT) {
                         // something we need to do here, but what?
                         // datasheet isn't clear, just says that these are transient
-                        // Never see these either.
-                        // printf("\r\nOutTransfer MEMLAT\r\n");
+                        // related to ram bank
+                        printf("\r\nOutTransfer MEMLAT\r\n");
                         rcode = UHS_HOST_ERROR_NAK;
                         break;
                 }
@@ -662,6 +663,7 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::InTransfer(UHS_EpInfo *pep, uint16_t nak_lim
                 if(rcode == UHS_HOST_ERROR_MEM_LAT) {
                         // something we need to do here, but what?
                         // datasheet isn't clear, just says that these are transient
+                        // related to ram bank
                         printf("\r\nInTransfer MEMLAT\r\n");
                         //rcode = UHS_HOST_ERROR_NAK;
                 }
@@ -738,7 +740,8 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_FS_HOST::ctrlReqOpen(uint8_t addr, uint64_t Requ
                 datalen = 8;
                 //data = setup_command_buffer;
                 ep0_tx_data_toggle = UHS_KINETIS_FS_DATA0; // setup always uses DATA0
-                endpoint0_transmit(&Request, datalen); // setup internal buffer
+                memcpy(data_out_buf, &Request, datalen); // copy packet into buffer
+                endpoint0_transmit(data_out_buf, datalen); // setup internal buffer
 
                 rcode = dispatchPkt(UHS_KINETIS_FS_TOKEN_SETUP, 0, nak_limit); //dispatch packet
 
@@ -848,59 +851,12 @@ uint8_t UHS_NI UHS_KINETIS_FS_HOST::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqT
 int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
 #if defined(UHS_USB_VBUS)
         pinMode(UHS_USB_VBUS, OUTPUT);
-        //digitalWriteFast(UHS_USB_VBUS, LOW);
 #endif
         vbusPower(vbus_off);
-        /*
-         * Nybble       Master
-         * 0            Core ICODE
-         * 1            Core ISYS
-         * 2            DMA
-         * 3            USB OTG
-         *
-         * Register     Slave
-         * 0            Flash
-         * 1            SRAM
-         * 2            Preph bridge 0
-         * 3            Preph bridge 1
-         * 4            ??????? Undocumented, but present.
-         */
-
-
-        // Optimize AXBS
-        //AXBS_PRS0 = 0x00000321U; // Flash
-        //AXBS_PRS1 = 0x00000321U; // SRAM
-        //AXBS_PRS2 = 0x00000321U; // br0
-        //AXBS_PRS3 = 0x00000321U; // br1
-        //AXBS_PRS4 = 0x00000321U; // ???
-        //AXBS_PRS5 = 0x76543210U;
-        //AXBS_PRS6 = 0x76543210U;
-        //AXBS_PRS7 = 0x76543210U;
-
-        //AXBS_CRS0 = 0x00000003U; // Flash
-        //AXBS_CRS1 = 0x00000003U; // SRAM
-        //AXBS_CRS2 = 0x00000003U; // br0
-        //AXBS_CRS3 = 0x00000003U; // br1
-        //AXBS_CRS4 = 0x00000003U; // ???
-        //AXBS_CRS5 = 0x00U;
-        //AXBS_CRS6 = 0x00U;
-        //AXBS_CRS7 = 0x00U;
-
-        // Access to these cause fault.
-        // Why? Not available?
-        //AXBS_MGPCR0 = 0x00U;
-        //AXBS_MGPCR1 = 0x00U;
-        //AXBS_MGPCR2 = 0x00U;
-        //AXBS_MGPCR3 = 0x00U;
-        //AXBS_MGPCR4 = 0x00U;
-        //AXBS_MGPCR5 = 0x00U;
-        //AXBS_MGPCR6 = 0x00U;
-        //AXBS_MGPCR7 = 0x00U;
-
+        // Does this matter??
         // Change SRAM[LU] priority to prefer backdoor (DMA/USB) over CPU.
         // 0=RR, 1=SRR, 2=CPU, 3=DMA
-        //MCM_CR = MCM_CR_SRAMLAP(1) | MCM_CR_SRAMUAP(1);
-
+        //MCM_CR = (MCM_CR & ~(MCM_CR_SRAMLAP(3) | MCM_CR_SRAMUAP(3))) | MCM_CR_SRAMLAP(2) | MCM_CR_SRAMUAP(2);
 
         Init_dyn_SWI();
         //UHS_printf_HELPER_init();
@@ -935,20 +891,13 @@ int16_t UHS_NI UHS_KINETIS_FS_HOST::Init(int16_t mseconds) {
         ep0_tx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
         ep0_rx_data_toggle = UHS_KINETIS_FS_BDT_DATA0;
 
-        // setup buffers
-        // to-do: re-use (steal) Paul's allocated buffers, but ONLY if using his stuff.
+        // setup buffers... Probably not needed, since this is changed elsewhere
 
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_EVEN)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
-        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_EVEN)].addr = ep0_rx0_buf;
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_EVEN)].addr = data_in_buf;
 
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_EVEN)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
-        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_EVEN)].addr = ep0_tx0_buf;
-
-        // This would allow ping-pong buffers, but my code is so fast, we do not need them. 8-)
-        //table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_ODD)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
-        //table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, UHS_KINETIS_FS_ODD)].addr = ep0_rx1_buf;
-        //table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_ODD)].desc = UHS_KINETIS_FS_BDT_DESC(UHS_KINETIS_FS_EP0_SIZE, 0);
-        //table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_ODD)].addr = ep0_tx1_buf;
+        table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, UHS_KINETIS_FS_EVEN)].addr = data_out_buf;
 
         // clear interrupts
         USB0_ERRSTAT = 0xFF;
@@ -1004,9 +953,9 @@ void UHS_NI UHS_KINETIS_FS_HOST::endpoint0_transmit(const void *data, uint32_t l
                 HOST_DEBUG(", %lx\r\n", len);
         }
 #endif
-        last_count = len;
-        last_address = (void *)data;
-        last_tx = true;
+        //last_count = len;
+        //last_address = (void *)data;
+        //last_tx = true;
 
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, ep0_tx_bdt_bank)].addr = (void *)data;
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_TX, ep0_tx_bdt_bank)].desc = UHS_KINETIS_FS_BDT_DESC(len, ep0_tx_data_toggle);
@@ -1020,9 +969,9 @@ void UHS_NI UHS_KINETIS_FS_HOST::endpoint0_receive(const void *data, uint32_t le
         HOST_DEBUG("endpoint0_receive: %lx", len);
 #endif
 
-        last_count = len;
-        last_address = (void *)data;
-        last_tx = false;
+        //last_count = len;
+        //last_address = (void *)data;
+        //last_tx = false;
 
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, ep0_rx_bdt_bank)].addr = (void *)data;
         table[UHS_KINETIS_FS_index(0, UHS_KINETIS_FS_RX, ep0_rx_bdt_bank)].desc = UHS_KINETIS_FS_BDT_DESC(len, ep0_rx_data_toggle);

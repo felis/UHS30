@@ -39,7 +39,7 @@ extern "C" {
         static PFAT *Fats[PFAT_VOLUMES];
         static storage_t *sto[PFAT_VOLUMES];
 
-#ifdef __UHS_BULK_STORAGE_H__
+#ifdef LOAD_UHS_BULK_STORAGE
         static bool last_ready[MAX_USB_MS_DRIVERS][MASS_MAX_SUPPORTED_LUN];
 
         static void none_ready(int idx) {
@@ -65,7 +65,7 @@ extern "C" {
         }
 #endif
 
-#ifdef __UHS_BULK_STORAGE_H__
+#ifdef LOAD_UHS_BULK_STORAGE
 
         static void kill_mounts(int idx, int drv) {
                 for(int f = 0; f < PFAT_VOLUMES; f++) {
@@ -150,7 +150,7 @@ extern "C" {
         }
 #endif
 
-#ifdef __UHS_BULK_STORAGE_H__
+#ifdef LOAD_UHS_BULK_STORAGE
         // On mass storage, there is nothing to do. Just call the status function.
 
         DSTATUS UHS_USB_BulkOnly_Initialize(storage_t *sto) {
@@ -217,7 +217,7 @@ extern "C" {
 }
 
 
-#ifdef __UHS_BULK_STORAGE_H__
+#ifdef LOAD_UHS_BULK_STORAGE
 
 UHS_FS_BULK_DRIVER::UHS_FS_BULK_DRIVER(UHS_USB_HOST_BASE *p, int i) : UHS_Bulk_Storage(p) {
         sto_idx = i;
@@ -231,6 +231,7 @@ uint8_t UHS_FS_BULK_DRIVER::OnStart(void) {
 
 void UHS_FS_BULK_DRIVER::OnPoll(void) {
         // Check LUN status, mount/unmount as needed.
+        //printf(".");
         for(uint8_t lun = 0; lun <= bMaxLUN; lun++) {
                 if(!last_ready[sto_idx][lun]) {
                         if(LUNIsGood(lun)) {
@@ -347,7 +348,7 @@ UHS_SD::UHS_SD(int _present, int _cs) {
 bool UHS_SD::waitNotBusy(uint16_t timeoutMillis) {
         uint16_t t0 = millis();
         do {
-                if(SPI.transfer(0xFF) == 0XFF) return true;
+                if(UHS_SDSPI.transfer(0xFF) == 0XFF) return true;
         } while(((uint16_t)millis() - t0) < timeoutMillis);
         return false;
 
@@ -358,20 +359,20 @@ uint8_t UHS_SD::cardCommand(uint8_t cmd, uint32_t arg) {
         //chipSelectLow();
 
         waitNotBusy(300);
-        SPI.transfer(cmd | 0x40);
-        for(int8_t s = 24; s >= 0; s -= 8) SPI.transfer(arg >> s);
+        UHS_SDSPI.transfer(cmd | 0x40);
+        for(int8_t s = 24; s >= 0; s -= 8) UHS_SDSPI.transfer(arg >> s);
         uint8_t crc = 0XFF;
         if(cmd == UHS_SD_CMD0) crc = 0X95; // correct crc for CMD0 with arg 0
         if(cmd == UHS_SD_CMD8) crc = 0X87; // correct crc for CMD8 with arg 0X1AA
-        SPI.transfer(crc);
-        for(uint8_t i = 0; ((status_ = SPI.transfer(0xFF)) & 0X80) && i != 0XFF; i++);
+        UHS_SDSPI.transfer(crc);
+        for(uint8_t i = 0; ((status_ = UHS_SDSPI.transfer(0xFF)) & 0X80) && i != 0XFF; i++);
         return status_;
 }
 
 bool UHS_SD::readRegister(uint8_t cmd, void* buf) {
         uint8_t* dst = reinterpret_cast<uint8_t*>(buf);
         // Trans
-        SPI.beginTransaction(settings);
+        UHS_SDSPI.beginTransaction(settings);
         digitalWrite(cs, LOW);
         if(cardCommand(cmd, 0)) {
                 error(UHS_SD_CARD_ERROR_READ_REG);
@@ -379,23 +380,23 @@ bool UHS_SD::readRegister(uint8_t cmd, void* buf) {
         }
         if(!waitStartBlock()) goto fail;
         // transfer data
-        for(uint16_t i = 0; i < 16; i++) dst[i] = SPI.transfer(0xFF);
-        SPI.transfer(0xFF); // get first crc byte
-        SPI.transfer(0xFF); // get second crc byte
+        for(uint16_t i = 0; i < 16; i++) dst[i] = UHS_SDSPI.transfer(0xFF);
+        UHS_SDSPI.transfer(0xFF); // get first crc byte
+        UHS_SDSPI.transfer(0xFF); // get second crc byte
         digitalWrite(cs, HIGH);
-        SPI.endTransaction();
+        UHS_SDSPI.endTransaction();
         return true;
 
 fail:
         digitalWrite(cs, HIGH);
-        SPI.endTransaction();
+        UHS_SDSPI.endTransaction();
         return false;
 }
 
 bool UHS_SD::waitStartBlock(void) {
         uint16_t t0 = millis();
 
-        while((status_ = SPI.transfer(0xFF)) == 0XFF) {
+        while((status_ = UHS_SDSPI.transfer(0xFF)) == 0XFF) {
                 if(((uint16_t)millis() - t0) > UHS_SD_READ_TIMEOUT) {
                         error(UHS_SD_CARD_ERROR_READ_TIMEOUT);
                         goto fail;
@@ -442,7 +443,7 @@ uint8_t UHS_SD::Read(uint32_t addr, uint16_t bsize, uint8_t blocks, uint8_t *buf
                 xaddr = addr;
                 // use address if not SDHC card
                 if(type() != UHS_SD_CARD_TYPE_SDHC) xaddr <<= 9;
-                SPI.beginTransaction(settings);
+                UHS_SDSPI.beginTransaction(settings);
                 digitalWrite(cs, LOW);
                 // Trans
                 if(cardCommand(UHS_SD_CMD17, xaddr)) {
@@ -454,29 +455,29 @@ uint8_t UHS_SD::Read(uint32_t addr, uint16_t bsize, uint8_t blocks, uint8_t *buf
                 }
                 // transfer data
                 for(uint16_t i = 0; i < bsize; i++, j++) {
-                        buf[j] = SPI.transfer(0xFF);
+                        buf[j] = UHS_SDSPI.transfer(0xFF);
                 }
                 addr++;
                 digitalWrite(cs, HIGH);
-                SPI.endTransaction();
+                UHS_SDSPI.endTransaction();
         }
         return 0;
 
 fail:
         digitalWrite(cs, HIGH);
-        SPI.endTransaction();
+        UHS_SDSPI.endTransaction();
         return FR_DISK_ERR;
 }
 
 bool UHS_SD::writeData(uint8_t token, const uint8_t* src) {
-        SPI.transfer(token);
+        UHS_SDSPI.transfer(token);
         for(uint16_t i = 0; i < 512; i++) {
-                SPI.transfer(src[i]);
+                UHS_SDSPI.transfer(src[i]);
         }
-        SPI.transfer(0xff); // dummy crc
-        SPI.transfer(0xff); // dummy crc
+        UHS_SDSPI.transfer(0xff); // dummy crc
+        UHS_SDSPI.transfer(0xff); // dummy crc
 
-        status_ = SPI.transfer(0xff);
+        status_ = UHS_SDSPI.transfer(0xff);
         if((status_ & UHS_SD_DATA_RES_MASK) != UHS_SD_DATA_RES_ACCEPTED) {
                 error(UHS_SD_CARD_ERROR_WRITE);
                 digitalWrite(cs, HIGH);
@@ -490,7 +491,7 @@ bool UHS_SD::writeBlock(uint32_t blockNumber, const uint8_t* src) {
         // use address if not SDHC card
         if(type() != UHS_SD_CARD_TYPE_SDHC) blockNumber <<= 9;
         // Trans
-        SPI.beginTransaction(settings);
+        UHS_SDSPI.beginTransaction(settings);
         digitalWrite(cs, LOW);
         if(cardCommand(UHS_SD_CMD24, blockNumber)) {
                 error(UHS_SD_CARD_ERROR_CMD24);
@@ -504,17 +505,17 @@ bool UHS_SD::writeBlock(uint32_t blockNumber, const uint8_t* src) {
                 goto fail;
         }
         // response is r2 so get and check two bytes for nonzero
-        if(cardCommand(UHS_SD_CMD13, 0) || SPI.transfer(0xFF)) {
+        if(cardCommand(UHS_SD_CMD13, 0) || UHS_SDSPI.transfer(0xFF)) {
                 error(UHS_SD_CARD_ERROR_WRITE_PROGRAMMING);
                 goto fail;
         }
         digitalWrite(cs, HIGH);
-        SPI.endTransaction();
+        UHS_SDSPI.endTransaction();
         return true;
 
 fail:
         digitalWrite(cs, HIGH);
-        SPI.endTransaction();
+        UHS_SDSPI.endTransaction();
         return false;
 }
 
@@ -554,9 +555,9 @@ void UHS_FS_SD_DRIVER::IRQ(void) {
                                 // Do card detection.
                                 // This equals USB connection check.
                                 settings = SPISettings(400000, MSBFIRST, SPI_MODE0);
-                                SPI.beginTransaction(settings);
+                                UHS_SDSPI.beginTransaction(settings);
                                 digitalWrite(cs, HIGH);
-                                for(uint8_t i = 0; i < 10; i++) SPI.transfer(0xff);
+                                for(uint8_t i = 0; i < 10; i++) UHS_SDSPI.transfer(0xff);
                                 digitalWrite(cs, LOW);
                                 while((status_ = cardCommand(UHS_SD_CMD0, 0)) != UHS_SD_R1_IDLE_STATE) {
                                         if(((uint16_t)(millis() - t0)) > UHS_SD_INIT_TIMEOUT) {
@@ -570,7 +571,7 @@ void UHS_FS_SD_DRIVER::IRQ(void) {
                                         type(UHS_SD_CARD_TYPE_SD1);
                                 } else {
                                         // only need last byte of r7 response
-                                        for(uint8_t i = 0; i < 4; i++) status_ = SPI.transfer(0xff);
+                                        for(uint8_t i = 0; i < 4; i++) status_ = UHS_SDSPI.transfer(0xff);
                                         if(status_ != 0XAA) {
                                                 error(UHS_SD_CARD_ERROR_CMD8);
                                                 goto fail;
@@ -595,23 +596,23 @@ void UHS_FS_SD_DRIVER::IRQ(void) {
                                                 error(UHS_SD_CARD_ERROR_CMD58);
                                                 goto fail;
                                         }
-                                        if((SPI.transfer(0xff) & 0XC0) == 0XC0) type(UHS_SD_CARD_TYPE_SDHC);
+                                        if((UHS_SDSPI.transfer(0xff) & 0XC0) == 0XC0) type(UHS_SD_CARD_TYPE_SDHC);
                                         // discard rest of ocr - contains allowed voltage range
-                                        for(uint8_t i = 0; i < 3; i++) SPI.transfer(0xff);
+                                        for(uint8_t i = 0; i < 3; i++) UHS_SDSPI.transfer(0xff);
                                 }
 
                                 digitalWrite(cs, HIGH);
-                                SPI.endTransaction();
+                                UHS_SDSPI.endTransaction();
                                 ok = true;
                                 break;
 fail:
                                 digitalWrite(cs, HIGH);
-                                SPI.endTransaction();
+                                UHS_SDSPI.endTransaction();
                         }
                         if(!ok) {
                                 //printf("Failed to init card\r\n");
                                 digitalWrite(cs, HIGH);
-                                SPI.endTransaction();
+                                UHS_SDSPI.endTransaction();
                                 return;
                         }
                         // card OK
@@ -710,20 +711,20 @@ extern "C" {
         /**
          * This must be called before using generic_storage. Calling more than once is harmless.
          */
-        void Init_Generic_Storage(
-#ifdef __UHS_BULK_STORAGE_H__
-                void *hd
+#if defined(LOAD_UHS_BULK_STORAGE) && defined(UHS_USE_SDCARD)
+        void Init_Generic_Storage(void *hd, int _pr[], int _cs[]) {
+#else
+#if defined(UHS_USE_SDCARD) && !defined(LOAD_UHS_BULK_STORAGE)
+        void Init_Generic_Storage(int _pr[], int _cs[]) {
+#else
+#if defined(LOAD_UHS_BULK_STORAGE) && !defined(UHS_USE_SDCARD)
+        void Init_Generic_Storage(void *hd) {
 #endif
-#ifdef UHS_USE_SDCARD
-#ifdef __UHS_BULK_STORAGE_H__
-                ,
 #endif
-                int _pr[], int _cs[]
 #endif
-                ) {
                 if(!Init_Generic_Storage_inited) {
                         Init_Generic_Storage_inited = true;
-#ifdef __UHS_BULK_STORAGE_H__
+#ifdef LOAD_UHS_BULK_STORAGE
                         UHS_USB_BulkOnly_Init((UHS_USB_HOST_BASE *)hd);
 
 #endif
@@ -735,7 +736,7 @@ extern "C" {
                                 fhandles[i]->fs = NULL;
                                 dhandles[i]->fs = NULL;
                         }
-#ifdef __UHS_BULK_STORAGE_H
+#ifdef LOAD_UHS_BULK_STORAGE
                         for(int i = 0; i < MAX_USB_MS_DRIVERS; i++) {
                                 for(int j = 0; j < MASS_MAX_SUPPORTED_LUN; j++) {
                                         last_ready[i][j] = false;
@@ -748,7 +749,14 @@ extern "C" {
                                 Fats[i] = NULL;
                         }
 #ifdef UHS_USE_SDCARD
-                        SPI.begin();
+                        UHS_SDSPI.begin();
+#if defined(__MK66FX1M0__)
+                        // teensy 3.6 :-)
+                        SPI1.setMOSI(61);
+                        SPI1.setMISO(59);
+                        SPI1.setSCK(60);
+
+#endif
                         uint8_t intr;
                         // Enumerate SDcards
                         for(int i = 0; i < UHS_MAX_SD_CARDS; i++) {
@@ -758,7 +766,7 @@ extern "C" {
                                 UHS_SD_Storage[i] = new UHS_FS_SD_DRIVER(_pr[i], _cs[i], i);
                                 //printf("usingInterrupt... pin %d, %d\r\n",_pr[i], intr);
                                 //delay(1000);
-                                SPI.usingInterrupt(intr);
+                                UHS_SDSPI.usingInterrupt(intr);
                                 //printf("usingInterrupt OK\r\n");
                                 //delay(1000);
                                 UHS_SD_Storage[i]->IRQ(); // Initial SDcard Probe.
@@ -822,6 +830,62 @@ extern "C" {
                         }
                 }
                 return vol;
+        }
+
+        /**
+         * Simplify provided path in-place.
+         * The returned path will be equal or less than the original.
+         * Path returned is not guaranteed to be an actual path.
+         * Replace leading "./" or "../" to /
+         *
+         * @param path This must be a writable object. Can't exist in flash.
+         */
+        void fs_simplify_path(char *path) {
+                if(path == NULL) return;
+
+                char *found = path;
+                char *move = found + 1;
+                size_t l = strlen(found);
+
+                if(l > 1) {
+                        // start with ./ ?
+                        if(found[0] == '.' && found[1] == '/') {
+                                memmove(found, move, l);
+                        }
+                }
+
+                move = found + 2;
+                l = strlen(found);
+
+                if(l > 2) {
+                        // start with ../ ?
+                        if(found[0] == '.' && found[0] == '/' && found[2] == '/') {
+                                l -= 1;
+                                memmove(found, move, l);
+                        }
+                }
+
+                //  '//' ?
+                while((found = strstr(path, "//"))) {
+                        // move string over
+                        l = strlen(found);
+                        move = found + 1;
+                        memmove(found, move, l);
+                }
+                // '/./'?
+                while((found = strstr(path, "/./"))) {
+                        // move string over
+                        l = strlen(found) - 1;
+                        move = found + 2;
+                        memmove(found, move, l);
+                }
+                // '/../' ?
+                while((found = strstr(path, "/../"))) {
+                        // move string over
+                        l = strlen(found) - 2;
+                        move = found + 3;
+                        memmove(found, move, l);
+                }
         }
 
         /**

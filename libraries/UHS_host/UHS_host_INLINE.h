@@ -53,13 +53,13 @@ UHS_EpInfo* UHS_USB_HOST_BASE::getEpInfoEntry(uint8_t addr, uint8_t ep) {
         UHS_EpInfo *pep;
         for(uint8_t j = 0; j < UHS_HOST_MAX_INTERFACE_DRIVERS; j++) {
                 pep = (UHS_EpInfo *)(p->epinfo[j]);
-                HOST_DEBUG("PEP @ 0x%x\r\n",(unsigned int) pep);
+                HOST_DEBUG("PEP @ 0x%x\r\n", (unsigned int)pep);
                 for(uint8_t i = 0; i < p->epcount; i++) {
                         if((pep)->epAddr == ep) {
                                 HOST_DEBUG("ep entry for interface %d ep %d max packet size = %d\r\n\r\n", pep->bIface, ep, pep->maxPktSize);
                                 return pep;
                         } else {
-                                HOST_DEBUG("ep entry not 0x%2.2x...\r\n",(pep)->epAddr);
+                                HOST_DEBUG("ep entry not 0x%2.2x...\r\n", (pep)->epAddr);
                         }
 
                         pep++;
@@ -136,13 +136,18 @@ void UHS_USB_HOST_BASE::DeviceDefaults(uint8_t maxep, UHS_USBInterface *interfac
 
 uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t address) {
         uint8_t rcode = 0;
-
         if(parent == 0) {
                 // Send a bus reset on the root interface.
                 doHostReset();
         } else {
                 // reset parent port
-                devConfig[parent]->ResetHubPort(port);
+                // find hub by address
+                for(uint8_t i = 0; i < UHS_HOST_MAX_INTERFACE_DRIVERS; i++) {
+                        if(devConfig[i]->bAddress == parent) {
+                                devConfig[i]->ResetHubPort(port);
+                                break;
+                        }
+                }
         }
 
         //
@@ -158,7 +163,7 @@ uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t add
                         retries++;
                         sof_delay(10);
                 } while(retries < 200);
-                HOST_DEBUG("%i retries.\r\n", retries);
+                HOST_DEBUGx("$$$$$$$$$$$$$$$$$$$$$$$$$ ADDRESS %i: %i retries.\r\n", address, retries);
         } else {
 #if DEBUG_PRINTF_EXTRA_HUGE
                 printf_P(PSTR("\r\ndoSoftReset called with address == 0.\r\n"));
@@ -269,6 +274,8 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
                         return UHS_HOST_ERROR_NO_ADDRESS_IN_POOL;
                 }
 
+                p->parent.devAddress = parent;
+                p->port = port;
                 p->speed = speed;
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
 
@@ -280,7 +287,7 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
 #endif
 again:
                 memset((void *)buf, 0, biggest);
-                HOST_DEBUGx("\r\n\r\nConfiguring PktSize 0x%2.2x,  rcode: 0x%2.2x, retries %i\r\n", p->epinfo[0][0].maxPktSize, rcode, retries);
+                HOST_DEBUG("\r\n\r\nConfiguring PktSize 0x%2.2x,  rcode: 0x%2.2x, retries %i\r\n", p->epinfo[0][0].maxPktSize, rcode, retries);
                 rcode = getDevDescr(0, biggest, (uint8_t*)buf);
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
                 if(rcode || udd->bMaxPacketSize0 < 8)
@@ -308,13 +315,13 @@ again:
                         } else if((rcode == UHS_HOST_ERROR_DMA || rcode == UHS_HOST_ERROR_MEM_LAT) && retries < 4) {
                                 if(p->epinfo[0][0].maxPktSize < 32) p->epinfo[0][0].maxPktSize = p->epinfo[0][0].maxPktSize << 1;
 #endif
-                                HOST_DEBUGx("Configuring error: 0x%2.2x UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", rcode, p->epinfo[0][0].maxPktSize);
+                                HOST_DEBUG("Configuring error: 0x%2.2x UHS_HOST_ERROR_DMA. Retry with maxPktSize: %i\r\n", rcode, p->epinfo[0][0].maxPktSize);
                                 doSoftReset(parent, port, 0);
                                 retries++;
                                 sof_delay(200);
                                 goto again;
                         }
-                        HOST_DEBUGx("*** Configuring error: 0x%2.2x Can't get USB_DEVICE_DESCRIPTOR\r\n", rcode);
+                        HOST_DEBUG("*** Configuring error: 0x%2.2x Can't get USB_DEVICE_DESCRIPTOR\r\n", rcode);
                         return rcode;
                 }
 
@@ -387,7 +394,7 @@ again:
 #endif
 
         ei.address = addrPool.AllocAddress(parent, port);
-
+        HOST_DEBUG("((((((((((((((((((address %i parent %i \r\n", ei.address, ei.parent);
         if(!ei.address) {
                 return UHS_HOST_ERROR_ADDRESS_POOL_FULL;
         }
@@ -578,6 +585,7 @@ again:
  * @return nothing
  */
 void UHS_USB_HOST_BASE::ReleaseDevice(uint8_t addr) {
+        DisablePoll();
         if(addr) {
 #if 0 // defined(UHS_HID_LOADED)
                 // Release any HID children
@@ -590,6 +598,7 @@ void UHS_USB_HOST_BASE::ReleaseDevice(uint8_t addr) {
                         }
                 }
         }
+        EnablePoll();
 }
 
 /**
@@ -602,6 +611,18 @@ void UHS_USB_HOST_BASE::ReleaseDevice(uint8_t addr) {
  */
 uint8_t UHS_USB_HOST_BASE::getDevDescr(uint8_t addr, uint16_t nbytes, uint8_t* dataptr) {
         return ( ctrlReq(addr, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_DESCRIPTOR, 0x00, USB_DESCRIPTOR_DEVICE, 0x0000, nbytes), nbytes, dataptr));
+}
+
+/**
+ * Gets 2 byte device status
+ *
+ * @param addr  Address of the device
+ * @param nbytes how many bytes to return
+ * @param dataptr pointer to the data to return
+ * @return status of the request, zero is success.
+ */
+uint8_t UHS_USB_HOST_BASE::getDevStatus(uint8_t addr, uint16_t nbytes, uint8_t* dataptr) {
+        return ( ctrlReq(addr, mkSETUP_PKT8(UHS_bmREQ_GET_DESCR, USB_REQUEST_GET_STATUS, 0x00, 0x0000, 0x0000, nbytes), nbytes, dataptr));
 }
 
 /**
@@ -998,7 +1019,7 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbyt
         }
         uint8_t rt = (uint8_t)(Request & 0xFFU);
 
-        //        Serial.println("Opened");
+        Serial.println("Opened");
         uint16_t left = (uint16_t)(Request >> 48) /*total*/;
         if(dataptr != NULL) {
                 //data stage
@@ -1011,11 +1032,10 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbyt
                                 rcode = ctrlReqRead(pep, &left, &read, nbytes, dataptr);
 
 #if UHS_DEVICE_WINDOWS_USB_SPEC_VIOLATION_DESCRIPTOR_DEVICE
-                                HOST_DEBUG("RESULT: 0x%2.2x 0x%2.2x 0x%2.2x 0x%8.8lx%8.8lx\r\n", rcode, addr, read, (uint32_t)((Request>>32)&0xfffffffflu), (uint32_t)(Request&0xfffffffflu));
+                                HOST_DEBUG("RESULT: 0x%2.2x 0x%2.2x 0x%2.2x 0x%8.8lx%8.8lx\r\n", rcode, addr, read, (uint32_t)((Request >> 32)&0xfffffffflu), (uint32_t)(Request & 0xfffffffflu));
                                 // Should only be used for GET_DESCRIPTOR USB_DESCRIPTOR_DEVICE
-                                constexpr uint32_t req_match = ((uint32_t)USB_DESCRIPTOR_DEVICE      << 24) |
-                                                               ((uint32_t)USB_REQUEST_GET_DESCRIPTOR <<  8);
-                                const     uint32_t req_found = Request & 0xFF00FF00ul;
+                                constexpr uint32_t req_match = ((uint32_t)USB_DESCRIPTOR_DEVICE << 24) | ((uint32_t)USB_REQUEST_GET_DESCRIPTOR << 8);
+                                const uint32_t req_found = Request & 0xFF00FF00ul;
                                 if(!addr && read && (req_found == req_match)) {
                                         HOST_DEBUG("ctrlReq3: acceptBuffer sz %i nbytes %i left %i\n\r", read, nbytes, left);
                                         left = 0;
@@ -1046,6 +1066,7 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbyt
 }
 
 uint8_t UHS_USB_HOST_BASE::EPClearHalt(uint8_t addr, uint8_t ep) {
+        HOST_DEBUG("host_INLINE EPClearHalt\r\n");
         return ctrlReq(addr, mkSETUP_PKT8(USB_SETUP_HOST_TO_DEVICE | USB_SETUP_TYPE_STANDARD | USB_SETUP_RECIPIENT_ENDPOINT, USB_REQUEST_CLEAR_FEATURE, USB_FEATURE_ENDPOINT_HALT, 0, ep, 0), 0, NULL);
 }
 
@@ -1123,6 +1144,7 @@ uint8_t UHS_USB_HOST_BASE::enumerateInterface(ENUMERATION_INFO *ei) {
 ////////////////////////////////////////////////////////////////////////////////
 
 #if 0
+
 /**
  * Might go away, depends on if it is useful, or not.
  *

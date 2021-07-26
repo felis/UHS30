@@ -125,7 +125,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::SCSITransaction6(SCSI_CDB6_t *cdb, uint16_t buf
         printf("\r\n");
         uint8_t *dump = (uint8_t*)(&cbw);
 
-        for(int i=0; i<(sizeof (UHS_BULK_CommandBlockWrapper)); i++) {
+        for(int i = 0; i < (sizeof (UHS_BULK_CommandBlockWrapper)); i++) {
                 printf("%02.2x ", *dump);
                 dump++;
         }
@@ -360,7 +360,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].bmNakPower = UHS_USB_NAK_MAX_POWER;
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
-                        epInfo[index].bIface=ei->interface.bInterfaceNumber;
+                        epInfo[index].bIface = ei->interface.bInterfaceNumber;
                         BS_HOST_DEBUG("index: %i\r\n", index);
                 }
                 BS_HOST_DEBUG("\r\n");
@@ -380,11 +380,12 @@ uint8_t UHS_NI UHS_Bulk_Storage::SetInterface(ENUMERATION_INFO *ei) {
  */
 uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
         uint8_t rcode;
+        SCSI_Inquiry_Response response;
         //        Serial.print("Bulk Start from USB Host @ 0x");
         //        Serial.println((uint32_t)pUsb, HEX);
         //        Serial.print("Bulk Start USB Host Address Pool @ 0x");
         //        Serial.println((uint32_t)pUsb->GetAddressPool(), HEX);
-
+        dCBWTag = 0;
         BS_HOST_DEBUG("BS Start, speed: %i\r\n", pUsb->GetAddressPool()->GetUsbDevicePtr(bAddress)->speed);
         BS_HOST_DEBUG("BS Start\r\n");
         rcode = pUsb->setEpInfoEntry(bAddress, bIface, 3, epInfo);
@@ -403,10 +404,8 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
         BS_HOST_DEBUG("MaxLUN %u\r\n", bMaxLUN);
         //ErrorMessage<uint8_t > (PSTR("MaxLUN"), bMaxLUN);
         if(!UHS_SLEEP_MS(150)) goto FailUnPlug; // Delay a bit for slow firmware. (again)
-
         for(uint8_t lun = 0; lun <= bMaxLUN; lun++) {
                 if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
-                SCSI_Inquiry_Response response;
                 rcode = Inquiry(lun, sizeof (SCSI_Inquiry_Response), (uint8_t*) & response);
                 BS_HOST_DEBUG("Inquiry 0x%2.2x 0x%2.2x\r\n", sizeof (SCSI_Inquiry_Response), rcode);
                 if(rcode) {
@@ -469,16 +468,19 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                 LockMedia(lun, 1);
                 if(rcode == 0x08) {
                         if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
-                        if(MediaCTL(lun, 1) == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug; // I actually have a USB stick that needs this!
+                        // I actually have a USB stick that needs this!
+                        BS_HOST_DEBUG("Spinup LUN %u\r\n", lun);
+                        if(MediaCTL(lun, 1) == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug;
+                        BS_HOST_DEBUG("Spinup LUN %u completed\r\n", lun);
                 }
                 BS_HOST_DEBUG("\r\nTry %2.2x TestUnitReady %2.2x\r\n", tries - 0xf0, rcode);
                 if(!rcode) {
                         if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
                         BS_HOST_DEBUG("CheckLUN...\r\n");
-                        BS_HOST_DEBUG("%lu\r\n", millis()/1000);
+                        BS_HOST_DEBUG("%lu\r\n", millis() / 1000);
                         // Stalls on ***some*** devices, ***WHY***?! Device SAID it is READY!!
                         LUNOk[lun] = CheckLUN(lun);
-                        BS_HOST_DEBUG("%lu\r\n", millis()/1000);
+                        BS_HOST_DEBUG("%lu\r\n", millis() / 1000);
                         if(!LUNOk[lun]) LUNOk[lun] = CheckLUN(lun);
                         if(!UHS_SLEEP_MS(1)) goto FailUnPlug;
                         BS_HOST_DEBUG("Checked LUN...\r\n");
@@ -527,21 +529,6 @@ Fail:
 
         return rcode;
 }
-
-// Base class definition of Release() used. See UHS_USBInterface class definition for details
-
-/**
- * For driver use only.
- *
- * @return
- */
-//void UHS_NI UHS_Bulk_Storage::Release(void) {
-//        pUsb->DisablePoll();
-//        OnRelease();
-//        DriverDefaults();
-//        pUsb->EnablePoll();
-//        return;
-//}
 
 /**
  * For driver use only.
@@ -614,8 +601,6 @@ void UHS_NI UHS_Bulk_Storage::CheckMedia(void) {
         }
         BS_HOST_DEBUG("\r\n");
 #endif
-        OnPoll();
-        qNextPollTime = millis() + 100;
 }
 
 /**
@@ -624,8 +609,9 @@ void UHS_NI UHS_Bulk_Storage::CheckMedia(void) {
  */
 void UHS_NI UHS_Bulk_Storage::Poll(void) {
         if((long)(millis() - qNextPollTime) >= 0L) {
-
                 CheckMedia();
+                OnPoll();
+                qNextPollTime = millis() + 100;
         }
 
         return;
@@ -902,14 +888,13 @@ void UHS_NI UHS_Bulk_Storage::DriverDefaults(void) {
 bool UHS_NI UHS_Bulk_Storage::IsValidCSW(UHS_BULK_CommandStatusWrapper *pcsw, UHS_BULK_CommandBlockWrapperBase *pcbw) {
         if(!bAddress) return false;
         if(pcsw->dCSWSignature != UHS_BULK_CSW_SIGNATURE) {
-                Notify(PSTR("CSW:Sig error\r\n"), 0x80);
+                BS_HOST_DEBUG("CSW:Sig error %8.8lx != %8.8lx\r\n", pcsw->dCSWSignature, UHS_BULK_CSW_SIGNATURE);
                 return false;
         }
         if(pcsw->dCSWTag != pcbw->dCBWTag) {
-                Notify(PSTR("CSW:Wrong tag\r\n"), 0x80);
-                ErrorMessage<uint32_t > (PSTR("dCSWTag"), pcsw->dCSWTag);
-                ErrorMessage<uint32_t > (PSTR("dCBWTag"), pcbw->dCBWTag);
-
+                BS_HOST_DEBUG("CSW:Wrong tag\r\n");
+                BS_HOST_DEBUG("dCSWTag %8.8lx\r\n", pcsw->dCSWTag);
+                BS_HOST_DEBUG("dCBWTag %8.8lx\r\n", pcbw->dCBWTag);
                 return false;
         }
         return true;
@@ -1060,7 +1045,8 @@ uint8_t UHS_NI UHS_Bulk_Storage::Transaction(UHS_BULK_CommandBlockWrapper *pcbw,
                                 // I own one... 05e3:0701 Genesys Logic, Inc. USB 2.0 IDE Adapter.
                                 // Other devices that exhibit this behavior exist in the wild too.
                                 // Be sure to check quirks in the Linux source code before reporting a bug. --xxxajk
-                                Notify(PSTR("Invalid CSW\r\n"), 0x80);
+                                BS_HOST_DEBUG(PSTR("Invalid CSW\r\n"));
+                                //Notify(PSTR("Invalid CSW\r\n"), 0x80);
                                 Reset();
                                 ResetRecovery();
 

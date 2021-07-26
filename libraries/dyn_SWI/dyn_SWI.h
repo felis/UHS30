@@ -22,6 +22,13 @@
 #ifndef DYN_SWI_H
 #define	DYN_SWI_H
 
+// Not actually required for compile...
+#if defined(ARDUINO)
+#include <Arduino.h>
+#endif
+
+
+
 #if defined(__arm__) || defined(ARDUINO_ARCH_PIC32)
 #if defined(ARDUINO_ARCH_PIC32)
 #include <p32xxxx.h>

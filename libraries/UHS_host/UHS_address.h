@@ -65,9 +65,6 @@ struct UHS_DeviceAddress {
         union {
 
                 struct {
-//                        uint8_t bmAddress : 3; // port number
-//                        uint8_t bmParent : 3; // parent hub address
-//                        uint8_t bmHub : 1; // hub flag
                         uint8_t bmAddress : 7; // address
                         uint8_t bmReserved : 1; // reserved, must be zero
                 } __attribute__((packed));
@@ -106,22 +103,26 @@ class AddressPool {
 
         // find a new lowest unused address number.
         uint8_t UHS_NI FindNewAddress() {
+                printf("Find address...\r\n");
                 uint8_t rv = 0;
                 bool got = false;
                 // scan low to high
                 for(uint8_t i = 1; i < 127; i++) {
-                        got = false;
                         for(uint8_t j = 1; j < UHS_HOST_MAX_INTERFACE_DRIVERS; j++) {
                                 if(thePool[i].address.devAddress == i) {
+                                        printf("Address %i used\r\n", i);
                                         got = true;
                                         break;
                                 }
                         }
                         if(!got) {
+                                printf("Address %i NOT used\r\n", i);
                                 rv=i;
                                 break;
                         }
+                        got = false;
                 }
+                printf("Returning %i as free\r\n", rv);
                 return rv;
         }
 

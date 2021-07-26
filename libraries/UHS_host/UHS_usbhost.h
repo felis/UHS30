@@ -183,6 +183,7 @@ public:
         //
         /////////////////////////////////////////////
         // these two probably will go away, and won't be used, TBD
+
         inline void Poll_Others(void) {
 #if defined(UHS_LOAD_BT)
                 UHS_BT_Poll(this);
@@ -215,6 +216,8 @@ public:
         uint8_t UHS_NI ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbytes, uint8_t* dataptr);
 
         uint8_t UHS_NI getDevDescr(uint8_t addr, uint16_t nbytes, uint8_t* dataptr);
+
+        uint8_t UHS_NI getDevStatus(uint8_t addr, uint16_t nbytes, uint8_t* dataptr);
 
         uint8_t UHS_NI getConfDescr(uint8_t addr, uint16_t nbytes, uint8_t conf, uint8_t* dataptr);
 
@@ -360,8 +363,10 @@ public:
          * Normally this does not need to be overridden.
          */
         virtual void Release(void) {
+                pUsb->DisablePoll();
                 OnRelease();
                 DriverDefaults();
+                pUsb->EnablePoll();
                 return;
         };
 
@@ -399,53 +404,6 @@ public:
         virtual void ResetHubPort(NOTUSED(uint8_t port)) {
                 return;
         };
-
-#if 0
-        /**
-         *
-         * @return true if this interface is Vendor Specific.
-         */
-        virtual bool IsVSI() {
-                return false;
-        }
-#endif
 };
-
-#if 0
-/**
- *
- * Vendor Specific interface class.
- * This is used by a partner interface.
- * It can also be used to force-enumerate an interface that
- * can use this interface directly.
- * You can also add an instance of this class within the interface constructor
- * if you expect the interface.
- *
- * If this is not needed, it may be removed. Nothing I have written needs this.
- * Let me know if it is not required, then IsVSI method can also be shit-canned.
- * -- AJK
- */
-
-class UHS_VSI : public UHS_USBInterface {
-public:
-        volatile UHS_EpInfo epInfo[1];
-        volatile ENUMERATION_INFO eInfo;
-        UHS_VSI(UHS_USB_HOST_BASE *p);
-        bool OKtoEnumerate(ENUMERATION_INFO *ei);
-        uint8_t SetInterface(ENUMERATION_INFO *ei);
-        virtual void DriverDefaults(void);
-        virtual void Release(void);
-
-        uint8_t GetAddress(void) {
-                return bAddress;
-        };
-
-        virtual bool IsVSI() {
-                return true;
-        }
-
-};
-#endif
-
 #endif //_USBHOST_H_
 #endif
