@@ -6,11 +6,17 @@
 #define VOL_LABEL "/"
 #define VOL_PATH "/"
 
+#if defined(__MK66FX1M0__)
+// Teensy 3.6 :-)
+#define SDCARD_CS_PIN 62
+#define SDCARD_DETECT_PIN 37
 
+#else
 #define SDCARD_CS_PIN 5
 // this pin needs to be on a real IRQ.
 // All boards should be able to use pin2.
 #define SDCARD_DETECT_PIN 2
+#endif
 
 // inline library loading
 // Patch printf so we can use it.
@@ -296,7 +302,6 @@ void setup() {
         int detpins[UHS_MAX_SD_CARDS] = {SDCARD_DETECT_PIN}; // list of sdcard detection pins
         int cspins[UHS_MAX_SD_CARDS] = {SDCARD_CS_PIN}; // list of CS pins
         Init_Generic_Storage(detpins, cspins);
-
 }
 
 uint8_t current_state = 128;
