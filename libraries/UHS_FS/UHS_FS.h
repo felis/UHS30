@@ -114,6 +114,7 @@ extern "C" {
         extern uint8_t fs_lseek(uint8_t fd, unsigned long offset, int whence);
 
         extern uint8_t fs_rename(const char *oldpath, const char *newpath);
+        extern uint8_t fs_setlabel(const char *oldpath, const char *newpath);
         extern uint8_t fs_chmod(const char *path, uint8_t mode);
         extern uint8_t fs_utime(const char *path, time_t timesec);
         extern uint8_t fs_mkdir(const char *path, uint8_t mode);

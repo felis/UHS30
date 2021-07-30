@@ -3954,7 +3954,7 @@ FRESULT f_setlabel(const TCHAR* label) {
 #endif
 #endif
 #endif
-                        if(!w || chk_chr(PSTR("\"*+,.:;<=>\?[]|\x7F"), w) || j >= (UINT) ((w >= 0x100) ? 10 : 11)) /* Reject invalid chars for volume label */
+                        if(!w || chk_chr(PSTR("/\"*+,.:;<=>\?[]|\x7F"), w) || j >= (UINT) ((w >= 0x100) ? 10 : 11)) /* Reject invalid chars for volume label */
                                 LEAVE_FF(dj.fs, FR_INVALID_NAME);
                         if(w >= 0x100) vn[j++] = (FBYTE) (w >> 8);
                         vn[j++] = (FBYTE) w;

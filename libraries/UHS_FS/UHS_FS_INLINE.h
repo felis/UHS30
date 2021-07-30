@@ -712,12 +712,15 @@ extern "C" {
          * This must be called before using generic_storage. Calling more than once is harmless.
          */
 #if defined(LOAD_UHS_BULK_STORAGE) && defined(UHS_USE_SDCARD)
+
         void Init_Generic_Storage(void *hd, int _pr[], int _cs[]) {
 #else
 #if defined(UHS_USE_SDCARD) && !defined(LOAD_UHS_BULK_STORAGE)
+
         void Init_Generic_Storage(int _pr[], int _cs[]) {
 #else
 #if defined(LOAD_UHS_BULK_STORAGE) && !defined(UHS_USE_SDCARD)
+
         void Init_Generic_Storage(void *hd) {
 #endif
 #endif
@@ -899,7 +902,6 @@ extern "C" {
                 uint8_t *ptr;
                 char *fname;
                 uint8_t vol = PFAT_VOLUMES;
-
                 if((strlen(path) < 1) || *path != '/' || strstr(path, "/./") || strstr(path, "/../") || strstr(path, "//")) {
                         fs_err = FR_INVALID_NAME;
                 } else {
@@ -1117,7 +1119,7 @@ extern "C" {
          */
         uint8_t AJK_NI fs_sync(void) {
                 uint8_t rc;
-                int i=0;
+                int i = 0;
                 for(; i < _FS_LOCK; i++) {
                         if(fhandles[i]->fs != NULL) {
                                 f_sync(fhandles[i]);
@@ -1433,6 +1435,42 @@ extern "C" {
 
                         rc = f_rename(oldname, newpathtrunc);
                         free((void *)oldname);
+                }
+                fs_err = rc;
+                return rc;
+        }
+
+        /**
+         * Rename a volume, and remount it.
+         *
+         * @param oldpath old label
+         * @param newpath new label
+         * @return FRESULT, 0 = success
+         */
+        uint8_t AJK_NI fs_setlabel(const char *oldpath, const char *newpath) {
+                uint8_t rc = FR_INVALID_NAME;
+                uint8_t vol = _fs_util_vol(oldpath);
+                if(strlen(newpath) < 12 && vol != PFAT_VOLUMES) {
+                        char *fname = (char *)malloc(strlen(newpath) + 3);
+                        *fname = 0x00;
+                        strcat(fname, "/");
+                        strcat(fname, newpath);
+                        if(strlen(fname) > 1) strcat(fname, "/");
+                        uint8_t vol2 = _fs_util_vol(fname);
+                        free(fname);
+                        if(vol2 == PFAT_VOLUMES) {
+                                const char *newname = _fs_util_FATpath(newpath, vol);
+                                rc = f_setlabel(newpath);
+                                free((void *)newname);
+                                if(rc == FR_OK) {
+                                        // eject
+                                        int eject = 0;
+                                        rc = Fats[vol]->disk_ioctl(CTRL_EJECT, &eject);
+                                        // and remount
+                                        eject = 1;
+                                        if(rc == FR_OK) rc = Fats[vol]->disk_ioctl(CTRL_EJECT, &eject);
+                                }
+                        }
                 }
                 fs_err = rc;
                 return rc;

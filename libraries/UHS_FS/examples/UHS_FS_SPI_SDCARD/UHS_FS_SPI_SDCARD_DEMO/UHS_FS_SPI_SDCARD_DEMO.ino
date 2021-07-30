@@ -207,8 +207,8 @@ PFAT_DIRINFO *de;
 uint8_t *data;
 #endif
 
-uint8_t mounted = PFAT_VOLUMES;
-uint8_t wasmounted = 0;
+uint8_t mounted = 0;
+uint8_t wasmounted = PFAT_VOLUMES; // Initial state that's expected is none.
 
 
 #if MAKE_BIG_DEMO
