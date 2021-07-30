@@ -1449,14 +1449,14 @@ extern "C" {
          */
         uint8_t AJK_NI fs_setlabel(const char *oldpath, const char *newpath) {
                 uint8_t rc = FR_INVALID_NAME;
-                uint8_t vol = _fs_util_vol(oldpath);
+                uint8_t vol = fs_ready(oldpath);
                 if(strlen(newpath) < 12 && vol != PFAT_VOLUMES) {
                         char *fname = (char *)malloc(strlen(newpath) + 3);
                         *fname = 0x00;
                         strcat(fname, "/");
                         strcat(fname, newpath);
-                        if(strlen(fname) > 1) strcat(fname, "/");
-                        uint8_t vol2 = _fs_util_vol(fname);
+                        uint8_t vol2 = fs_ready(fname);
+
                         free(fname);
                         if(vol2 == PFAT_VOLUMES) {
                                 const char *newname = _fs_util_FATpath(newpath, vol);

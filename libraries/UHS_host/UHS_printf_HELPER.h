@@ -155,7 +155,7 @@ extern "C" {
         int _fstat(int fd, struct stat *st) {
                 memset(st, 0, sizeof (*st));
                 st->st_mode = S_IFCHR;
-                st->st_blksize = 1024;
+                st->st_blksize = 1024; // too big??
                 return 0;
         }
 
@@ -198,4 +198,3 @@ void UHS_AVR_printf_HELPER_init(void) {
 #define UHS_printf_HELPER_init() (void(0))
 #endif
 #endif	/* UHS_PRINTF_HELPER_H */
-
