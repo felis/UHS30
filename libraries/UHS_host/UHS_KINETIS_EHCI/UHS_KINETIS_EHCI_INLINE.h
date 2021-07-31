@@ -494,15 +494,9 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         PORTE_PCR6 = PORT_PCR_MUX(1);
         GPIOE_PDDR |= (1 << 6);
 
+        DDSB();
         vbusPower(vbus_off);
-        // Delay a minimum of 1 second to ensure any capacitors are drained.
-        // 1 second is required to make sure we do not smoke a Microdrive!
-        if(mseconds != INT16_MIN) {
-                if(mseconds < 1000) mseconds = 1000;
-                delay(mseconds); // We can't depend on SOF timer here.
-        }
-        vbusPower(vbus_on);
-
+        DDSB();
 
         MCG_C1 |= MCG_C1_IRCLKEN; // enable MCGIRCLK 32kHz
         OSC0_CR |= OSC_ERCLKEN;
@@ -603,6 +597,15 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
                 USBHS_USBINTR_UEE | // Error
                 USBHS_USBINTR_UE // Enable
                 ;
+        /*
+         * To enable full USB support on the PHY, bits ENUTMILEVEL3 and ENUTMILEVEL2, in the
+         * USBPHY_CTRL register, must be set. UTMI+ Level 2 adds support for directly connected low-speed
+         * devices. This is needed when the controller operates in host mode for operation with low-speed devices
+         * such as USB mice. UTMI+ Level 3 adds support for directly connected full-speed hubs that need to support
+         * low-speed devices
+         */
+        UHS_KIO_SETBIT_ATOMIC(USBPHY_CTRL, USBPHY_CTRL_ENUTMILEVEL3);
+        UHS_KIO_SETBIT_ATOMIC(USBPHY_CTRL, USBPHY_CTRL_ENUTMILEVEL2);
 
         // switch isr for USB
         noInterrupts();
@@ -612,6 +615,14 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         DDSB();
         NVIC_ENABLE_IRQ(IRQ_USBHS);
         interrupts();
+
+        // Delay a minimum of 1 second to ensure any capacitors are drained.
+        // 1 second is required to make sure we do not smoke a Microdrive!
+        if(mseconds != INT16_MIN) {
+                if(mseconds < 1000) mseconds = 1000;
+                delay(mseconds); // We can't depend on SOF timer here.
+        }
+        vbusPower(vbus_on);
 
         return 0;
 }
@@ -968,7 +979,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
 }
 
 UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr) {
-        HOST_DEBUG("ctrlReqOpen\r\n");
+        HOST_DEBUG("ctrlReqOpen Request and 0x80 %2.2x\r\n", uint8_t(((Request)  & 0x80U)&0xffU));
 
         UHS_EpInfo *pep = NULL;
         uint16_t nak_limit = 1;
