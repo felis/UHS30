@@ -1019,7 +1019,7 @@ uint8_t UHS_USB_HOST_BASE::ctrlReq(uint8_t addr, uint64_t Request, uint16_t nbyt
         }
         uint8_t rt = (uint8_t)(Request & 0xFFU);
 
-        Serial.println("Opened");
+        //Serial.println("Opened");
         uint16_t left = (uint16_t)(Request >> 48) /*total*/;
         if(dataptr != NULL) {
                 //data stage

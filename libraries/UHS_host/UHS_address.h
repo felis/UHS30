@@ -103,26 +103,26 @@ class AddressPool {
 
         // find a new lowest unused address number.
         uint8_t UHS_NI FindNewAddress() {
-                printf("Find address...\r\n");
+                //printf("Find address...\r\n");
                 uint8_t rv = 0;
                 bool got = false;
                 // scan low to high
                 for(uint8_t i = 1; i < 127; i++) {
                         for(uint8_t j = 1; j < UHS_HOST_MAX_INTERFACE_DRIVERS; j++) {
                                 if(thePool[i].address.devAddress == i) {
-                                        printf("Address %i used\r\n", i);
+                                        //printf("Address %i used\r\n", i);
                                         got = true;
                                         break;
                                 }
                         }
                         if(!got) {
-                                printf("Address %i NOT used\r\n", i);
+                                //printf("Address %i NOT used\r\n", i);
                                 rv=i;
                                 break;
                         }
                         got = false;
                 }
-                printf("Returning %i as free\r\n", rv);
+                //printf("Returning %i as free\r\n", rv);
                 return rv;
         }
 
