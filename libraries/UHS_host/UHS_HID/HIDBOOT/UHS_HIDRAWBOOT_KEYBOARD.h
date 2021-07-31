@@ -71,13 +71,20 @@ public:
         }
 
         uint8_t AJK_NI SetLEDs(uint8_t leds) {
+#if 1
+                parent->pUsb->DisablePoll();
+                led_states = leds;
+                parent->SetReport(parent->bIface, 2, 0, 1, &leds);
+                parent->pUsb->EnablePoll();
+                return 0;
+#else
                 uint8_t rv;
                 parent->pUsb->DisablePoll();
                 led_states = leds;
                 rv = parent->SetReport(parent->bIface, 2, 0, 1, &leds);
                 parent->pUsb->EnablePoll();
-                //return rv;
-                return 0;
+                return rv;
+#endif
         }
 
         uint8_t AJK_NI getLEDs(void) {
