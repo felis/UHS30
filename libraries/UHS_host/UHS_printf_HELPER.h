@@ -163,6 +163,11 @@ extern "C" {
                 return (fd < 3) ? 1 : 0;
         }
 }
+void UHS_PJRC_printf_HELPER_init(void) {
+        setvbuf(stdout, NULL, _IONBF, 0);
+}
+
+#define UHS_printf_HELPER_init() UHS_PJRC_printf_HELPER_init()
 #else
 #error no STDIO
 #endif // defined(ARDUINO_ARCH_PIC32)
