@@ -53,7 +53,7 @@ UHS_NI UHS_USBHub::UHS_USBHub(UHS_USB_HOST_BASE *p) {
 }
 
 bool UHS_NI UHS_USBHub::OKtoEnumerate(ENUMERATION_INFO *ei) {
-        HUB_DEBUG("USBHub: checking numep %i, klass %2.2x, interface.klass %2.2x, protocol %2.2x\r\n", ei->interface.numep, ei->klass, ei->interface.klass,ei->interface.protocol );
+        HUB_DEBUG("USBHub: checking numep %i, klass %2.2x, interface.klass %2.2x, protocol %2.2x\r\n", ei->interface.numep, ei->klass, ei->interface.klass, ei->interface.protocol);
         return ((ei->interface.numep == 1) && ((ei->klass == UHS_USB_CLASS_HUB) && (ei->interface.klass == UHS_USB_CLASS_HUB) && (ei->interface.protocol == ei->protocol)));
 }
 
@@ -79,43 +79,51 @@ uint8_t UHS_NI UHS_USBHub::SetInterface(ENUMERATION_INFO *ei) {
         epInfo[0].epAddr = 0;
         epInfo[0].maxPktSize = ei->bMaxPacketSize0;
         epInfo[0].epAttribs = 0;
+        epInfo[0].type = USB_TRANSFER_TYPE_CONTROL;
+
         epInfo[1].epAddr = 1;
         epInfo[1].maxPktSize = ei->interface.epInfo[0].wMaxPacketSize;
         epInfo[1].epAttribs = ei->interface.epInfo[0].bmAttributes;
         epInfo[1].bmNakPower = UHS_USB_NAK_NOWAIT;
+        epInfo[1].type = ei->interface.epInfo[0].bmAttributes;
+
         bIface = ei->interface.bInterfaceNumber;
         bAlternateSetting = ei->interface.bAlternateSetting;
+
         return 0;
 }
 
 uint8_t UHS_NI UHS_USBHub::Finalize(void) {
         uint8_t rcode;
-        uint8_t buf[32];
+        uint8_t l;
+        {
+                uint8_t buf[4];
+                UHS_HubDescriptor* nhd = reinterpret_cast<UHS_HubDescriptor*>(buf);
+                // Get hub descriptor
+                rcode = GetHubDescriptor(0, 3, buf);
+                l = nhd->bDescLength;
+        }
+        uint8_t buf[l + 1];
         UHS_HubDescriptor* hd = reinterpret_cast<UHS_HubDescriptor*>(buf);
-        // Get hub descriptor
-        rcode = GetHubDescriptor(0, 8, buf);
+        if(rcode) goto Fail;
+        rcode = GetHubDescriptor(0, l, buf);
+        if(rcode) goto Fail;
+
         // Save number of ports for future use
+
         bNbrPorts = hd->bNbrPorts;
-
-        if(rcode)
-                goto Fail;
         rcode = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(USB_SETUP_RECIPIENT_INTERFACE, USB_REQUEST_SET_INTERFACE, bAlternateSetting, bIface, 0), 0, NULL);
-
-        if(rcode)
-                goto Fail;
+        if(rcode) goto Fail;
 
         // delay a bit...
         if(!UHS_SLEEP_MS(50)) goto Fail;
 
-        rcode  = pUsb->getDevStatus(bAddress, 2, buf);
-
-        if(rcode)
-                goto Fail;
+        rcode = pUsb->getDevStatus(bAddress, 2, buf);
+        if(rcode) goto Fail;
 
         //rcode  = GetHubStatus(4, buf);
 
-        if(rcode)
-                goto Fail;
+        if(rcode) goto Fail;
 
         return 0;
 
@@ -134,12 +142,14 @@ uint8_t UHS_NI UHS_USBHub::Start(void) {
 
         //rcode  = GetHubStatus(4, buf);
 
-
+        //printf("\r\n\r\n\r\nPORT_POWER\r\n");
         for(uint8_t j = 1; j <= bNbrPorts; j++) {
+                //printf("PORT_POWER to %i\r\n",j);
                 //rcode =
                 SetPortFeature(UHS_HUB_FEATURE_PORT_POWER, j, 0); //HubPortPowerOn(j);
-                //printf("Address 0x%2.2x Port %i rcode 0x%2.2x\r\n", bAddress, j, rcode);
+                //printf("Address 0x%2.2x Port %i rcode 0x%2.2x\r\n\r\n", bAddress, j, rcode);
         }
+        //printf("PORT_POWER DONE\r\n\r\n\r\n");
 
         if(bAddress == 1) {
                 if(pUsb) {

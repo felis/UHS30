@@ -42,12 +42,12 @@ e-mail   :  support@circuitsathome.com
 #define bmUSB_DEV_ADDR_PARENT           0x78
 #define bmUSB_DEV_ADDR_HUB              0x40
 
-// TODO: embed parent?
 struct UHS_EpInfo {
         uint8_t epAddr; // Endpoint address
         uint8_t bIface;
         uint16_t maxPktSize; // Maximum packet size
-
+        // TO-DO: selective removal?
+        uint8_t type; // USB_TRANSFER_TYPE_* Needed only for controllers that HAVE TO have this info, E.G. silly EHCI.
         union {
                 uint8_t epAttribs;
 
@@ -76,7 +76,7 @@ struct UHS_Device {
         volatile UHS_EpInfo *epinfo[UHS_HOST_MAX_INTERFACE_DRIVERS]; // endpoint info pointer
         UHS_DeviceAddress address;
         UHS_DeviceAddress parent;
-        uint8_t port;
+        uint8_t port; // Only needed for some controllers TO-DO: selective removal?
         uint8_t epcount; // number of endpoints
         uint8_t speed; // indicates device speed
 } __attribute__((packed));

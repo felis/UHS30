@@ -68,6 +68,7 @@ uint8_t UHS_NI UHS_PRINTER::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].bmNakPower = (index == epDataInIndex) ? UHS_USB_NAK_NOWAIT : UHS_USB_NAK_MAX_POWER;
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
+                        epInfo[index].type=ei->interface.epInfo[ep].bmAttributes;
                         bNumEP++;
                         UHS_PRINTER_HOST_DEBUG("PRINTER: index 0x%2.2x epAddr 0x%2.2x maxPktSize 0x%2.2x\r\n", index, epInfo[index].epAddr, epInfo[index].maxPktSize);
                         if(qPollRate == 0 && ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_INTERRUPT) {
@@ -84,6 +85,7 @@ uint8_t UHS_NI UHS_PRINTER::SetInterface(ENUMERATION_INFO *ei) {
         epInfo[0].epAddr = 0;
         epInfo[0].maxPktSize = ei->bMaxPacketSize0;
         epInfo[0].bmNakPower = UHS_USB_NAK_MAX_POWER;
+        epInfo[0].type=USB_TRANSFER_TYPE_CONTROL;
         bIface = ei->interface.bInterfaceNumber;
         bConfNum = ei->currentconfig;
         vid = ei->vid;

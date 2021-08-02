@@ -245,6 +245,7 @@ uint8_t UHS_NI UHS_ADK::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].epAttribs = 0;
                         epInfo[index].bmNakPower = (index == epDataInIndex) ? UHS_USB_NAK_NOWAIT : UHS_USB_NAK_MAX_POWER;
                         epInfo[index].bIface=ei->interface.bInterfaceNumber;
+                        epInfo[index].type=ei->interface.epInfo[ep].bmAttributes;
                         // redundant!
                         // epInfo[index].bmSndToggle = 0;
                         // epInfo[index].bmRcvToggle = 0;
@@ -256,6 +257,7 @@ uint8_t UHS_NI UHS_ADK::SetInterface(ENUMERATION_INFO *ei) {
         epInfo[0].epAddr = 0;
         epInfo[0].maxPktSize = ei->bMaxPacketSize0;
         epInfo[0].bmNakPower = UHS_USB_NAK_MAX_POWER;
+        epInfo[0].type=USB_TRANSFER_TYPE_CONTROL;
         bIface = ei->interface.bInterfaceNumber;
         bConfNum = ei->currentconfig;
         ADK_HOST_DEBUG("ADK: address %i, config %i, iface %i with %i endpoints\r\n", bAddress, bConfNum, bIface, bNumEP);

@@ -79,11 +79,13 @@ uint8_t UHS_NI UHS_HID::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
                         epInfo[index].bIface=ei->interface.bInterfaceNumber;
+                        epInfo[index].type=ei->interface.epInfo[ep].bmAttributes;
                 }
         }
         epInfo[0].epAddr = 0;
         epInfo[0].maxPktSize = ei->bMaxPacketSize0;
         epInfo[0].bmNakPower = UHS_USB_NAK_MAX_POWER;
+        epInfo[0].type=USB_TRANSFER_TYPE_CONTROL;
 
         if(pollRate == 0) {
                 pollRate = 100;

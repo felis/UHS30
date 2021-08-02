@@ -112,6 +112,7 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
                         epInfo[index].bIface=ei->interface.bInterfaceNumber;
+                        epInfo[index].type=ei->interface.epInfo[ep].bmAttributes;
                         bNumEP++;
                 } else if((ei->interface.epInfo[ep].bmAttributes == USB_TRANSFER_TYPE_INTERRUPT) && ((ei->interface.epInfo[ep].bEndpointAddress & USB_TRANSFER_DIRECTION_IN) == USB_TRANSFER_DIRECTION_IN)) {
                         index = epInterruptInIndex;
@@ -122,6 +123,7 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
                         epInfo[index].bIface=ei->interface.bInterfaceNumber;
+                        epInfo[index].type=ei->interface.epInfo[ep].bmAttributes;
                         bNumEP++;
                         if(ei->interface.epInfo[ep].bInterval > qPollRate) qPollRate = ei->interface.epInfo[ep].bInterval;
                 }
@@ -135,6 +137,7 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
                         epInfo[index].bmSndToggle = 0;
                         epInfo[index].bmRcvToggle = 0;
                         epInfo[index].bIface=ei->interface.bInterfaceNumber;
+                        epInfo[index].type=ei->interface.epInfo[ep].bmAttributes;
                         bNumEP++;
                 }
 #endif
@@ -170,6 +173,7 @@ uint8_t UHS_NI UHS_CDC_ACM::SetInterface(ENUMERATION_INFO *ei) {
                 epInfo[0].epAddr = 0;
                 epInfo[0].maxPktSize = ei->bMaxPacketSize0;
                 epInfo[0].bmNakPower = UHS_USB_NAK_MAX_POWER;
+                epInfo[0].type=USB_TRANSFER_TYPE_CONTROL;
                 bIface = ei->interface.bInterfaceNumber;
                 // Both interfaces have finally been set and match
         } else {

@@ -333,6 +333,10 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
                         timer_countdown--;
                         counted = true;
                 }
+                if(nak_countdown) {
+                        nak_countdown--;
+                        counted = true;
+                }
         }
 
         if(Ustat & USBHS_USBINTR_SRE) {
@@ -342,13 +346,6 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
                 }
         }
 
-        if(Ustat & USBHS_USBINTR_NAKE) {
-                // countdown NAKs
-                if(nak_countdown) {
-                        nak_countdown--;
-                        counted = true;
-                }
-        }
 #if LED_STATUS
         // shit out speed status on LEDs
         // Indicate speed on 2,3
@@ -586,7 +583,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
                 //        USBHS_USBINTR_TIE0 | // GP timer 0
                 //        USBHS_USBINTR_UPIE | // Host Periodic
                 //        USBHS_USBINTR_UAIE | // Host Asynchronous
-                USBHS_USBINTR_NAKE | // NAK
+                //        USBHS_USBINTR_NAKE | // NAK
                 //        USBHS_USBINTR_SLE  | // Sleep
                 USBHS_USBINTR_SRE | // SOF
                 //        USBHS_USBINTR_URE  | // Reset
@@ -643,7 +640,6 @@ static uint32_t QH_capabilities2(uint32_t high_bw_mult, uint32_t hub_port_number
 }
 
 // Fill in the qTD fields (token & data)
-//   t       the Transfer qTD to initialize
 //   buf     data to transfer
 //   len     length of data  (up to 16K for any address, or up to 20K if 4K aligned)
 //   pid     type of packet: 0=OUT, 1=IN, 2=SETUP
@@ -708,22 +704,25 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         if(!p->epinfo) return UHS_HOST_ERROR_NULL_EPINFO;
         *ppep = getEpInfoEntry(addr, ep);
         if(!*ppep) return UHS_HOST_ERROR_NO_ENDPOINT_IN_TABLE;
-        nak_limit = (0x0001UL << (((*ppep)->bmNakPower > UHS_USB_NAK_MAX_POWER) ? UHS_USB_NAK_MAX_POWER : (*ppep)->bmNakPower));
-        nak_limit--;
-        if(p->speed ==2) {
-                // 125us v.s. 1ms, so we need to multiply the nak limit.
-                nak_limit = nak_limit * 8; // microframes.
-        }
+        nak_limit = (*ppep)->bmNakPower;
+        //nak_limit = (0x0001UL << (((*ppep)->bmNakPower > UHS_USB_NAK_MAX_POWER) ? UHS_USB_NAK_MAX_POWER : (*ppep)->bmNakPower));
+        //nak_limit--;
+        if(nak_limit==1)nak_limit=2;
+        //if(p->speed == 2) {
+        //        // 125us v.s. 1ms, so we need to multiply the nak limit.
+        //        nak_limit = nak_limit * 8; // microframes.
+        //}
         USBHS_USBCMD &= ~USBHS_USBCMD_ASE;
         while((USBHS_USBSTS & USBHS_USBSTS_AS)); // wait for async schedule disable
 
-        uint32_t type = 0; // 0=control, 2=bulk, 3=interrupt
-        if((ep & 0x7F) > 0) {
-                // From Andrew:
-                //   There are currently only bulk packets.
-                //   Interrupt variety can be added to the structure, but this won't be used yet.
-                type = 2; // assume bulk ep != 0
-        }
+        uint32_t type = (*ppep)->type;
+        //uint32_t type = 0; // 0=control, 1=ISO, 2=bulk, 3=interrupt
+        //if((ep & 0x7F) > 0) {
+        // From Andrew:
+        //   There are currently only bulk packets.
+        //   Interrupt variety can be added to the structure, but this won't be used yet.
+        //        type = 2; // assume bulk ep != 0
+        //}
         uint32_t speed;
         if(p->speed == 2) {
                 speed = 2; // 480 Mbit/sec
@@ -781,35 +780,30 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         // endpoint,
         // Inactivate on Next Transaction (Periodic only, unused, set to zero),
         // device address
-        QH.staticEndpointStates[0] = QH_capabilities1(15, c, maxlen, 1, 1, speed, ep, 0, addr);
-        QH.staticEndpointStates[1] = QH_capabilities2(1, hub_port, hub_addr, 0, 0);
         QH.nextQtdPointer = (uint32_t) & qHalt;
         QH.alternateNextQtdPointer = (uint32_t) & qHalt;
         if((*ppep)->bmNeedPing) {
                 QH.transferOverlayResults[0] = 1;
                 (*ppep)->bmNeedPing = 0;
         }
-#if 0
-        // this can stop at specific locations in the enumeration process
-        // helpful if things go awry, spewing endless data that scrolls
-        // the important stuff off the window.
-        static int diecount = 0;
-        if(++diecount > 5) {
-                printf("DIE HERE\r\n");
-                while(1);
-        }
-#endif
+        QH.staticEndpointStates[0] = QH_capabilities1(15, c, maxlen, 1, 1, speed, ep, 0, addr);
+        QH.staticEndpointStates[1] = QH_capabilities2(1, hub_port, hub_addr, 0, 0);
         USBHS_ASYNCLISTADDR = (uint32_t) & QH;
         USBHS_USBCMD |= USBHS_USBCMD_ASE;
+
+
         //poopOutStatus();
         return UHS_HOST_ERROR_NONE;
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uint8_t ep), uint16_t nak_limit) {
+        uint16_t nc = 0;
+        //printf("DISPATCH! %i\r\n", nak_limit);
         noInterrupts();
         nak_countdown = nak_limit;
         QH.transferOverlayResults[0] &= 1;
         QH.nextQtdPointer = (uint32_t) & qTD;
+        if(nak_limit==1)nak_limit=2;
         // Nope... We signal really bad shit from ISR.
         //uint32_t usec_timeout = 1200; // TODO: use data length & speed
         //elapsedMicros usec=0;
@@ -838,8 +832,8 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uin
                 }
 #endif
                 uint32_t status = qTD.transferResults;
-                //HOST_DEBUG("dispatchPkt %lx\r\n", status);
                 if(!(status & 0x80)) {
+                        HOST_DEBUG("dispatchPkt status code %2.2x\r\n", (uint8_t)(status & 0xffu));
                         if(!(status & 0xffu)) {
                                 // no longer active, not halted, no errors... so ok
                                 noInterrupts();
@@ -880,6 +874,12 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uin
                                 // UHS_HOST_ERROR_TOGERR
                                 // UHS_HOST_ERROR_WRONGPID
                                 // Are these available??
+                                //
+                                // bit 6 0x40 Serious error halted
+                                // bit 4 0x08 Transaction Error
+                                //
+                                //
+
                                 noInterrupts();
                                 nak_countdown = 0;
                                 interrupts();
@@ -889,29 +889,39 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uin
                         interrupts();
                         return UHS_HOST_ERROR_NAK;
                 }
-                if(!nak_countdown) {
+                noInterrupts();
+                nc = nak_countdown;
+                interrupts();
+                if(nc == 0 && nak_limit) {
                         return UHS_HOST_ERROR_NAK;
                 }
         }
         if(condet) {
+                noInterrupts();
                 nak_countdown = 0;
+                interrupts();
                 return UHS_HOST_ERROR_UNPLUGGED;
         }
+        noInterrupts();
         nak_countdown = 0;
+        interrupts();
         return UHS_HOST_ERROR_TIMEOUT;
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t nbytes, uint8_t *data) {
-        HOST_DEBUG("OutTransfer %d, NAKS:%d toggle %d\r\n", nbytes, nak_limit,pep->bmSndToggle);
+        HOST_DEBUG("OutTransfer %d, NAKS:%d toggle %d\r\n", nbytes, nak_limit, pep->bmSndToggle);
 
-        //if(ifu < 2000) nak_limit = 2000;
+        //if( nak_limit < 2000) nak_limit = 2000;
         //HOST_DEBUG("NOW OutTransfer %d, NAKS:%d\n", nbytes, nak_limit);
         uint16_t bytes;
+        uint16_t maxpktsize = pep->maxPktSize;
         uint8_t rcode = UHS_HOST_ERROR_NONE;
+        nak_limit = (0x0001UL << (( nak_limit > UHS_USB_NAK_MAX_POWER) ? UHS_USB_NAK_MAX_POWER : nak_limit));
+        nak_limit--;
         while(nbytes && !rcode) {
                 bytes = nbytes;
                 // don't exceed 16KB
-                if(bytes > 16384) bytes = 16384;
+                if(bytes > maxpktsize) bytes = maxpktsize;
                 init_qTD(data, bytes, 0, pep->bmSndToggle, false);
                 rcode = dispatchPkt(0, 0, nak_limit);
                 uint32_t status = qTD.transferResults;
@@ -950,14 +960,17 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
         *nbytesptr -= (status >> 16) & 0x7FFF;
         pep->bmRcvToggle = status >> 31;
 #else
+        nak_limit = (0x0001UL << (( nak_limit > UHS_USB_NAK_MAX_POWER) ? UHS_USB_NAK_MAX_POWER : nak_limit));
+        nak_limit--;
         uint8_t rcode = 0;
         uint16_t pktsize;
-        //uint16_t maxpktsize = pep->maxPktSize;
+        uint16_t maxpktsize = pep->maxPktSize; /* 16384 */
         uint32_t datalen;
         uint16_t nbytes = *nbytesptr;
         *nbytesptr = 0;
+        // NOTE: can rx > maxPktSize?!
         while(nbytes && !rcode) {
-                datalen = (nbytes > 16384) ? 16384 : nbytes;
+                datalen = (nbytes > maxpktsize) ? maxpktsize : nbytes;
                 init_qTD(data, datalen, 1, pep->bmRcvToggle, false);
                 rcode = dispatchPkt(0, 0, nak_limit);
                 uint32_t status = qTD.transferResults;
@@ -979,11 +992,10 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
 }
 
 UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr) {
-        HOST_DEBUG("ctrlReqOpen Request and 0x80 %2.2x\r\n", uint8_t(((Request)  & 0x80U)&0xffU));
+        HOST_DEBUG("ctrlReqOpen Request and 0x80 %2.2x\r\n", uint8_t(((Request) & 0x80U)&0xffU));
 
         UHS_EpInfo *pep = NULL;
-        uint16_t nak_limit = 1;
-
+        uint16_t nak_limit;
         uint8_t rcode = SetAddress(addr, 0, &pep, nak_limit);
         if(!rcode) {
                 static uint8_t setupbuf[8];
@@ -1008,47 +1020,51 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
 uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t * dataptr) {
         HOST_DEBUG("*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*&*& ctrlReqRead left: %i, nbytes: %i, dataptr: %lx\r\n", *left, nbytes, (uint32_t)dataptr);
         uint8_t rcode = 0;
+
         if(*left) {
                 *read = nbytes;
-                rcode = InTransfer(pep, 2000, read, dataptr);
-//                if(rcode == UHS_HOST_TRANSFER_IS_DONE) {
-//                        *left=0;
-//                        rcode=UHS_HOST_ERROR_NONE;
-//                } else
+                rcode = InTransfer(pep, 0, read, dataptr);
                 if(rcode) {
                         HOST_DEBUG("ctrlReqRead ERROR: %2.2x\r\n", rcode);
                 } else {
                         *left -= *read;
                 }
         }
-         HOST_DEBUG("ctrlReqRead left: %i, read %i\r\n", *left, *read);
+        HOST_DEBUG("ctrlReqRead left: %i, read %i\r\n", *left, *read);
         return rcode;
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr) {
         uint8_t rcode;
-
+        //printf("Close\r\n");
         if(((bmReqType & 0x80) == 0x80) && pep && left && dataptr) {
                 HOST_DEBUG("ctrlReqClose Sinking %i\r\n", left);
                 // TODO: is this needed?
                 // Paul: Yes! otherwise USB will stall and die. -- AJK
                 while(left) {
                         uint16_t read = nbytes;
-                        rcode = InTransfer(pep, 2000, &read, dataptr);
+                        rcode = InTransfer(pep, 0, &read, dataptr);
                         if(rcode) break;
                         left -= read;
                         if(read < nbytes) break;
                 }
 
         }
-
+        // provide something...
+        uint8_t tmp[8];
         if(((bmReqType & 0x80) == 0x80)) {
-                init_qTD(NULL, 0, 0, 1, false);
-                rcode = dispatchPkt(0, 0, 2000);
-        } else {
-                init_qTD(NULL, 0, 1, 1, false);
+                //printf("^^^^^^^^^0x80\r\n");
+                init_qTD(&tmp, 0, 0, 1, false);
                 rcode = dispatchPkt(0, 0, 2000);
         }
+#if 1
+        else {
+                //printf("^^^^^^^^^0x00\r\n");
+                init_qTD(&tmp, 0, 1, 1, false);
+                rcode = dispatchPkt(0, 0, 2000);
+
+        }
+#endif
         return rcode;
 }
 

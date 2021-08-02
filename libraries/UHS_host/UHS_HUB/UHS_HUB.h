@@ -139,8 +139,16 @@ struct UHS_HubDescriptor {
                 uint16_t Reserved : 8;
         } __attribute__((packed));
 
-        uint8_t bPwrOn2PwrGood;
-        uint8_t bHubContrCurrent;
+        uint8_t bPwrOn2PwrGood; // 6
+        uint8_t bHubContrCurrent; // 7
+        uint8_t removable; // 8
+        uint8_t powerMask; // 9
+        // 10
+        // 11
+        // 12
+        // 13
+        // 14
+        // 15
 } __attribute__((packed));
 
 struct UHS_HubEvent {
