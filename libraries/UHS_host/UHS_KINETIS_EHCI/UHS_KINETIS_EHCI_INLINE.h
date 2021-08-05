@@ -800,10 +800,10 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uin
         uint16_t nc = 0;
         //printf("DISPATCH! %i\r\n", nak_limit);
         noInterrupts();
+        if(nak_limit == 1) nak_limit = 2; // allow for transmission if we are between...
         nak_countdown = nak_limit;
-        QH.transferOverlayResults[0] &= 1;
         QH.nextQtdPointer = (uint32_t) & qTD;
-        if(nak_limit==1)nak_limit=2;
+        QH.transferOverlayResults[0] &= 1;
         // Nope... We signal really bad shit from ISR.
         //uint32_t usec_timeout = 1200; // TODO: use data length & speed
         //elapsedMicros usec=0;
