@@ -165,9 +165,7 @@ uint8_t UHS_USB_HOST_BASE::doSoftReset(uint8_t parent, uint8_t port, uint8_t add
                 } while(retries < 200);
                 HOST_DEBUGx("$$$$$$$$$$$$$$$$$$$$$$$$$ ADDRESS %i: %i retries.\r\n", address, retries);
         } else {
-#if DEBUG_PRINTF_EXTRA_HUGE
-                printf_P(PSTR("\r\ndoSoftReset called with address == 0.\r\n"));
-#endif
+                HOST_DEBUGx("\r\ndoSoftReset called with address == 0.\r\n");
         }
         return rcode;
 }
@@ -321,7 +319,7 @@ again:
                                 sof_delay(200);
                                 goto again;
                         }
-                        HOST_DEBUG("*** Configuring error: 0x%2.2x Can't get USB_DEVICE_DESCRIPTOR\r\n", rcode);
+                        HOST_DEBUGx("*** Configuring error: 0x%2.2x Can't get USB_DEVICE_DESCRIPTOR\r\n", rcode);
                         return rcode;
                 }
 
@@ -365,7 +363,7 @@ again:
                         sof_delay(10);
                         memset((void *)buf, 0, biggest);
                         rcode = getDevDescr(ei.address, 18, (uint8_t*)buf);
-                        if(rcode) HOST_DEBUG("getDevDescr err: 0x%x \r\n", rcode);
+                        if(rcode) HOST_DEBUGx("getDevDescr err: 0x%2.2x \r\n", rcode);
 
                         addrPool.FreeAddress(ei.address);
                         if(rcode && rcode != UHS_HOST_ERROR_DMA) {

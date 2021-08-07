@@ -216,7 +216,7 @@ e-mail   :  support@circuitsathome.com
 #define                         UHS_HOST_ERROR_BABBLE 0x0FU // Line noise/unexpected data
 #define                        UHS_HOST_ERROR_MEM_LAT 0x10U // Error caused by memory latency.
 #define                           UHS_HOST_ERROR_NYET 0x11U // OUT transfer accepted with NYET
-#define                     UHS_HOST_TRANSFER_IS_DONE 0x12U // The transfer is toitally done, there's no data left to send
+
 // Addressing error codes
 #define                      ADDR_ERROR_INVALID_INDEX 0xA0U
 #define                    ADDR_ERROR_INVALID_ADDRESS 0xA1U
