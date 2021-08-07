@@ -455,7 +455,7 @@ uint8_t UHS_NI MAX3421E_HOST::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **
         //Serial.println(p->speed, HEX);
 
         // Set bmLOWSPEED and bmHUBPRE in case of low-speed device, reset them otherwise
-        regWr(rMODE, (p->speed) ? mode & ~(bmHUBPRE | bmLOWSPEED) : mode | bmLOWSPEED | hub_present);
+        regWr(rMODE, (p->speed) != 0 ? mode & ~(bmHUBPRE | bmLOWSPEED) : mode | bmLOWSPEED | hub_present);
 
         return 0;
 }
