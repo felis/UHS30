@@ -131,7 +131,7 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         //
         __attribute__ ((section(".usbdescriptortable"), used)) static bdt_t table[4];
         __attribute__ ((section(".usbdescriptortable"), used)) static uint8_t data_in_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to receive data in as host
-        __attribute__ ((section(".usbdescriptortable"), used)) static uint8_t data_out_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to send data in as host
+        __attribute__ ((section(".usbdescriptortable"), used)) static uint8_t data_out_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to send data out as host
         // mark that a token was done and store its pid while inside the isr
         volatile bool newToken;
         volatile uint8_t isrPid;

@@ -95,7 +95,7 @@ public:
                 //printf_P(PSTR("BOOT_KEYBOARD\r\n"));
                 {
                         // to-do: actually properly read it.
-                        uint16_t length = 64;
+                        uint16_t length = 7;
                         uint8_t buffer[length];
                         parent->ReportDescr(parent->bIface, length, buffer);
                 }
