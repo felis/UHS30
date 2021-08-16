@@ -53,8 +53,8 @@ UHS_NI UHS_USBHub::UHS_USBHub(UHS_USB_HOST_BASE *p) {
 }
 
 bool UHS_NI UHS_USBHub::OKtoEnumerate(ENUMERATION_INFO *ei) {
-        HUB_DEBUG("USBHub: checking numep %i, klass %2.2x, interface.klass %2.2x, protocol %2.2x\r\n", ei->interface.numep, ei->klass, ei->interface.klass, ei->interface.protocol);
-        return ((ei->interface.numep == 1) && ((ei->klass == UHS_USB_CLASS_HUB) && (ei->interface.klass == UHS_USB_CLASS_HUB) && (ei->interface.protocol == ei->protocol)));
+        HUB_DEBUG("USBHub: checking numep %i, klass %2.2x, interface.klass %2.2x, protocol %2.2x/%2.2x-%2.2x\r\n", ei->interface.numep, ei->klass, ei->interface.klass, ei->interface.protocol, ei->protocol, ei->interface.bInterfaceNumber);
+        return ((ei->interface.numep == 1) && ((ei->klass == UHS_USB_CLASS_HUB) && (ei->interface.klass == UHS_USB_CLASS_HUB) && ((ei->interface.protocol == ei->protocol)  || ((ei->interface.protocol != ei->protocol) && (ei->interface.bInterfaceNumber == 0)))));
 }
 
 void UHS_NI UHS_USBHub::DriverDefaults(void) {
