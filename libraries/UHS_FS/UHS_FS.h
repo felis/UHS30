@@ -74,7 +74,7 @@ extern "C" {
                 uint32_t TotalSectors; // Total sector count. Used to guard against illegal access.
                 int driver_type;
                 void *private_data; // Anything you need, or nothing at all.
-        } storage_t;
+        } __attribute__((packed)) storage_t;
 
         /**
          * FAT directory information structure
@@ -178,7 +178,7 @@ extern "C" {
 typedef struct Pvt {
         int B; // which instance
         uint8_t lun; // which LUN
-} pvt_t;
+} __attribute__((packed)) pvt_t;
 
 class UHS_FS_BULK_DRIVER : public UHS_Bulk_Storage {
 private:
@@ -333,7 +333,7 @@ typedef struct UHS_SD_CID {
         // byte 15
         unsigned always1 : 1;
         unsigned crc : 7;
-} UHS_SD_cid_t;
+} __attribute__((packed)) UHS_SD_cid_t;
 
 typedef struct UHS_SD_CSDV1 {
         // byte 0
@@ -393,7 +393,7 @@ typedef struct UHS_SD_CSDV1 {
         // byte 15
         unsigned always1 : 1;
         unsigned crc : 7;
-} UHS_SD_csd1_t;
+} __attribute__((packed)) UHS_SD_csd1_t;
 
 typedef struct UHS_SD_CSDV2 {
         // byte 0
@@ -449,7 +449,7 @@ typedef struct UHS_SD_CSDV2 {
         // byte 15
         unsigned always1 : 1;
         unsigned crc : 7;
-} UHS_SD_csd2_t;
+} __attribute__((packed)) UHS_SD_csd2_t;
 
 union UHS_SD_csd_t {
         UHS_SD_csd1_t v1;
@@ -460,7 +460,7 @@ union UHS_SD_csd_t {
 #define MAKE_SD_ISR_REFS() AJK_MAKE_FUNS(static void SD_ISR, void, UHS_MAX_SD_CARDS, SDISR_BODY)
 typedef struct SDPvt {
         int B; // which instance
-} SDpvt_t;
+} __attribute__((packed)) SDpvt_t;
 
 class UHS_SD {
 protected:

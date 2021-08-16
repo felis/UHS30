@@ -647,7 +647,7 @@ static uint32_t QH_capabilities2(uint32_t high_bw_mult, uint32_t hub_port_number
 //   irq     whether to generate an interrupt when transfer complete
 //
 
-void UHS_KINETIS_EHCI::init_qTD(uint32_t len, uint32_t pid, uint32_t data01) {
+void UHS_KINETIS_EHCI::init_qTD(uint32_t len, /* uint32_t pid ,*/ uint32_t data01) {
         qTD.nextQtdPointer = (uint32_t) & qHalt;
         qTD.alternateNextQtdPointer = (uint32_t) & qHalt;
         //if(data01) data01 = 0x80000000;
@@ -660,11 +660,11 @@ void UHS_KINETIS_EHCI::init_qTD(uint32_t len, uint32_t pid, uint32_t data01) {
         qTD.bufferPointers[3] = addr + 0x3000;
         qTD.bufferPointers[4] = addr + 0x4000;
 
-        qTD.transferResults.token = 0x80; // status
+        qTD.transferResults.token = 0x80; // status is set, the remaining is cleared to zero
         qTD.transferResults.toggle = data01;
         qTD.transferResults.length = len;
         //qTD.transferResults.ioc = (irq ? 1 : 0);
-        qTD.transferResults.PID = pid;
+        //qTD.transferResults.PID = pid;
 }
 
 /*
@@ -727,7 +727,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         uint32_t c = 0;
         uint32_t maxlen = (*ppep)->maxPktSize;
         uint32_t hub_addr = p->parent.bmAddress;
-        uint32_t hub_port = p->port; // hub port
+        uint32_t hub_port = p->port;
 
         if(type == 0) {
                 if(speed < 2) {
@@ -739,6 +739,12 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         qHalt.transferResults.token = 0x40;
         memset(&QH, 0, sizeof (QH));
         QH.horizontalLinkPointer = (uint32_t) & QH | 2;
+        QH.nextQtdPointer = (uint32_t) & qHalt;
+        QH.alternateNextQtdPointer = (uint32_t) & qHalt;
+        if((*ppep)->bmNeedPing) {
+                QH.transferOverlayResults[0] = 1;
+                (*ppep)->bmNeedPing = 0;
+        }
         // NAK limit,
         // LS/FS control ep flag,
         // max packet length,
@@ -748,13 +754,12 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         // endpoint,
         // Inactivate on Next Transaction (Periodic only, unused, set to zero),
         // device address
-        QH.nextQtdPointer = (uint32_t) & qHalt;
-        QH.alternateNextQtdPointer = (uint32_t) & qHalt;
-        if((*ppep)->bmNeedPing) {
-                QH.transferOverlayResults[0] = 1;
-                (*ppep)->bmNeedPing = 0;
-        }
         QH.staticEndpointStates[0] = QH_capabilities1(15, c, maxlen, 1, 1, speed, ep, 0, addr);
+        // high_bw_mult
+        // hub_port_number ( >1 <8 ), or 1 if root
+        // hub_address, zero is root
+        // split_completion_mask (always 0)
+        // interrupt_schedule_mask (always 0)
         QH.staticEndpointStates[1] = QH_capabilities2(1, hub_port, hub_addr, 0, 0);
         USBHS_ASYNCLISTADDR = (uint32_t) & QH;
         USBHS_USBCMD |= USBHS_USBCMD_ASE;
@@ -767,7 +772,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 // EHCI needs to fill in more information than the max chip. This is why it is failing.
 // Setaddress is a SPECIAL CASE for the max chip, which determines the speed on the max chip, not the end device.
 // EHCI works differently, needing to know BOTH factors before sending any packet.
-// The token determines what the actual USB token is. IN/OUT/BULK/ETC. NOT setup!
+// The token determines what the actual USB token is. IN/OUT/BULK/ETC.
 //
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit) {
@@ -776,6 +781,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
         noInterrupts();
         if(nak_limit == 1) nak_limit = 2; // allow for transmission if we are between...
         nak_countdown = nak_limit;
+        qTD.transferResults.PID = token;
         // set token and final endpoint here
         QH.nextQtdPointer = (uint32_t) & qTD;
         QH.transferOverlayResults[0] &= 1;
@@ -823,16 +829,12 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                                 noInterrupts();
                                 nak_countdown = 0;
                                 interrupts();
-                                USBHS_USBCMD &= ~USBHS_USBCMD_ASE;
-                                while((USBHS_USBSTS & USBHS_USBSTS_AS)); // wait for async schedule disable
                                 return UHS_HOST_ERROR_BABBLE; // Babble Detected
                         }
                         if(status & 0x20u) {
                                 noInterrupts();
                                 nak_countdown = 0;
                                 interrupts();
-                                USBHS_USBCMD &= ~USBHS_USBCMD_ASE;
-                                while((USBHS_USBSTS & USBHS_USBSTS_AS)); // wait for async schedule disable
                                 return UHS_HOST_ERROR_DMA; // Data Buffer Error
                         }
                         if(status & 0x48u) { // Halted or Transaction Error
@@ -855,13 +857,9 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                                 interrupts();
                                 if(status & 0x40u) {
                                         HOST_DEBUGx("dispatchPkt STALL\r\n");
-                                        USBHS_USBCMD &= ~USBHS_USBCMD_ASE;
-                                        while((USBHS_USBSTS & USBHS_USBSTS_AS)); // wait for async schedule disable
                                         return UHS_HOST_ERROR_STALL;
                                 }
                                 HOST_DEBUGx("dispatchPkt OTHER\r\n");
-                                USBHS_USBCMD &= ~USBHS_USBCMD_ASE;
-                                while((USBHS_USBSTS & USBHS_USBSTS_AS)); // wait for async schedule disable
                                 return UHS_HOST_ERROR_TIMEOUT;
                         }
                         noInterrupts();
@@ -911,7 +909,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit
                 bytes = nbytes;
                 if(bytes > maxpktsize) bytes = maxpktsize;
                 memcpy(data_buf, p_buffer, bytes); // copy packet into buffer
-                init_qTD(bytes, UHS_KINETIS_EHCI_TOKEN_DATA_OUT, pep->bmSndToggle);
+                init_qTD(bytes, pep->bmSndToggle);
                 rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_OUT, ep, nak_limit);
                 uint32_t status = qTD.transferResults.token;
                 pep->bmSndToggle = status >> 31;
@@ -944,7 +942,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
         // certain devices can send more than asked for.
         // Let's hope EHCI truncates.
 #if 0
-        init_qTD(/* data,*/ *nbytesptr, 1, pep->bmRcvToggle /*, false*/);
+        init_qTD(*nbytesptr, pep->bmRcvToggle);
         uint8_t rcode = dispatchPkt(0, 0, nak_limit);
         uint32_t status = qTD.transferResults;
         *nbytesptr -= (status >> 16) & 0x7FFF;
@@ -964,7 +962,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
         // NOTE: can rx > maxPktSize?!
         while(nbytes && !rcode) {
                 datalen = (nbytes > maxpktsize) ? maxpktsize : nbytes;
-                init_qTD(/* data,*/ datalen, UHS_KINETIS_EHCI_TOKEN_DATA_IN, pep->bmRcvToggle/* , false*/);
+                init_qTD(datalen, pep->bmRcvToggle);
                 rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_IN, ep, nak_limit);
                 uint32_t status = qTD.transferResults.token;
                 // This field is decremented by the number of bytes actually moved
@@ -996,7 +994,7 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
                 //static uint8_t setupbuf[8];
                 //memcpy(setupbuf, &Request, 8);
                 memcpy(data_buf, &Request, datalen); // copy packet into buffer
-                init_qTD(/* setupbuf,*/ datalen, UHS_KINETIS_EHCI_TOKEN_SETUP, 0/* , false*/); // setup always uses DATA0
+                init_qTD(datalen, 0); // setup always uses DATA0
                 rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_SETUP, 0, nak_limit); // setup always uses DATA0
                 if(!rcode) {
                         if(dataptr != NULL) {
@@ -1032,7 +1030,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, ui
 }
 
 uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr) {
-        uint8_t rcode;
+        uint8_t rcode = 0;
         //printf("Close\r\n");
         if(((bmReqType & 0x80) == 0x80) && pep && left && dataptr) {
                 HOST_DEBUG("ctrlReqClose Sinking %i\r\n", left);
@@ -1047,13 +1045,15 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType
                 }
 
         }
-        if(((bmReqType & 0x80) == 0x80)) {
-                init_qTD(/* &tmp,*/ 0, UHS_KINETIS_EHCI_TOKEN_DATA_OUT, 1/*, false*/); // make sure we use DATA1 for status phase
-                rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_OUT, 0, 2000);
-        } else {
-                init_qTD(/* &tmp,*/ 0, UHS_KINETIS_EHCI_TOKEN_DATA_IN, 1/*, false*/); // make sure we use DATA1 for status phase
-                rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_IN, 0, 2000);
+        if(!rcode) {
+                if(((bmReqType & 0x80) == 0x80)) {
+                        init_qTD(0, 1); // make sure we use DATA1 for status phase
+                        rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_OUT, 0, 2000);
+                } else {
+                        init_qTD(0, 1); // make sure we use DATA1 for status phase
+                        rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_IN, 0, 2000);
 
+                }
         }
 
         return rcode;

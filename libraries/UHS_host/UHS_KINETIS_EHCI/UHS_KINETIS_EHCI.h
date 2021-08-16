@@ -79,7 +79,7 @@ typedef struct _uhs_kehci_qh {
         volatile uint32_t alternateNextQtdPointer; /* alternate next qTD pointer */
         volatile uint32_t transferOverlayResults[6]; /* transfer overlay configuration and transfer results */
         uint32_t rspace[4]; // reserved space
-} uhs_kehci_qh_t;
+} __attribute__((packed)) uhs_kehci_qh_t;
 
 
 typedef struct _UHS_EHCI_TOKEN {
@@ -103,7 +103,7 @@ typedef struct _UHS_EHCI_TOKEN {
                 volatile uint32_t alternateNextQtdPointer; /* QTD specification filed, alternate next QTD pointer */
                 volatile UHS_EHCI_TOKEN transferResults; /* QTD specification filed, transfer results fields */
                 volatile uint32_t bufferPointers[5]; /* QTD specification filed, transfer buffer fields */
-        } uhs_kehci_qtd_t;
+        } __attribute__((packed)) uhs_kehci_qtd_t;
 
 #if defined(UHS_FUTURE)
 
@@ -116,7 +116,7 @@ typedef struct _UHS_EHCI_TOKEN {
                 struct _uhs_kehci_itd *nextItdPointer; /* Next ITD pointer */
                 uint32_t frameEntryIndex; /* The ITD inserted frame value */
                 uint32_t reserved[6]; /* Reserved fields for 32 bytes align */
-        } uhs_kehci_itd_t;
+        } __attribute__((packed)) uhs_kehci_itd_t;
 
         typedef struct _uhs_kehci_sitd {
                 uint32_t nextLinkPointer; /* SITD specification filed, the next linker pointer */
@@ -129,7 +129,7 @@ typedef struct _UHS_EHCI_TOKEN {
                 uint8_t nextSitdIndex; /* The next SITD index; Get the next SITD pointer through adding base address with the
                                  index. 0xFF means invalid. */
                 uint8_t reserved; /* Reserved fields for 32 bytes align */
-        } uhs_kehci_sitd_t;
+        } __attribute__((packed)) uhs_kehci_sitd_t;
 
         /*
          *
@@ -143,7 +143,7 @@ typedef struct _UHS_EHCI_TOKEN {
 
                 uint16_t lastLinkFrame; /*!< It means that the inserted frame for ISO ITD/SITD. 0xFFFF is invalid. For ITD, it is a
                                micro-frame value. For SITD, it is a frame value */
-        } usb_host_ehci_iso_t;
+        } __attribute__((packed)) usb_host_ehci_iso_t;
 
 #define UHS_KEHCI_ehciUnitBase_MAX \
 ((sizeof(uhs_kehci_qh_t) * UHS_KEHCI_MAX_QH) + \
@@ -161,7 +161,7 @@ typedef struct _UHS_EHCI_TOKEN {
                 uhs_kehci_itd_t itd[UHS_KEHCI_MAX_ITD] __attribute__ ((aligned(32)));
                 uhs_kehci_sitd_t sitd[UHS_KEHCI_MAX_SITD] __attribute__ ((aligned(32)));
 #endif
-        } Qs_t;
+        } __attribute__((packed)) Qs_t;
 
 #endif // UHS_FUTURE
 
@@ -241,7 +241,7 @@ typedef struct _UHS_EHCI_TOKEN {
                 void UHS_NI poopOutStatus();
                 void ISRTask(void);
                 void ISRbottom(void);
-                void init_qTD(uint32_t len, uint32_t pid, uint32_t data01);
+                void init_qTD(uint32_t len, uint32_t data01);
                 void busprobe(void);
 
                 virtual void VBUS_changed(void);

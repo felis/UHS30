@@ -22,7 +22,7 @@ struct quirk_printer_struct {
         uint16_t vendorId;
         uint16_t productId;
         uint8_t quirks;
-};
+}__attribute__((packed));
 
 #define     UHS_PRINTER_QUIRK_BIDIR 0x01U /* reports bidir but requires unidirectional mode (no INs/reads) */
 #define  UHS_PRINTER_QUIRK_USB_INIT 0x02U /* needs vendor USB init string */

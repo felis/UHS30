@@ -49,7 +49,7 @@ extern "C" {
         typedef struct {
                 FBYTE pd; /* Physical drive number */
                 FBYTE pt; /* Partition: 0:Auto detect, 1-4:Forced partition) */
-        } PARTITION;
+        } __attribute__((packed)) PARTITION;
         extern PARTITION VolToPart[]; /* Volume - Partition resolution table */
 #define LD2PD(vol) (VolToPart[vol].pd)	/* Get physical drive number */
 #define LD2PT(vol) (VolToPart[vol].pt)	/* Get partition index */
@@ -120,7 +120,7 @@ extern "C" {
 #if _USB_ == 1
                 struct PFAT* pfat;
 #endif
-        } FATFS;
+        } __attribute__((packed)) FATFS;
 
         /* File object structure (FIL) */
 
@@ -147,7 +147,7 @@ extern "C" {
 #if !_FS_TINY
                 FBYTE buf[_MAX_SS]; /* File data read/write buffer */
 #endif
-        } FIL;
+        } __attribute__((packed)) FIL;
 
         /* Directory object structure (DIR) */
 
@@ -164,7 +164,7 @@ extern "C" {
                 WCHAR* lfn; /* Pointer to the LFN working buffer */
                 WORD lfn_idx; /* Last matched LFN index number (0xFFFF:No LFN) */
 #endif
-        } DIR;
+        } __attribute__((packed)) DIR;
 
         /* File status structure (FILINFO) */
 
@@ -178,7 +178,7 @@ extern "C" {
                 TCHAR* lfname; /* Pointer to the LFN buffer */
                 UINT lfsize; /* Size of LFN buffer in TCHAR */
 #endif
-        } FILINFO;
+        } __attribute__((packed)) FILINFO;
 
         /* File function return code (FRESULT) */
 
@@ -208,7 +208,7 @@ extern "C" {
                 FR_DISK_FULL, /* (22) no clusters left */
                 FR_ABORTED, /* (23) aborted file */
 
-        } /* __attribute__((packed)) */ FRESULT;
+        } FRESULT;
 
         /*--------------------------------------------------------------*/
         /* FatFs module application interface                           */

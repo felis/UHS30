@@ -458,7 +458,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                 uint8_t tries = 0xf0;
                 while((rcode = TestUnitReady(lun))) {
                         BS_HOST_DEBUG("\r\nTry %2.2x TestUnitReady %2.2x\r\n", tries - 0xf0, rcode);
-                        if(rcode == 0x08) break; // break on no media, this is OK to do.
+                        if(rcode == UHS_BULK_ERR_NO_MEDIA || rcode == 0x08) break; // break on no media, this is OK to do.
                         if(rcode == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug;
                         if(rcode == UHS_BULK_ERR_INVALID_CSW) goto Fail;
                         if(rcode != UHS_BULK_ERR_MEDIA_CHANGED) goto Fail;
@@ -467,6 +467,10 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                         if(!tries) break;
                 }
                 if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
+                if(rcode == UHS_BULK_ERR_NO_MEDIA) {
+                        LUNOk[lun] = false;
+                        continue;
+                }
                 LockMedia(lun, 1);
                 if(rcode == 0x08) {
                         if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
@@ -490,7 +494,6 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                         LUNOk[lun] = false;
                 }
         }
-
         rcode = OnStart();
 
         if(rcode) goto FailOnInit;

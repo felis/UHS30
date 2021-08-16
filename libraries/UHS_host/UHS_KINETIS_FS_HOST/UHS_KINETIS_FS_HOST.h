@@ -96,7 +96,7 @@ e-mail   :  support@circuitsathome.com
 typedef struct {
         uint32_t desc;
         void * addr;
-} bdt_t;
+} __attribute__((packed)) bdt_t;
 
 class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
 
