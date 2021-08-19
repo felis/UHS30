@@ -61,7 +61,7 @@ void UHS_NI UHS_USBHub::DriverDefaults(void) {
         bNbrPorts = 0;
         bAlternateSetting = 255;
         pUsb->DeviceDefaults(2, this);
-        epInfo[0].maxPktSize = 8;
+        epInfo[0].maxPktSize = 8; // kludge
         epInfo[0].bmNakPower = UHS_USB_NAK_MAX_POWER;
 
         epInfo[1].epAddr = 1;
@@ -110,10 +110,11 @@ uint8_t UHS_NI UHS_USBHub::Finalize(void) {
         if(rcode) goto Fail;
 
         // Save number of ports for future use
-
+        if(!UHS_SLEEP_MS(50)) goto Fail;
         bNbrPorts = hd->bNbrPorts;
-        rcode = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(USB_SETUP_RECIPIENT_INTERFACE, USB_REQUEST_SET_INTERFACE, bAlternateSetting, bIface, 0), 0, NULL);
-        if(rcode) goto Fail;
+        // Allowed to stall as per spec
+        pUsb->ctrlReq(bAddress, mkSETUP_PKT16(USB_SETUP_RECIPIENT_INTERFACE, USB_REQUEST_SET_INTERFACE, bAlternateSetting, bIface, 0), 0, NULL);
+        //if(rcode) goto Fail;
 
         // delay a bit...
         if(!UHS_SLEEP_MS(50)) goto Fail;
@@ -122,8 +123,7 @@ uint8_t UHS_NI UHS_USBHub::Finalize(void) {
         if(rcode) goto Fail;
 
         //rcode  = GetHubStatus(4, buf);
-
-        if(rcode) goto Fail;
+        //if(rcode) goto Fail;
 
         return 0;
 
