@@ -577,13 +577,13 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
 
         uint32_t type = (*ppep)->type;
         uint32_t speed;
-        if(p->speed == 2) {
-                speed = 2; // 480 Mbit/sec
+
+        if(p->speed == 0) {
+                speed = 1; // 1.5 Mbit/sec
         } else if(p->speed == 1) {
                 speed = 0; // 12 Mbit/sec
-        } else {
-                speed = 1; // 1.5 Mbit/sec
-        }
+        } else speed = p->speed; // 480 Mbit/sec
+
         uint32_t c = 0;
         uint32_t maxlen = (*ppep)->maxPktSize;
         uint32_t hub_addr = p->parent.bmAddress;
@@ -641,15 +641,16 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
         isrHappened = false;
         interrupts();
         while(!condet) {
+                uint32_t status = qTD.transferResults.token;
                 // Wait for a state change.
                 if(newError) {
                         // we need to get the actual translated error, for now, we'll say NAK here too
                         noInterrupts();
                         nak_countdown = 0;
                         interrupts();
-                        return UHS_HOST_ERROR_NAK;
+                        UHS_EHCI_DEBUG("XXXXXXXX newError trap - status said %2.2x\r\n", (unsigned int)(status & 0xffu));
+                        // return UHS_HOST_ERROR_NAK;
                 }
-                uint32_t status = qTD.transferResults.token;
 
                 if(!(status & 0x80)) {
                         if(!(status & 0xffu)) {
@@ -725,6 +726,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                         interrupts();
                         USBHS_USBCMD &= ~USBHS_USBCMD_ASE;
                         while((USBHS_USBSTS & USBHS_USBSTS_AS)); // wait for async schedule disable
+                        UHS_EHCI_DEBUG("XXXXXXXX Default trap - NAKing\r\n");
                         return UHS_HOST_ERROR_NAK;
                 }
                 noInterrupts();
@@ -735,6 +737,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                         USBHS_USBCMD &= ~USBHS_USBCMD_ASE;
                         while((USBHS_USBSTS & USBHS_USBSTS_AS)); // wait for async schedule disable
 
+                        UHS_EHCI_DEBUG("XXXXXXXX NAK out NAKing\r\n");
                         return UHS_HOST_ERROR_NAK;
                 }
         }

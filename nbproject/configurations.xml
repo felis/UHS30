@@ -88,11 +88,6 @@
         </df>
         <df name="UHS_FS">
           <df name="examples">
-            <df name="UHS_FS_SPI_SDCARD">
-              <df name="UHS_FS_SPI_SDCARD_DEMO_LABEL">
-                <in>UHS_FS_SPI_SDCARD_DEMO_LABEL.ino</in>
-              </df>
-            </df>
             <df name="UHS_KINETIS_EHCI">
               <df name="UHS_FS_NEW_DEMO">
                 <in>UHS_FS_NEW_DEMO.ino</in>
@@ -690,11 +685,6 @@
             ex="false"
             tool="1"
             flavor2="4">
-      </item>
-      <item path="libraries/UHS_FS/examples/UHS_FS_SPI_SDCARD/UHS_FS_SPI_SDCARD_DEMO_LABEL/UHS_FS_SPI_SDCARD_DEMO_LABEL.ino"
-            ex="false"
-            tool="1"
-            flavor2="0">
       </item>
       <item path="libraries/UHS_FS/examples/UHS_KINETIS_EHCI/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
             ex="false"

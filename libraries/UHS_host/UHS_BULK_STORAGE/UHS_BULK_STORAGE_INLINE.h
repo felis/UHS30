@@ -450,8 +450,8 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                                         BS_HOST_DEBUG("unknown");
                         }
                         BS_HOST_DEBUG(" standards.\r\n");
-                }
 #endif
+                }
         }
 
         for(lun = 0; lun <= bMaxLUN; lun++) {
