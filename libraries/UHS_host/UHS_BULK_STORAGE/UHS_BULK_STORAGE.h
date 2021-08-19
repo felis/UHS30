@@ -174,6 +174,9 @@ protected:
         volatile uint16_t CurrentSectorSize[MASS_MAX_SUPPORTED_LUN]; // Sector size, clipped to 16 bits
         volatile bool LUNOk[MASS_MAX_SUPPORTED_LUN]; // use this to check for media changes.
         volatile bool WriteOk[MASS_MAX_SUPPORTED_LUN];
+        volatile uint8_t scsiver[MASS_MAX_SUPPORTED_LUN];
+        volatile uint8_t DeviceType[MASS_MAX_SUPPORTED_LUN];
+
         void PrintEndpointDescriptor(const USB_ENDPOINT_DESCRIPTOR* ep_ptr);
 
 public:
@@ -231,6 +234,7 @@ private:
         uint8_t TestUnitReady(uint8_t lun);
         uint8_t RequestSense(uint8_t lun, uint16_t size, uint8_t *buf);
         uint8_t ModeSense6(uint8_t lun, uint8_t pc, uint8_t page, uint8_t subpage, uint8_t len, uint8_t *buf);
+        uint8_t ModeSense10(uint8_t lun, uint8_t pc, uint8_t page, uint8_t subpage, uint16_t len, uint8_t *buf);
         uint8_t GetMaxLUN(uint8_t *max_lun);
         uint8_t SetCurLUN(uint8_t lun);
         uint8_t ResetRecovery();

@@ -27,11 +27,15 @@ e-mail   :  support@circuitsathome.com
 #if defined(LOAD_UHS_BULK_STORAGE) && defined(__UHS_BULK_STORAGE_H__) && !defined(UHS_BULK_STORAGE_LOADED)
 #define UHS_BULK_STORAGE_LOADED
 
+#if !defined(DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE)
+#define DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE 0
+#endif
+
 // uncomment to get 'printf' console debugging. NOT FOR UNO!
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE
 
 #if DEBUG_PRINTF_EXTRA_HUGE
-#ifdef DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE
+#if DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE
 #define BS_HOST_DEBUG(...) printf(__VA_ARGS__)
 #else
 #define BS_HOST_DEBUG(...) VOID0
@@ -326,12 +330,6 @@ bool UHS_NI UHS_Bulk_Storage::OKtoEnumerate(ENUMERATION_INFO *ei) {
         BS_HOST_DEBUG("BulkOnly: checking numep %i, klass %2.2x, subklass %2.2x\r\n", ei->interface.numep, ei->klass, ei->subklass);
         BS_HOST_DEBUG("BulkOnly: checking protocol %2.2x, interface.klass %2.2x, interface.subklass %2.2x\r\n", ei->protocol, ei->interface.klass, ei->interface.subklass);
         BS_HOST_DEBUG("BulkOnly: checking interface.protocol %2.2x\r\n", ei->interface.protocol);
-        //
-        // TO-DO?
-        // Check that we have 2 bulk endpoints, and one in each direction??
-        // e.g.       (ei->interface.numep > 1) && // two or more endpoints AND check types
-        // This will work with proper hardware though.
-        //
 
         return (
                 ((ei->klass == UHS_USB_CLASS_MASS_STORAGE) || (ei->interface.klass == UHS_USB_CLASS_MASS_STORAGE)) && // mass storage class AND
@@ -370,11 +368,11 @@ uint8_t UHS_NI UHS_Bulk_Storage::SetInterface(ENUMERATION_INFO *ei) {
         epInfo[0].epAddr = 0;
         epInfo[0].maxPktSize = ei->bMaxPacketSize0;
         epInfo[0].bmNakPower = UHS_USB_NAK_MAX_POWER;
-        epInfo[0].type=USB_TRANSFER_TYPE_CONTROL;
+        epInfo[0].type = USB_TRANSFER_TYPE_CONTROL;
         bIface = ei->interface.bInterfaceNumber;
 
         return 0;
-};
+}
 
 /**
  *
@@ -412,18 +410,20 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                 BS_HOST_DEBUG("Inquiry 0x%2.2x 0x%2.2x\r\n", sizeof (SCSI_Inquiry_Response), rcode);
                 if(rcode) {
                         goto FailInquiry;
-#if 0
+                        scsiver[lun] = 0;
                 } else {
+                        DeviceType[lun] = response.DeviceType;
+                        scsiver[lun] = response.Version;
+#if DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE
                         BS_HOST_DEBUG("LUN %i `", lun);
                         uint8_t *buf = response.VendorID;
-                        for(int i = 0; i < 28; i++) BS_HOST_DEBUG("%c", buf[i]);
+                        for(int i = 0; i < 28; i++) BS_HOST_DEBUG("%c", buf[i] &0x7f);
                         BS_HOST_DEBUG("'\r\nQualifier %1.1X ", response.PeripheralQualifier);
-                        BS_HOST_DEBUG("Device type %2.2X ", response.DeviceType);
+                        BS_HOST_DEBUG("Device type %2.2X ", DeviceType[lun]);
                         BS_HOST_DEBUG("RMB %1.1X ", response.Removable);
                         BS_HOST_DEBUG("SSCS %1.1X ", response.SCCS);
-                        uint8_t sv = response.Version;
-                        BS_HOST_DEBUG("SCSI version %2.2X\r\nDevice conforms to ", sv);
-                        switch(sv) {
+                        BS_HOST_DEBUG("SCSI version %2.2X\r\nDevice conforms to ", scsiver[lun]);
+                        switch(scsiver[lun]) {
                                 case 0:
                                         BS_HOST_DEBUG("No specific");
                                         break;
@@ -449,15 +449,15 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                                         BS_HOST_DEBUG("unknown");
                         }
                         BS_HOST_DEBUG(" standards.\r\n");
-#endif
                 }
+#endif
         }
 
         for(uint8_t lun = 0; lun <= bMaxLUN; lun++) {
                 if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
                 uint8_t tries = 0xf0;
                 while((rcode = TestUnitReady(lun))) {
-                        BS_HOST_DEBUG("\r\nTry %2.2x TestUnitReady %2.2x\r\n", tries - 0xf0, rcode);
+                        BS_HOST_DEBUG("\r\nTry %2.2x TestUnitReady1 %2.2x\r\n", tries - 0xf0, rcode);
                         if(rcode == UHS_BULK_ERR_NO_MEDIA || rcode == 0x08) break; // break on no media, this is OK to do.
                         if(rcode == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug;
                         if(rcode == UHS_BULK_ERR_INVALID_CSW) goto Fail;
@@ -468,8 +468,13 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                 }
                 if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
                 if(rcode == UHS_BULK_ERR_NO_MEDIA) {
-                        LUNOk[lun] = false;
-                        continue;
+                        if(DeviceType[lun] != 0) {
+                                LUNOk[lun] = false;
+                                continue;
+                        } else {
+                                if(MediaCTL(lun, 3) == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug;
+                                rcode = 0x08;
+                        }
                 }
                 LockMedia(lun, 1);
                 if(rcode == 0x08) {
@@ -478,13 +483,12 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                         BS_HOST_DEBUG("Spinup LUN %u\r\n", lun);
                         if(MediaCTL(lun, 1) == UHS_BULK_ERR_DEVICE_DISCONNECTED) goto FailUnPlug;
                         BS_HOST_DEBUG("Spinup LUN %u completed\r\n", lun);
+                        rcode = 0;
                 }
-                BS_HOST_DEBUG("\r\nTry %2.2x TestUnitReady %2.2x\r\n", tries - 0xf0, rcode);
                 if(!rcode) {
                         if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
                         BS_HOST_DEBUG("CheckLUN...\r\n");
                         BS_HOST_DEBUG("%lu\r\n", millis() / 1000);
-                        // Stalls on ***some*** devices, ***WHY***?! Device SAID it is READY!!
                         LUNOk[lun] = CheckLUN(lun);
                         BS_HOST_DEBUG("%lu\r\n", millis() / 1000);
                         if(!LUNOk[lun]) LUNOk[lun] = CheckLUN(lun);
@@ -494,42 +498,34 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
                         LUNOk[lun] = false;
                 }
         }
+        BS_HOST_DEBUG("Onstart begin\r\n");
         rcode = OnStart();
 
         if(rcode) goto FailOnInit;
 
-#ifdef DEBUG_USB_HOST
-        USBTRACE("BS configured\r\n\r\n");
-#endif
+        BS_HOST_DEBUG("BS configured\r\n\r\n");
         qNextPollTime = millis() + 100;
         bPollEnable = true;
 
         return 0;
 FailUnPlug:
         rcode = UHS_BULK_ERR_DEVICE_DISCONNECTED;
+        BS_HOST_DEBUG("unplugged: ");
         goto Fail;
 
 FailOnInit:
-#ifdef DEBUG_USB_HOST
-        USBTRACE("OnStart:");
+        BS_HOST_DEBUG("Onstart:");
         goto Fail;
-#endif
 
 FailGetMaxLUN:
-#ifdef DEBUG_USB_HOST
-        USBTRACE("GetMaxLUN:");
+        BS_HOST_DEBUG("GetMaxLUN:");
         goto Fail;
-#endif
 
 FailInquiry:
-#ifdef DEBUG_USB_HOST
-        USBTRACE("Inquiry:");
-#endif
+        BS_HOST_DEBUG("Inquiry:");
 
 Fail:
-#ifdef DEBUG_USB_HOST
-        NotifyFail(rcode);
-#endif
+        BS_HOST_DEBUG(" %2.2x\r\n", rcode);
         Release();
 
         return rcode;
@@ -551,12 +547,12 @@ bool UHS_NI UHS_Bulk_Storage::CheckLUN(uint8_t lun) {
                 BS_HOST_DEBUG(">>>>>>>>>>>>>>>>ReadCapacity returned %i\r\n", rcode);
                 return false;
         }
-#ifdef DEBUG_USB_HOST
-        ErrorMessage<uint8_t > (PSTR(">>>>>>>>>>>>>>>>CAPACITY OK ON LUN"), lun);
-        for(uint8_t i = 0; i < 8 /*sizeof (Capacity)*/; i++)
-                D_PrintHex<uint8_t > (capacity.data[i], 0x80);
-        Notify(PSTR("\r\n\r\n"), 0x80);
+#if DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE
+        BS_HOST_DEBUG(">>>>>>>>>>>>>>>>CAPACITY OK ON LUN %i\r\n", lun);
+        for(uint8_t i = 0; i < 8; i++) BS_HOST_DEBUG("%2.2x", capacity.data[i]);
+        BS_HOST_DEBUG("\r\n\r\n");
 #endif
+
         // Only 512/1024/2048/4096 are valid values!
         uint32_t c = UHS_BYTES_TO_UINT32(capacity.data[4], capacity.data[5], capacity.data[6], capacity.data[7]);
         if(c != 0x0200LU && c != 0x0400LU && c != 0x0800LU && c != 0x1000LU) {
@@ -568,10 +564,11 @@ bool UHS_NI UHS_Bulk_Storage::CheckLUN(uint8_t lun) {
         CurrentCapacity[lun] = UHS_BYTES_TO_UINT32(capacity.data[0], capacity.data[1], capacity.data[2], capacity.data[3]) + 1;
         if(CurrentCapacity[lun] == /*0xffffffffLU */ 0x01LU || CurrentCapacity[lun] == 0x00LU) {
                 // Buggy firmware will report 0xffffffff or 0 for no media
-#ifdef DEBUG_USB_HOST
-                if(CurrentCapacity[lun])
-                        ErrorMessage<uint8_t > (PSTR(">>>>>>>>>>>>>>>>BUGGY FIRMWARE. CAPACITY FAIL ON LUN"), lun);
-#endif
+                if(CurrentCapacity[lun]) {
+                        BS_HOST_DEBUG(">>>>>>>>>>>>>>>>BUGGY FIRMWARE. CAPACITY FAIL ON LUN %i", lun);
+                } else {
+                        BS_HOST_DEBUG("Capacity is Zero on LUN %i.", lun);
+                }
                 return false;
         }
         if(!UHS_SLEEP_MS(20)) return false;
@@ -636,7 +633,7 @@ void UHS_NI UHS_Bulk_Storage::Poll(void) {
  * @param plun
  * @return
  */
-uint8_t UHS_NI UHS_Bulk_Storage::GetMaxLUN(uint8_t *plun) {
+uint8_t UHS_NI UHS_Bulk_Storage::GetMaxLUN(uint8_t * plun) {
         if(!bAddress) return UHS_BULK_ERR_DEVICE_DISCONNECTED;
         uint8_t ret = pUsb->ctrlReq(bAddress, mkSETUP_PKT16(UHS_BULK_bmREQ_IN, UHS_BULK_REQ_GET_MAX_LUN, 0x0000U, bIface, 1), 1, plun);
 
@@ -656,11 +653,8 @@ uint8_t UHS_NI UHS_Bulk_Storage::GetMaxLUN(uint8_t *plun) {
  * @param buf
  * @return
  */
-uint8_t UHS_NI UHS_Bulk_Storage::Inquiry(uint8_t lun, uint16_t bsize, uint8_t *buf) {
+uint8_t UHS_NI UHS_Bulk_Storage::Inquiry(uint8_t lun, uint16_t bsize, uint8_t * buf) {
         if(!bAddress) return UHS_BULK_ERR_DEVICE_DISCONNECTED;
-        Notify(PSTR("\r\nInquiry\r\n"), 0x80);
-        Notify(PSTR("---------\r\n"), 0x80);
-
         SCSI_CDB6_t cdb = SCSI_CDB6_t(SCSI_CMD_INQUIRY, lun, 0LU, (uint8_t)bsize, 0);
         uint8_t rc = SCSITransaction6(&cdb, bsize, buf, (uint8_t)UHS_BULK_CMD_DIR_IN);
 
@@ -678,9 +672,6 @@ uint8_t UHS_NI UHS_Bulk_Storage::TestUnitReady(uint8_t lun) {
         //SetCurLUN(lun);
         if(!bAddress)
                 return UHS_BULK_ERR_UNIT_NOT_READY;
-
-        Notify(PSTR("\r\nTestUnitReady\r\n"), 0x80);
-        Notify(PSTR("-----------------\r\n"), 0x80);
 
         SCSI_CDB6_t cdb = SCSI_CDB6_t(SCSI_CMD_TEST_UNIT_READY, lun, (uint8_t)0, 0);
 
@@ -701,8 +692,6 @@ uint8_t UHS_NI UHS_Bulk_Storage::TestUnitReady(uint8_t lun) {
  */
 uint8_t UHS_NI UHS_Bulk_Storage::ModeSense6(uint8_t lun, uint8_t pc, uint8_t page, uint8_t subpage, uint8_t len, uint8_t * pbuf) {
         if(!bAddress) return UHS_BULK_ERR_DEVICE_DISCONNECTED;
-        Notify(PSTR("\r\rModeSense\r\n"), 0x80);
-        Notify(PSTR("------------\r\n"), 0x80);
 
         SCSI_CDB6_t cdb = SCSI_CDB6_t(SCSI_CMD_MODE_SENSE_6, lun, (uint32_t)((((pc << 6) | page) << 8) | subpage), len, 0);
 
@@ -713,14 +702,31 @@ uint8_t UHS_NI UHS_Bulk_Storage::ModeSense6(uint8_t lun, uint8_t pc, uint8_t pag
  * For driver use only.
  *
  * @param lun Logical Unit Number
+ * @param pc
+ * @param page
+ * @param subpage
+ * @param len
+ * @param pbuf
+ * @return
+ */
+uint8_t UHS_NI UHS_Bulk_Storage::ModeSense10(uint8_t lun, uint8_t pc, uint8_t page, uint8_t subpage, uint16_t len, uint8_t * pbuf) {
+        if(!bAddress) return UHS_BULK_ERR_DEVICE_DISCONNECTED;
+
+        SCSI_CDB10_t cdb = SCSI_CDB10_t(SCSI_CMD_MODE_SENSE_10, lun, (uint32_t)((((pc << 6) | page) << 8) | subpage), len, 0);
+
+        return SCSITransaction10(&cdb, len, pbuf, (uint8_t)UHS_BULK_CMD_DIR_IN);
+}
+
+/**
+ * For driver use only.
+ *
+ * @param lun Logical Unit Number
  * @param bsize
  * @param buf
  * @return
  */
-uint8_t UHS_NI UHS_Bulk_Storage::ReadCapacity10(uint8_t lun, uint8_t *buf) {
+uint8_t UHS_NI UHS_Bulk_Storage::ReadCapacity10(uint8_t lun, uint8_t * buf) {
         if(!bAddress) return UHS_BULK_ERR_DEVICE_DISCONNECTED;
-        Notify(PSTR("\r\nReadCapacity\r\n"), 0x80);
-        Notify(PSTR("---------------\r\n"), 0x80);
 
         SCSI_CDB10_t cdb = SCSI_CDB10_t(SCSI_CMD_READ_CAPACITY_10, lun);
 
@@ -737,23 +743,33 @@ uint8_t UHS_NI UHS_Bulk_Storage::ReadCapacity10(uint8_t lun, uint8_t *buf) {
  */
 uint8_t UHS_NI UHS_Bulk_Storage::Page3F(uint8_t lun) {
         if(!bAddress) return UHS_BULK_ERR_DEVICE_DISCONNECTED;
-        uint8_t buf[192];
-        for(int i = 0; i < 192; i++) {
+        uint8_t buf[255];
+        uint8_t rc = 0;
+        for(int i = 0; i < 255; i++) {
                 buf[i] = 0x00;
         }
         WriteOk[lun] = true;
-        uint8_t rc = ModeSense6(lun, 0, 0x3f, 0, 192, buf);
+        // try Page3F with 4 bytes.
+        rc = ModeSense10(lun, 0, 0x3f, 0, 4, buf);
         if(!rc) {
-                WriteOk[lun] = ((buf[2] & 0x80) == 0);
-#ifdef DEBUG_USB_HOST
-                Notify(PSTR("Mode Sense: "), 0x80);
-                for(int i = 0; i < 4; i++) {
-
-                        D_PrintHex<uint8_t > (buf[i], 0x80);
-                        Notify(PSTR(" "), 0x80);
+                WriteOk[lun] = ((buf[3] & 0x80) == 0);
+        } else {
+                rc = ModeSense6(lun, 0, 0x3f, 0, 4, buf);
+                if(!rc) {
+                        WriteOk[lun] = ((buf[2] & 0x80) == 0);
                 }
-                Notify(PSTR("\r\n"), 0x80);
-#endif
+        }
+        // try page 00 with 4 bytes.
+        if(rc) {
+                rc = ModeSense10(lun, 0, 0, 0, 4, buf);
+                if(!rc) {
+                        WriteOk[lun] = ((buf[3] & 0x80) == 0);
+                } else {
+                        rc = ModeSense6(lun, 0, 0, 0, 4, buf);
+                        if(!rc) {
+                                WriteOk[lun] = ((buf[2] & 0x80) == 0);
+                        }
+                }
         }
         return rc;
 }
@@ -766,11 +782,9 @@ uint8_t UHS_NI UHS_Bulk_Storage::Page3F(uint8_t lun) {
  * @param buf
  * @return
  */
-uint8_t UHS_NI UHS_Bulk_Storage::RequestSense(uint8_t lun, uint16_t size, uint8_t *buf) {
+uint8_t UHS_NI UHS_Bulk_Storage::RequestSense(uint8_t lun, uint16_t size, uint8_t * buf) {
         if(!bAddress) return UHS_BULK_ERR_DEVICE_DISCONNECTED;
         pUsb->DisablePoll();
-        Notify(PSTR("\r\nRequestSense\r\n"), 0x80);
-        Notify(PSTR("----------------\r\n"), 0x80);
 
         SCSI_CDB6_t cdb = SCSI_CDB6_t(SCSI_CMD_REQUEST_SENSE, lun, 0LU, (uint8_t)size, 0);
         UHS_BULK_CommandBlockWrapper cbw = UHS_BULK_CommandBlockWrapper(++dCBWTag, (uint32_t)size, &cdb, (uint8_t)UHS_BULK_CMD_DIR_IN);
@@ -890,7 +904,7 @@ void UHS_NI UHS_Bulk_Storage::DriverDefaults(void) {
  * @param pcbw
  * @return
  */
-bool UHS_NI UHS_Bulk_Storage::IsValidCSW(UHS_BULK_CommandStatusWrapper *pcsw, UHS_BULK_CommandBlockWrapperBase *pcbw) {
+bool UHS_NI UHS_Bulk_Storage::IsValidCSW(UHS_BULK_CommandStatusWrapper *pcsw, UHS_BULK_CommandBlockWrapperBase * pcbw) {
         if(!bAddress) return false;
         if(pcsw->dCSWSignature != UHS_BULK_CSW_SIGNATURE) {
                 BS_HOST_DEBUG("CSW:Sig error %8.8lx != %8.8lx\r\n", pcsw->dCSWSignature, UHS_BULK_CSW_SIGNATURE);
@@ -1090,14 +1104,12 @@ uint8_t UHS_NI UHS_Bulk_Storage::HandleSCSIError(uint8_t status) {
                 case 0: return UHS_BULK_ERR_SUCCESS;
 
                 case 2:
-                        ErrorMessage<uint8_t > (PSTR("Phase Error"), status);
-                        ErrorMessage<uint8_t > (PSTR("LUN"), bTheLUN);
+                        BS_HOST_DEBUG("Phase Error %2.2x on LUN %i\r\n", status, bTheLUN);
                         ResetRecovery();
                         return UHS_BULK_ERR_GENERAL_SCSI_ERROR;
 
                 case 1:
-                        ErrorMessage<uint8_t > (PSTR("SCSI Error"), status);
-                        ErrorMessage<uint8_t > (PSTR("LUN"), bTheLUN);
+                        BS_HOST_DEBUG("SCSI Error %2.2x on LUN %i\r\n", status, bTheLUN);
                         SCSI_Request_Sense_Response rsp;
 
                         ret = RequestSense(bTheLUN, sizeof (SCSI_Request_Sense_Response), (uint8_t*) & rsp);
@@ -1106,20 +1118,8 @@ uint8_t UHS_NI UHS_Bulk_Storage::HandleSCSIError(uint8_t status) {
                                 if(ret == UHS_BULK_ERR_DEVICE_DISCONNECTED) return UHS_BULK_ERR_DEVICE_DISCONNECTED;
                                 return UHS_BULK_ERR_GENERAL_SCSI_ERROR;
                         }
-#if ENABLE_UHS_DEBUGGING
-                        ErrorMessage<uint8_t > (PSTR("Response Code"), rsp.bResponseCode);
-                        if(rsp.bResponseCode & 0x80) {
-                                Notify(PSTR("Information field: "), 0x80);
-                                for(int i = 0; i < 4; i++) {
-                                        D_PrintHex<uint8_t > (rsp.CmdSpecificInformation[i], 0x80);
-                                        Notify(PSTR(" "), 0x80);
-                                }
-                                Notify(PSTR("\r\n"), 0x80);
-                        }
-                        ErrorMessage<uint8_t > (PSTR("Sense Key"), rsp.bmSenseKey);
-                        ErrorMessage<uint8_t > (PSTR("Add Sense Code"), rsp.bAdditionalSenseCode);
-                        ErrorMessage<uint8_t > (PSTR("Add Sense Qual"), rsp.bAdditionalSenseQualifier);
-#endif
+                        BS_HOST_DEBUG("Response Code %2.2x, Information field: [%2.2x %2.2x %2.2x %2.2x]\r\n", rsp.bResponseCode, rsp.CmdSpecificInformation[0], rsp.CmdSpecificInformation[1], rsp.CmdSpecificInformation[2], rsp.CmdSpecificInformation[3]);
+                        BS_HOST_DEBUG("Sense Key %2.2x Sense Code %2.2x Sense Qual %2.2x\r\n", rsp.bmSenseKey, rsp.bAdditionalSenseCode, rsp.bAdditionalSenseQualifier);
                         // warning, this is not testing ASQ, only SK and ASC.
                         switch(rsp.bmSenseKey) {
                                 case SCSI_S_UNIT_ATTENTION:
@@ -1151,9 +1151,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::HandleSCSIError(uint8_t status) {
                         //    case 0x05/0x14: we stalled out
                         //    case 0x15/0x16: we naked out.
                 default:
-                        ErrorMessage<uint8_t > (PSTR("Gen SCSI Err"), status);
-                        ErrorMessage<uint8_t > (PSTR("LUN"), bTheLUN);
-
+                        BS_HOST_DEBUG("Gen SCSI Err %2.2x, LUN %2.2x\r\n", status, bTheLUN);
                         return status;
         } // switch
 }

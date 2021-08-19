@@ -3,6 +3,37 @@
  * Author: root
  *
  * Created on July 31, 2016, 1:01 AM
+ *
+ * This is a simplification & small subset of EHCI adapted for UHS.  If you read the
+ * EHCI spec, normally a driver would dynamically allocate one QH structure for each
+ * endpoint in every device.  The many QH structures would be placed into a circular
+ * linked list for the asynchronous schedule or an inverted binary tree for the
+ * periodic schedule.  For actual data transfer, qTD structures would be dynamically
+ * allocated and hot-inserted to the linked list from the QH representing the
+ * desired endpoint.  Additional list structures outside the scope of EHCI would
+ * normally be used to manage qTD structures after EHCI completes their work
+ * requirements.  As USB devices & hubs connect and disconnect, special rules need
+ * to be followed to dynamically change the QH lists while EHCI is actively using
+ * them.  The normal EHCI usage model is very complex!
+ *
+ * UHS uses a much simpler model, where SetAddress() is first called to configure
+ * the hardware to communicate with one endpoint on a particular device.  Then the
+ * functions below are called to perform the USB communication.  To meet this usage
+ * model, a single QH structure is connected to EHCI's asynchronous schedule.  The
+ * periodic schedule is not used or required.  When SetAddress() requests a different
+ * device or endpoint, this one QH is reconfigured.
+ *
+ * Data transfer is accomplished using two qTD structures.  qHalt is reserved for
+ * placing the QH into its halted state.  When no data transfer is needed, the
+ * QH.nextQtdPointer field must always have the address of qHalt.  This is how
+ * the QH "knows" no more data transfers are to be attempted.  When data transfer
+ * is needed, the main qTD structure is initialized with the details and a pointer
+ * to the actual buffer which sources or sinks USB data.  This main qTD structure
+ * must have its nextQtdPointer field set to the address of qHalt *before* it is
+ * used.  Then to cause EHCI to perform the data transfer, the QH.nextQtdPointer
+ * is written to the address of the main qTD.  When the transfer completes, EHCI
+ * automatically updates the QH.nextQtdPointer field to the qTD.nextQtdPointer.
+ * The QH returns to its halted state because the main qTD points to the qHalt structure.
  */
 
 
@@ -15,90 +46,6 @@ static UHS_KINETIS_EHCI *_UHS_KINETIS_EHCI_THIS_;
 static void UHS_NI call_ISR_kinetis_EHCI(void) {
         _UHS_KINETIS_EHCI_THIS_->ISRTask();
 }
-
-void UHS_NI UHS_KINETIS_EHCI::poopOutStatus() {
-#if defined(EHCI_TEST_DEV)
-        uint32_t n;
-
-        n = USBHS_PORTSC1;
-        if(n & USBHS_PORTSC_PR) {
-                printf("reset ");
-        }
-        if(n & USBHS_PORTSC_PP) {
-                printf("on ");
-        } else {
-                printf("off ");
-        }
-        if(n & USBHS_PORTSC_PHCD) {
-                printf("phyoff ");
-        }
-        if(n & USBHS_PORTSC_PE) {
-                if(n & USBHS_PORTSC_SUSP) {
-                        printf("suspend ");
-                } else {
-                        printf("enable ");
-                }
-        } else {
-                printf("disable ");
-        }
-        printf("speed=");
-        switch(((n >> 26) & 3)) {
-                case 0: printf("12 Mbps FS ");
-                        break;
-                case 1: printf("1.5 Mbps LS ");
-                        break;
-                case 2: printf("480 Mbps HS ");
-                        break;
-                default: printf("(undefined) ");
-        }
-        if(n & USBHS_PORTSC_HSP) {
-                printf("high-speed ");
-        }
-        if(n & USBHS_PORTSC_OCA) {
-                printf("overcurrent ");
-        }
-        if(n & USBHS_PORTSC_CCS) {
-                printf("connected ");
-        } else {
-                printf("not-connected ");
-        }
-
-        printf(" run=%i", (USBHS_USBCMD & 1) ? 1 : 0); // running mode
-
-        // print info about the EHCI status
-        n = USBHS_USBSTS;
-        printf(",SUSP=%i", n & USBHS_USBSTS_HCH ? 1 : 0);
-        printf(",RECL=%i", n & USBHS_USBSTS_RCL ? 1 : 0);
-        printf(",PSRUN=%i", n & USBHS_USBSTS_PS ? 1 : 0);
-        printf(",ASRUN=%i", n & USBHS_USBSTS_AS ? 1 : 0);
-        printf(",USBINT=%i", n & USBHS_USBSTS_UI ? 1 : 0);
-        printf(",USBERRINT=%i", n & USBHS_USBSTS_UEI ? 1 : 0);
-        printf(",PCHGINT=%i", n & USBHS_USBSTS_PCI ? 1 : 0);
-        printf(",FRAMEINT=%i", n & USBHS_USBSTS_FRI ? 1 : 0);
-        printf(",errINT=%i", n & USBHS_USBSTS_SEI ? 1 : 0);
-        printf(",AAINT=%i", n & USBHS_USBSTS_AAI ? 1 : 0);
-        printf(",RSTINT=%i", n & USBHS_USBSTS_URI ? 1 : 0);
-        printf(",SOFINT=%i", n & USBHS_USBSTS_SRI ? 1 : 0);
-        printf(",NAKINT=%i", n & USBHS_USBSTS_NAKI ? 1 : 0);
-        printf(",ASINT=%i", n & USBHS_USBSTS_UAI ? 1 : 0);
-        printf(",PSINT=%i", n & USBHS_USBSTS_UPI ? 1 : 0);
-        printf(",T0INT=%i", n & USBHS_USBSTS_TI0 ? 1 : 0);
-        printf(",T1INT=%i", n & USBHS_USBSTS_TI1 ? 1 : 0);
-
-        printf(",index=%lu\r\n", USBHS_FRINDEX); // periodic index
-
-#endif
-}
-
-/*
- * This will be part of packet dispatch.
-        do {
-                s = (USBHS_USBSTS & USBHS_USBSTS_AS) | (USBHS_USBCMD & USBHS_USBCMD_ASE);
-        } while((s == USBHS_USBSTS_AS) || (s == USBHS_USBCMD_ASE));
-        USBHS_USBCMD |= USBHS_USBCMD_ASE;
-        while (!(USBHS_USBSTS & USBHS_USBSTS_AS)); // spin
- */
-
 
 void UHS_NI UHS_KINETIS_EHCI::busprobe(void) {
         uint8_t speed = 15;
@@ -123,10 +70,8 @@ void UHS_NI UHS_KINETIS_EHCI::busprobe(void) {
         usb_host_speed = speed;
         if(speed == 2) {
                 UHS_KIO_SETBIT_ATOMIC(USBPHY_CTRL, USBPHY_CTRL_ENHOSTDISCONDETECT);
-                //USBPHY_CTRL |= USBPHY_CTRL_ENHOSTDISCONDETECT;
         } else {
                 UHS_KIO_CLRBIT_ATOMIC(USBPHY_CTRL, USBPHY_CTRL_ENHOSTDISCONDETECT);
-                //USBPHY_CTRL &= ~USBPHY_CTRL_ENHOSTDISCONDETECT;
         }
 }
 
@@ -354,8 +299,6 @@ void UHS_NI UHS_KINETIS_EHCI::ISRTask(void) {
         // connected on pin 4
         digitalWriteFast(4, (Pstat & USBHS_PORTSC_CCS) ? 1 : 0);
 #endif
-        //USBHS_PORTSC1 &= Pstat;
-
         DDSB();
         if(!timer_countdown && !nak_countdown &&!sof_countdown && !counted && !usb_task_polling_disabled) {
                 usb_task_polling_disabled++;
@@ -402,92 +345,8 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
 
         memset(&qHalt, 0, sizeof (qHalt));
         qHalt.transferResults.token = 0x40;
-
-#if defined(UHS_FUTURE)
-#if defined(EHCI_TEST_DEV)
-        printf("*Q = %p\r\n", &Q);
-        printf("*Q.qh = %p\r\n", (Q.qh));
-        printf("*Q.qh[0] = %p\r\n", &(Q.qh[0]));
-        printf("*Q.qh[1] = %p\r\n\n", &(Q.qh[1]));
-        printf("*Q.qtd[0] = %p\r\n", &(Q.qtd[0]));
-        printf("*Q.qtd[1] = %p\r\n\n", &(Q.qtd[1]));
-#if defined(UHS_FUTURE)
-        printf("*Q.itd[0] = %p\r\n", &(Q.itd[0]));
-        printf("*Q.itd[1] = %p\r\n\n", &(Q.itd[1]));
-        printf("*Q.sitd[0] = %p\r\n", &(Q.sitd[0]));
-        printf("*Q.sitd[1] = %p\r\n\n", &(Q.sitd[1]));
-#endif
-#endif
-        // Zero entire Q structure.
-        uint8_t *bz = (uint8_t *)(&Q);
-#if defined(EHCI_TEST_DEV)
-        printf("Structure size = 0x%x ...", sizeof (Qs_t));
-#endif
-        memset(bz, 0, sizeof (Qs_t));
-#if defined(EHCI_TEST_DEV)
-        printf(" Zeroed");
-        // Init queue heads
-        printf("\r\nInit QH %u queue heads...", UHS_KEHCI_MAX_QH);
-#endif
-        for(unsigned int i = 0; i < UHS_KEHCI_MAX_QH; i++) {
-                Q.qh[i].horizontalLinkPointer = 1;
-                //2LU | (uint32_t)&(Q.qh[i + 1]);
-                Q.qh[i].currentQtdPointer = 1;
-                Q.qh[i].nextQtdPointer = 1;
-                Q.qh[i].alternateNextQtdPointer = 1;
-
-        }
-        Q.qh[UHS_KEHCI_MAX_QH - 1].horizontalLinkPointer = (uint32_t)3;
-
-        // Init queue transfer descriptors
-#if defined(EHCI_TEST_DEV)
-        printf("\r\nInit QTD %u queue transfer descriptors...", UHS_KEHCI_MAX_QTD);
-#endif
-        for(unsigned int i = 0; i < UHS_KEHCI_MAX_QTD; i++) {
-                Q.qtd[i].nextQtdPointer = 1;
-                // (uint32_t)&(Q.qtd[i + 1]);
-                Q.qtd[i].alternateNextQtdPointer = 1;
-                //Q.qtd[i].bufferPointers;
-                //Q.qtd[i].transferResults;
-        }
-        Q.qtd[UHS_KEHCI_MAX_QTD - 1].nextQtdPointer = (uint32_t)NULL;
-
-        // Init isochronous transfer descriptors
-#if defined(UHS_FUTURE)
-#if defined(EHCI_TEST_DEV)
-        printf("\r\nInit ITD %u isochronous transfer descriptors...", UHS_KEHCI_MAX_ITD);
-#endif
-        for(unsigned int i = 0; i < UHS_KEHCI_MAX_ITD; i++) {
-                Q.itd[i].nextLinkPointer = (uint32_t)&(Q.itd[i + 1]);
-        }
-        Q.itd[UHS_KEHCI_MAX_ITD - 1].nextLinkPointer = (uint32_t)NULL;
-
-        // Init split transaction isochronous transfer descriptors
-#if defined(EHCI_TEST_DEV)
-        printf("\r\nInit SITD %u split transaction isochronous transfer descriptors...", UHS_KEHCI_MAX_SITD);
-#endif
-        for(unsigned int i = 0; i < UHS_KEHCI_MAX_SITD; i++) {
-                Q.sitd[i].nextLinkPointer = (uint32_t)&(Q.sitd[i + 1]);
-        }
-        Q.sitd[UHS_KEHCI_MAX_SITD - 1].nextLinkPointer = (uint32_t)NULL;
-#endif
-#endif // UHS_FUTURE
-
-
-
-#if defined(EHCI_TEST_DEV)
-        printf("\r\n");
-#endif
-
-#if defined(UHS_FUTURE)
-        for(int i = 0; i < UHS_KEHCI_MAX_FRAMES; i++) {
-                frame[i] = 1;
-        }
-#endif
-
-#ifdef HAS_KINETIS_MPU
+#if defined(__MK66FX1M0__)
         MPU_RGDAAC0 |= 0x30000000;
-#endif
         PORTE_PCR6 = PORT_PCR_MUX(1);
         GPIOE_PDDR |= (1 << 6);
 
@@ -499,12 +358,11 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         OSC0_CR |= OSC_ERCLKEN;
         SIM_SOPT2 |= SIM_SOPT2_USBREGEN; // turn on USB regulator
         SIM_SOPT2 &= ~SIM_SOPT2_USBSLSRC; // use IRC for slow clock
-        HOST_DEBUG("power up USBHS PHY\r\n");
+        HOST_DEBUG("power up EHCI PHY\r\n");
         SIM_USBPHYCTL |= SIM_USBPHYCTL_USBDISILIM; // disable USB current limit
-        //SIM_USBPHYCTL = SIM_USBPHYCTL_USBDISILIM | SIM_USBPHYCTL_USB3VOUTTRG(6); // pg 237
         SIM_SCGC3 |= SIM_SCGC3_USBHSDCD | SIM_SCGC3_USBHSPHY | SIM_SCGC3_USBHS;
         USBHSDCD_CLOCK = 33 << 2;
-        HOST_DEBUG("init USBHS PHY & PLL\r\n");
+        HOST_DEBUG("init EHCI PHY & PLL\r\n");
 
         // init process: page 1681-1682
         USBPHY_CTRL_CLR = (USBPHY_CTRL_SFTRST | USBPHY_CTRL_CLKGATE); // // CTRL pg 1698
@@ -518,6 +376,60 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         }
         HOST_DEBUG("PLL locked, waited %i\r\n", count);
 
+#elif defined(__IMXRT1052__) || defined(__IMXRT1062__)
+#ifdef ARDUINO_TEENSY41
+        IOMUXC_SW_MUX_CTL_PAD_GPIO_EMC_40 = 5;
+        IOMUXC_SW_PAD_CTL_PAD_GPIO_EMC_40 = 0x0008; // slow speed, weak 150 ohm drive
+        GPIO8_GDIR |= 1 << 26;
+        GPIO8_DR_CLR = 1 << 26;
+#endif
+        while(1) {
+                uint32_t n = CCM_ANALOG_PLL_USB2;
+                if(n & CCM_ANALOG_PLL_USB2_DIV_SELECT) {
+                        CCM_ANALOG_PLL_USB2_CLR = 0xC000; // get out of 528 MHz mode
+                        CCM_ANALOG_PLL_USB2_SET = CCM_ANALOG_PLL_USB2_BYPASS;
+                        CCM_ANALOG_PLL_USB2_CLR = CCM_ANALOG_PLL_USB2_POWER |
+                                CCM_ANALOG_PLL_USB2_DIV_SELECT |
+                                CCM_ANALOG_PLL_USB2_ENABLE |
+                                CCM_ANALOG_PLL_USB2_EN_USB_CLKS;
+                        continue;
+                }
+                if(!(n & CCM_ANALOG_PLL_USB2_ENABLE)) {
+                        CCM_ANALOG_PLL_USB2_SET = CCM_ANALOG_PLL_USB2_ENABLE; // enable
+                        continue;
+                }
+                if(!(n & CCM_ANALOG_PLL_USB2_POWER)) {
+                        CCM_ANALOG_PLL_USB2_SET = CCM_ANALOG_PLL_USB2_POWER; // power up
+                        continue;
+                }
+                if(!(n & CCM_ANALOG_PLL_USB2_LOCK)) {
+                        continue; // wait for lock
+                }
+                if(n & CCM_ANALOG_PLL_USB2_BYPASS) {
+                        CCM_ANALOG_PLL_USB2_CLR = CCM_ANALOG_PLL_USB2_BYPASS; // turn off bypass
+                        continue;
+                }
+                if(!(n & CCM_ANALOG_PLL_USB2_EN_USB_CLKS)) {
+                        CCM_ANALOG_PLL_USB2_SET = CCM_ANALOG_PLL_USB2_EN_USB_CLKS; // enable
+                        continue;
+                }
+                break; // USB2 PLL up and running
+        }
+        // turn on USB clocks (should already be on)
+        CCM_CCGR6 |= CCM_CCGR6_USBOH3(CCM_CCGR_ON);
+        // turn on USB2 PHY
+        USBPHY_CTRL_CLR = USBPHY_CTRL_SFTRST | USBPHY_CTRL_CLKGATE;
+#endif
+
+        /*
+         * To enable full USB support on the PHY, bits ENUTMILEVEL3 and ENUTMILEVEL2, in the
+         * USBPHY_CTRL register, must be set. UTMI+ Level 2 adds support for directly connected low-speed
+         * devices. This is needed when the controller operates in host mode for operation with low-speed devices
+         * such as USB mice. UTMI+ Level 3 adds support for directly connected full-speed hubs that need to support
+         * low-speed devices
+         */
+
+        USBPHY_CTRL_SET = USBPHY_CTRL_ENUTMILEVEL2 | USBPHY_CTRL_ENUTMILEVEL3;
         // turn on power to PHY
         USBPHY_PWD = 0;
         delay(10);
@@ -531,33 +443,16 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         HOST_DEBUG("reset waited %i\r\n", count);
 
         // turn on the USBHS controller
-        USBHS_USBMODE = /* USBHS_USBMODE_TXHSD(5) |*/ USBHS_USBMODE_CM(3); // host mode
+        USBHS_USBMODE = USBHS_USBMODE_CM(3); // host mode
         USBHS_FRINDEX = 0;
         USBHS_USBINTR = 0;
-#if defined(EHCI_TEST_DEV)
-        poopOutStatus();
-#endif
         USBHS_USBCMD = USBHS_USBCMD_ITC(0) | USBHS_USBCMD_RS | USBHS_USBCMD_ASP(3) |
                 USBHS_USBCMD_FS2 | USBHS_USBCMD_FS(0); // periodic table is 64 pointers
 
-#if defined(UHS_FUTURE)
-        uint32_t s;
-        // periodic
-        do {
-                s = (USBHS_USBSTS & USBHS_USBSTS_PS) | (USBHS_USBCMD & USBHS_USBCMD_PSE);
-        } while((s == USBHS_USBSTS_PS) || (s == USBHS_USBCMD_PSE));
-        USBHS_PERIODICLISTBASE = (uint32_t)frame;
-        USBHS_USBCMD |= USBHS_USBCMD_PSE;
-#endif
         // async list
-        //USBHS_ASYNCLISTADDR = (uint32_t)(Q.qh);
         USBHS_ASYNCLISTADDR = 0;
 
         USBHS_PORTSC1 |= USBHS_PORTSC_PP;
-
-#if defined(EHCI_TEST_DEV)
-        poopOutStatus();
-#endif
 
         USBHS_OTGSC =
                 //        USBHS_OTGSC_BSEIE | // B session end
@@ -594,15 +489,6 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
                 USBHS_USBINTR_UEE | // Error
                 USBHS_USBINTR_UE // Enable
                 ;
-        /*
-         * To enable full USB support on the PHY, bits ENUTMILEVEL3 and ENUTMILEVEL2, in the
-         * USBPHY_CTRL register, must be set. UTMI+ Level 2 adds support for directly connected low-speed
-         * devices. This is needed when the controller operates in host mode for operation with low-speed devices
-         * such as USB mice. UTMI+ Level 3 adds support for directly connected full-speed hubs that need to support
-         * low-speed devices
-         */
-        UHS_KIO_SETBIT_ATOMIC(USBPHY_CTRL, USBPHY_CTRL_ENUTMILEVEL3);
-        UHS_KIO_SETBIT_ATOMIC(USBPHY_CTRL, USBPHY_CTRL_ENUTMILEVEL2);
 
         // switch isr for USB
         noInterrupts();
@@ -639,15 +525,7 @@ static uint32_t QH_capabilities2(uint32_t high_bw_mult, uint32_t hub_port_number
                 (split_completion_mask << 8) | (interrupt_schedule_mask << 0));
 }
 
-// Fill in the qTD fields (token & data)
-//   buf     data to transfer
-//   len     length of data  (up to 16K for any address, or up to 20K if 4K aligned)
-//   pid     type of packet: 0=OUT, 1=IN, 2=SETUP
-//   data01  value of DATA0/DATA1 toggle on 1st packet
-//   irq     whether to generate an interrupt when transfer complete
-//
-
-void UHS_KINETIS_EHCI::init_qTD(uint32_t len, /* uint32_t pid ,*/ uint32_t data01) {
+void UHS_KINETIS_EHCI::init_qTD(uint32_t len, uint32_t data01) {
         qTD.nextQtdPointer = (uint32_t) & qHalt;
         qTD.alternateNextQtdPointer = (uint32_t) & qHalt;
         //if(data01) data01 = 0x80000000;
@@ -664,42 +542,8 @@ void UHS_KINETIS_EHCI::init_qTD(uint32_t len, /* uint32_t pid ,*/ uint32_t data0
         qTD.transferResults.toggle = data01;
         qTD.transferResults.length = len;
         //qTD.transferResults.ioc = (irq ? 1 : 0);
-        //qTD.transferResults.PID = pid;
 }
 
-/*
-This is a simplification & small subset of EHCI adapted for UHS.  If you read the
-EHCI spec, normally a driver would dynamically allocate one QH structure for each
-endpoint in every device.  The many QH structures would be placed into a circular
-linked list for the asynchronous schedule or an inverted binary tree for the
-periodic schedule.  For actual data transfer, qTD structures would be dynamically
-allocated and hot-inserted to the linked list from the QH representing the
-desired endpoint.  Additional list structures outside the scope of EHCI would
-normally be used to manage qTD structures after EHCI completes their work
-requirements.  As USB devices & hubs connect and disconnect, special rules need
-to be followed to dynamically change the QH lists while EHCI is actively using
-them.  The normal EHCI usage model is very complex!
-
-UHS uses a much simpler model, where SetAddress() is first called to configure
-the hardware to communicate with one endpoint on a particular device.  Then the
-functions below are called to perform the USB communication.  To meet this usage
-model, a single QH structure is connected to EHCI's asynchronous schedule.  The
-periodic schedule is not used.  When SetAddress() requests a different device or
-endpoint, this one QH is reconfigured.
-
-Data transfer is accomplished using two qTD structures.  qHalt is reserved for
-placing the QH into its halted state.  When no data transfer is needed, the
-QH.nextQtdPointer field must always have the address of qHalt.  This is how
-the QH "knows" no more data transfers are to be attempted.  When data transfer
-is needed, the main qTD structure is initialized with the details and a pointer
-to the actual buffer which sources or sinks USB data.  This main qTD structure
-must have its nextQtdPointer field set to the address of qHalt *before* it is
-used.  Then to cause EHCI to perform the data transfer, the QH.nextQtdPointer
-is written to the address of the main qTD.  When the transfer completes, EHCI
-automatically updates the QH.nextQtdPointer field to the qTD.nextQtdPointer.
-The QH returns to its halted state because the main qTD points to the qHalt
-structure.
- */
 uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo **ppep, uint16_t & nak_limit) {
         HOST_DEBUG("SetAddress, addr=%d, ep=%x\r\n", addr, ep);
 
@@ -767,31 +611,21 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         return UHS_HOST_ERROR_NONE;
 }
 
-//
-// Paul has this wrong. the token etc is VERY important, as the MAX chip is more intellegent than EHCI.
-// EHCI needs to fill in more information than the max chip. This is why it is failing.
-// Setaddress is a SPECIAL CASE for the max chip, which determines the speed on the max chip, not the end device.
-// EHCI works differently, needing to know BOTH factors before sending any packet.
-// The token determines what the actual USB token is. IN/OUT/BULK/ETC.
-//
-
 uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit) {
         uint16_t nc = 0;
         //printf("DISPATCH! %i\r\n", nak_limit);
         noInterrupts();
         if(nak_limit == 1) nak_limit = 2; // allow for transmission if we are between...
         nak_countdown = nak_limit;
-        qTD.transferResults.PID = token;
         // set token and final endpoint here
+        qTD.transferResults.PID = token;
         QH.nextQtdPointer = (uint32_t) & qTD;
         QH.transferOverlayResults[0] &= 1;
         newError = false;
         isrHappened = false;
         interrupts();
         while(!condet) {
-                // Paul: Better to watch this from the ISR?
                 // Wait for a state change.
-                // See UHS_KINETIS_FS_HOST_INLINE.h
                 if(newError) {
                         // we need to get the actual translated error, for now, we'll say NAK here too
                         noInterrupts();
@@ -932,22 +766,6 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit
 uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit, uint16_t *nbytesptr, uint8_t *data) {
         HOST_DEBUG("InTransfer %d NAKS: %d\r\n", *nbytesptr, nak_limit);
 
-        // if(nak_limit < 2000) nak_limit = 2000;
-        //HOST_DEBUG("NOW InTransfer %d NAKS: %d\r\n", *nbytesptr, nak_limit);
-        // WARNING!
-        // Potentially unsafe if EHCI DMA > than requested size.
-        // This would cause corruption from broken hardware.
-        // This needs to be verified that it will never happen.
-        // If it becomes an issue, we need to allocate a dedicated buffer.
-        // certain devices can send more than asked for.
-        // Let's hope EHCI truncates.
-#if 0
-        init_qTD(*nbytesptr, pep->bmRcvToggle);
-        uint8_t rcode = dispatchPkt(0, 0, nak_limit);
-        uint32_t status = qTD.transferResults;
-        *nbytesptr -= (status >> 16) & 0x7FFF;
-        pep->bmRcvToggle = status >> 31;
-#else
         nak_limit = (0x0001UL << ((nak_limit > UHS_USB_NAK_MAX_POWER) ? UHS_USB_NAK_MAX_POWER : nak_limit));
         nak_limit--;
         if(nak_limit == 1)nak_limit = 2;
@@ -964,6 +782,13 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
                 datalen = (nbytes > maxpktsize) ? maxpktsize : nbytes;
                 init_qTD(datalen, pep->bmRcvToggle);
                 rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_IN, ep, nak_limit);
+                if(rcode == UHS_HOST_ERROR_NYET) {
+                        // NYET means the OUT transfer was successful, but
+                        // next time we need to begin the PING protocol.
+                        // USB 2.0 spec: section 8.5.1, pages 217-220
+                        pep->bmNeedPing = 1;
+                        rcode = UHS_HOST_ERROR_NONE;
+                }
                 uint32_t status = qTD.transferResults.token;
                 // This field is decremented by the number of bytes actually moved
                 // during the transaction, only on the successful completion of the
@@ -978,7 +803,6 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
                 HOST_DEBUG("InTransfer Got %d Bytes\r\n", *nbytesptr);
                 if(pktsize < datalen) break; // short packet.
         }
-#endif
         HOST_DEBUG("InTransfer done.\r\n");
         return rcode;
 }
@@ -996,6 +820,13 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
                 memcpy(data_buf, &Request, datalen); // copy packet into buffer
                 init_qTD(datalen, 0); // setup always uses DATA0
                 rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_SETUP, 0, nak_limit); // setup always uses DATA0
+                if(rcode == UHS_HOST_ERROR_NYET) {
+                        // NYET means the OUT transfer was successful, but
+                        // next time we need to begin the PING protocol.
+                        // USB 2.0 spec: section 8.5.1, pages 217-220
+                        pep->bmNeedPing = 1;
+                        rcode = UHS_HOST_ERROR_NONE;
+                }
                 if(!rcode) {
                         if(dataptr != NULL) {
                                 if(((Request) /* bmReqType */ & 0x80) == 0x80) {
@@ -1034,8 +865,6 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType
         //printf("Close\r\n");
         if(((bmReqType & 0x80) == 0x80) && pep && left && dataptr) {
                 HOST_DEBUG("ctrlReqClose Sinking %i\r\n", left);
-                // TODO: is this needed?
-                // Paul: Yes! otherwise USB will stall and die. -- AJK
                 while(left) {
                         uint16_t read = nbytes;
                         rcode = InTransfer(pep, 0, &read, dataptr);
@@ -1049,9 +878,24 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType
                 if(((bmReqType & 0x80) == 0x80)) {
                         init_qTD(0, 1); // make sure we use DATA1 for status phase
                         rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_OUT, 0, 2000);
+                        if(rcode == UHS_HOST_ERROR_NYET) {
+                                // NYET means the OUT transfer was successful, but
+                                // next time we need to begin the PING protocol.
+                                // USB 2.0 spec: section 8.5.1, pages 217-220
+                                pep->bmNeedPing = 1;
+                                rcode = UHS_HOST_ERROR_NONE;
+                        }
+
                 } else {
                         init_qTD(0, 1); // make sure we use DATA1 for status phase
                         rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_IN, 0, 2000);
+                        if(rcode == UHS_HOST_ERROR_NYET) {
+                                // NYET means the OUT transfer was successful, but
+                                // next time we need to begin the PING protocol.
+                                // USB 2.0 spec: section 8.5.1, pages 217-220
+                                pep->bmNeedPing = 1;
+                                rcode = UHS_HOST_ERROR_NONE;
+                        }
 
                 }
         }

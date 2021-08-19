@@ -24,9 +24,9 @@
 // enable testing output
 //#define EHCI_TEST_DEV
 //#define LED_STATUS 1
-//#define DEBUG_PRINTF_EXTRA_HUGE 1
+#define DEBUG_PRINTF_EXTRA_HUGE 1
 //#define DEBUG_PRINTF_EXTRA_HUGE_UHS_HOST 1
-//#define DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE 1
+#define DEBUG_PRINTF_EXTRA_HUGE_UHS_BULK_STORAGE 1
 
 //////////////////////////////////////
 // OPTIONS
@@ -332,4 +332,3 @@ void loop() {
                 }
         }
 }
-

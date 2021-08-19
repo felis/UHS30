@@ -28,6 +28,7 @@ e-mail   :  support@circuitsathome.com
 #else
 #define __MESSAGE_H__
 
+// to-do remove this cruft.
 extern int UsbDEBUGlvl;
 
 void E_Notify(char const * msg, int lvl);

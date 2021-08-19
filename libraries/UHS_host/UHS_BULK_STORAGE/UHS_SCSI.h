@@ -34,7 +34,7 @@ e-mail   :  support@circuitsathome.com
  * Multi-Media Commands - 5 (MMC-5)
  */
 
-/* Group 1 commands (CDB's here are should all be 6-bytes) */
+/* Group 1 commands (CDB's here are 6-bytes) */
 #define SCSI_CMD_TEST_UNIT_READY	0x00U
 #define SCSI_CMD_REQUEST_SENSE		0x03U
 #define SCSI_CMD_FORMAT_UNIT		0x04U
@@ -176,6 +176,12 @@ struct SCSI_CDB10 {
 
         uint8_t Control;
 public:
+
+        SCSI_CDB10(uint8_t _Opcode, uint8_t _LUN, uint32_t _LBA, uint16_t xflen, uint8_t _Control) :
+        Opcode(_Opcode), Service_Action(0), LUN(_LUN),
+        LBA_L_M_MB(UHS_UINT8_BYTE3(_LBA)), LBA_L_M_LB(UHS_UINT8_BYTE2(_LBA)), LBA_L_L_MB(UHS_UINT8_BYTE1(_LBA)), LBA_L_L_LB(UHS_UINT8_BYTE0(_LBA)),
+        Misc2(0), ALC_MB(UHS_UINT8_BYTE1(xflen)), ALC_LB(UHS_UINT8_BYTE0(xflen)), Control(_Control) {
+        }
 
         SCSI_CDB10(uint8_t _Opcode, uint8_t _LUN) :
         Opcode(_Opcode), Service_Action(0), LUN(_LUN),
@@ -325,4 +331,3 @@ struct SCSI_Request_Sense_Response {
 } __attribute__((packed));
 
 #endif	/* UHS_SCSI_H */
-
