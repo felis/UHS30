@@ -568,7 +568,9 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         *ppep = getEpInfoEntry(addr, ep);
         if(!*ppep) return UHS_HOST_ERROR_NO_ENDPOINT_IN_TABLE;
         nak_limit = (*ppep)->bmNakPower;
-        if(nak_limit == 1)nak_limit = 2;
+        if(nak_limit == 1) {
+                nak_limit = 2;
+        }
 
         USBHS_USBCMD &= ~USBHS_USBCMD_ASE;
         while((USBHS_USBSTS & USBHS_USBSTS_AS)); // wait for async schedule disable
@@ -830,6 +832,8 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
         uint16_t nak_limit;
         uint32_t datalen = 8;
         uint8_t rcode = SetAddress(addr, 0, &pep, nak_limit);
+        nak_limit = (0x0001UL << ((nak_limit > UHS_USB_NAK_MAX_POWER) ? UHS_USB_NAK_MAX_POWER : nak_limit));
+        nak_limit--;
         UHS_EHCI_DEBUG("ctrlReqOpen nak_limit is %i, rcode from SetAddress %i\r\n", nak_limit, rcode);
         if(!rcode) {
                 //static uint8_t setupbuf[8];
