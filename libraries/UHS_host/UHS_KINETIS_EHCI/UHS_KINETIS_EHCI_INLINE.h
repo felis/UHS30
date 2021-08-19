@@ -589,10 +589,8 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         uint32_t hub_addr = p->parent.bmAddress;
         uint32_t hub_port = p->port;
 
-        if(ep == 0) {
-                if(speed < 2) {
-                        c = 1; // not high speed, and control endpoint
-                }
+        if(speed < 2) {
+                c = 1; // not high speed
         }
         qHalt.nextQtdPointer = 1;
         qHalt.alternateNextQtdPointer = 1;
