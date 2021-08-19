@@ -380,6 +380,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::SetInterface(ENUMERATION_INFO *ei) {
  */
 uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
         uint8_t rcode;
+        uint8_t lun;
         SCSI_Inquiry_Response response;
         //        Serial.print("Bulk Start from USB Host @ 0x");
         //        Serial.println((uint32_t)pUsb, HEX);
@@ -404,7 +405,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
         BS_HOST_DEBUG("MaxLUN %u\r\n", bMaxLUN);
         //ErrorMessage<uint8_t > (PSTR("MaxLUN"), bMaxLUN);
         if(!UHS_SLEEP_MS(150)) goto FailUnPlug; // Delay a bit for slow firmware. (again)
-        for(uint8_t lun = 0; lun <= bMaxLUN; lun++) {
+        for(lun = 0; lun <= bMaxLUN; lun++) {
                 if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
                 rcode = Inquiry(lun, sizeof (SCSI_Inquiry_Response), (uint8_t*) & response);
                 BS_HOST_DEBUG("Inquiry 0x%2.2x 0x%2.2x\r\n", sizeof (SCSI_Inquiry_Response), rcode);
@@ -453,7 +454,7 @@ uint8_t UHS_NI UHS_Bulk_Storage::Start(void) {
 #endif
         }
 
-        for(uint8_t lun = 0; lun <= bMaxLUN; lun++) {
+        for(lun = 0; lun <= bMaxLUN; lun++) {
                 if(!UHS_SLEEP_MS(3)) goto FailUnPlug;
                 uint8_t tries = 0xf0;
                 while((rcode = TestUnitReady(lun))) {
