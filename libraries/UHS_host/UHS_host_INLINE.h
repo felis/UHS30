@@ -265,7 +265,7 @@ uint8_t UHS_USB_HOST_BASE::Configuring(uint8_t parent, uint8_t port, uint8_t spe
                 //        Serial.print("HOST USB Host Address Pool @ 0x");
                 //        Serial.println((uint32_t)GetAddressPool(), HEX);
 
-                sof_delay(200);
+                sof_delay(500);
                 p = addrPool.GetUsbDevicePtr(0);
                 if(!p) {
                         HOST_DEBUGx("Configuring error: USB_ERROR_ADDRESS_NOT_FOUND_IN_POOL\r\n");

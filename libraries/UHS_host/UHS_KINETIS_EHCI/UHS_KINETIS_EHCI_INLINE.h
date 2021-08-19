@@ -41,6 +41,20 @@
 
 #define UHS_KINETIS_EHCI_LOADED
 
+#if !defined(DEBUG_PRINTF_EXTRA_HUGE_USB_EHCI)
+#define DEBUG_PRINTF_EXTRA_HUGE_USB_EHCI 0
+#endif
+
+#if DEBUG_PRINTF_EXTRA_HUGE
+#if DEBUG_PRINTF_EXTRA_HUGE_USB_EHCI
+#define UHS_EHCI_DEBUG(...) printf(__VA_ARGS__)
+#else
+#define UHS_EHCI_DEBUG(...) VOID0
+#endif
+#else
+#define UHS_EHCI_DEBUG(...) VOID0
+#endif
+
 static UHS_KINETIS_EHCI *_UHS_KINETIS_EHCI_THIS_;
 
 static void UHS_NI call_ISR_kinetis_EHCI(void) {
@@ -689,10 +703,12 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                                 noInterrupts();
                                 nak_countdown = 0;
                                 interrupts();
-                                if(status & 0x40u) {
+                                if(status & 0x40u) { // Seems to be correct for a stall.
                                         HOST_DEBUGx("dispatchPkt STALL\r\n");
                                         return UHS_HOST_ERROR_STALL;
                                 }
+                                // so what exactly is the error anyway??
+                                // Transaction Error doesn't classify the fucking thing!
                                 HOST_DEBUGx("dispatchPkt OTHER\r\n");
                                 return UHS_HOST_ERROR_TIMEOUT;
                         }
@@ -808,12 +824,13 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
 }
 
 UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr) {
-        HOST_DEBUG("ctrlReqOpen Request and 0x80 %2.2x\r\n", uint8_t(((Request) & 0x80U)&0xffU));
+        UHS_EHCI_DEBUG("ctrlReqOpen Request and 0x80 %2.2x\r\n", uint8_t(((Request) & 0x80U)&0xffU));
 
         UHS_EpInfo *pep = NULL;
         uint16_t nak_limit;
         uint32_t datalen = 8;
         uint8_t rcode = SetAddress(addr, 0, &pep, nak_limit);
+        UHS_EHCI_DEBUG("ctrlReqOpen nak_limit is %i, rcode from SetAddress %i\r\n", nak_limit, rcode);
         if(!rcode) {
                 //static uint8_t setupbuf[8];
                 //memcpy(setupbuf, &Request, 8);

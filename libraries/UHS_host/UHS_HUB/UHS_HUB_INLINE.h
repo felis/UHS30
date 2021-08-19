@@ -167,7 +167,7 @@ uint8_t UHS_NI UHS_USBHub::Start(void) {
                         pUsb->IsHub(true);
                 }
         }
-        qNextPollTime = millis() + 100;
+        qNextPollTime = millis() + 1000;
         bPollEnable = true;
         return 0;
 Fail:
