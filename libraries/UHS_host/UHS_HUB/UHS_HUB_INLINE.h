@@ -146,6 +146,13 @@ uint8_t UHS_NI UHS_USBHub::Start(void) {
         for(uint8_t j = 1; j <= bNbrPorts; j++) {
                 //printf("PORT_POWER to %i\r\n",j);
                 //rcode =
+                ClearPortFeature(UHS_HUB_FEATURE_PORT_POWER, j, 0); //HubPortPowerOn(j);
+                //printf("Address 0x%2.2x Port %i rcode 0x%2.2x\r\n\r\n", bAddress, j, rcode);
+        }
+        if(!UHS_SLEEP_MS(200)) goto Fail;
+        for(uint8_t j = 1; j <= bNbrPorts; j++) {
+                //printf("PORT_POWER to %i\r\n",j);
+                //rcode =
                 SetPortFeature(UHS_HUB_FEATURE_PORT_POWER, j, 0); //HubPortPowerOn(j);
                 //printf("Address 0x%2.2x Port %i rcode 0x%2.2x\r\n\r\n", bAddress, j, rcode);
         }
