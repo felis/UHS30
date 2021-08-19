@@ -359,7 +359,7 @@ again:
                         p->address.devAddress = ei.address;
                         p->epcount = 1;
                         p->epinfo[0] = &dev1ep;
-
+                        p->speed=speed;
                         sof_delay(10);
                         memset((void *)buf, 0, biggest);
                         rcode = getDevDescr(ei.address, 18, (uint8_t*)buf);
@@ -414,6 +414,7 @@ again:
                 HOST_DEBUG("Configuring error: %2.2x Can't set USB INTERFACE ADDRESS\r\n", rcode);
                 return rcode;
         }
+        p->speed=speed;
 
         if(configs < 1) {
                 HOST_DEBUG("No interfaces?!\r\n");

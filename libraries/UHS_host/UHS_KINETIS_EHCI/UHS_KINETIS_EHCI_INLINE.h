@@ -575,7 +575,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         USBHS_USBCMD &= ~USBHS_USBCMD_ASE;
         while((USBHS_USBSTS & USBHS_USBSTS_AS)); // wait for async schedule disable
 
-        uint32_t type = (*ppep)->type;
+        //uint32_t type = (*ppep)->type;
         uint32_t speed;
 
         if(p->speed == 0) {
@@ -589,7 +589,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         uint32_t hub_addr = p->parent.bmAddress;
         uint32_t hub_port = p->port;
 
-        if(type == 0) {
+        if(ep == 0) {
                 if(speed < 2) {
                         c = 1; // not high speed, and control endpoint
                 }
@@ -615,6 +615,8 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         // Inactivate on Next Transaction (Periodic only, unused, set to zero),
         // device address
         QH.staticEndpointStates[0] = QH_capabilities1(15, c, maxlen, 1, 1, speed, ep, 0, addr);
+        //printf("SETUP C bit %2.2x EP %2.2x SPEED %2.2x\r\n", (size_t)(((QH.staticEndpointStates[0])& 0x8000000u) >> 27), (size_t)ep, (size_t)speed);
+        //fflush(stdout);
         // high_bw_mult
         // hub_port_number ( >1 <8 ), or 1 if root
         // hub_address, zero is root
