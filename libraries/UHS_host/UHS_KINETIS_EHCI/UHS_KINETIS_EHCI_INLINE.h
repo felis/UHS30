@@ -675,6 +675,12 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                         // hold-off caused the host controller to miss a required complete-split transaction.
                         // if(status & 0x04u) return; // Missed Micro-Frame...
 
+                        if(status & 0x02u) {
+                                UHS_EHCI_DEBUG("XXXXXXXX split state?\r\n");
+                        }
+                        if(status & 0x04u) {
+                                UHS_EHCI_DEBUG("XXXXXXXX Missed Micro-Frame?\r\n");
+                        }
                         if(status & 0x10u) {
                                 noInterrupts();
                                 nak_countdown = 0;
