@@ -100,9 +100,20 @@
 #define   USBHS_GPTIMERCTL_RUN USB_GPTIMERCTRL_GPTRUN
 #define    USBHS_USBMODE_CM(n) USB_USBMODE_CM(n)
 #define      USBHS_USB_SBUSCFG USB2_SBUSCFG
+#define       USBHS_USBSTS_FRI USB_USBSTS_FRI
+#define       USBHS_USBSTS_UEI USB_USBSTS_UEI
+#define      USBHS_USBINTR_SRE USB_USBINTR_SRE
+#define        USBHS_USBSTS_UI USB_USBSTS_UI
+#define       USBHS_USBINTR_UE USB_USBINTR_UE
+#define      USBHS_USBINTR_FRE USB_USBINTR_FRE
+#define             USBPHY_PWD USBPHY2_PWD
+#define        USBHS_OTGSC_MSS ((uint32_t)0x00200000)
+#define        USBHS_OTGSC_MSE ((uint32_t)0x20000000)
+#define            USBHS_OTGSC USB2_OTGSC
+
 #ifdef ARDUINO_TEENSY41
 #define     USBHS_USB_VBUS_SET GPIO8_DR_SET
-#define     USBHS_USB_VBUS_CLR GPIO8_DR_CLR
+#define     USBHS_USB_VBUS_CLR GPIO8_DR_CLEAR
 #define     USBHS_USB_VBUS_BIT (1<<26)
 #endif
 #else
@@ -179,10 +190,6 @@ class UHS_KINETIS_EHCI : public UHS_USB_HOST_BASE, public dyn_SWI {
         volatile uint8_t isrError;
         volatile bool isrHappened;
 
-        volatile uint32_t sof_mark; // Next time in MICROSECONDS that an SOF will be seen
-        volatile uint32_t last_mark; // LAST time in MICROSECONDS that a packet was completely sent
-        volatile uint8_t frame_counter;
-
 #if LED_STATUS
         volatile bool CL1;
         volatile bool CL2;
@@ -201,8 +208,6 @@ public:
                 sofevent = false;
                 doingreset = false;
                 hub_present = 0;
-                last_mark = 0;
-                frame_counter = 0;
                 isrError = 0;
                 newError = false;
                 isrHappened = false;

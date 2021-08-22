@@ -359,6 +359,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
 
         memset(&qHalt, 0, sizeof (qHalt));
         qHalt.transferResults.token = 0x40;
+        int count = 0;
 #if defined(__MK66FX1M0__)
         MPU_RGDAAC0 |= 0x30000000;
         PORTE_PCR6 = PORT_PCR_MUX(1);
@@ -384,7 +385,6 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         USBPHY_PLL_SIC = USBPHY_PLL_SIC_PLL_POWER | USBPHY_PLL_SIC_PLL_ENABLE |
                 USBPHY_PLL_SIC_PLL_DIV_SEL(1) | USBPHY_PLL_SIC_PLL_EN_USB_CLKS;
         // wait for the PLL to lock
-        int count = 0;
         while((USBPHY_PLL_SIC & USBPHY_PLL_SIC_PLL_LOCK) == 0) {
                 count++;
         }
@@ -395,7 +395,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         IOMUXC_SW_MUX_CTL_PAD_GPIO_EMC_40 = 5;
         IOMUXC_SW_PAD_CTL_PAD_GPIO_EMC_40 = 0x0008; // slow speed, weak 150 ohm drive
         GPIO8_GDIR |= 1 << 26;
-        GPIO8_DR_CLR = 1 << 26;
+        GPIO8_DR_CLEAR = 1 << 26;
 #endif
         while(1) {
                 uint32_t n = CCM_ANALOG_PLL_USB2;
@@ -468,7 +468,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
 
         USBHS_PORTSC1 |= USBHS_PORTSC_PP;
 
-        USBHS_OTGSC =
+        USBHS_OTGSC = 0 |
                 //        USBHS_OTGSC_BSEIE | // B session end
                 //        USBHS_OTGSC_BSVIE | // B session valid
                 //        USBHS_OTGSC_IDIE  | // USB ID
