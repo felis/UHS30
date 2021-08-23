@@ -668,7 +668,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                                 interrupts();
                                 return UHS_HOST_ERROR_NYET;
                         }
-                        HOST_DEBUGx("dispatchPkt status code %2.2x\r\n", (uint8_t)(status & 0xffu));
+                        HOST_DEBUGx("dispatchPkt status code %2.2x, ep %2.2x\r\n", (uint8_t)(status & 0xffu), ep);
 
                         // Important??
                         // Never seen these, as we only send one packet at a time.
@@ -721,7 +721,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                                 // so what exactly is the error anyway??
                                 // Transaction Error doesn't classify the fucking thing!
                                 HOST_DEBUGx("dispatchPkt OTHER\r\n");
-                                return UHS_HOST_ERROR_TIMEOUT;
+                                return /* UHS_HOST_ERROR_TIMEOUT */ UHS_HOST_ERROR_UNPLUGGED;
                         }
                         noInterrupts();
                         nak_countdown = 0;
