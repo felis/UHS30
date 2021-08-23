@@ -660,7 +660,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                                 interrupts();
                                 return UHS_HOST_ERROR_NONE;
                         }
-                        HOST_DEBUGx("dispatchPkt status code %2.2x\r\n", (uint8_t)(status & 0xffu));
+                        // doesn't catch the 0x09 case, which is NYET + other error...
                         if((status & 0x01u) && (QH.staticEndpointStates[0] & (1 << 13))) {
                                 // 480 Mbit OUT endpoint responded with NYET token.
                                 noInterrupts();
@@ -668,6 +668,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                                 interrupts();
                                 return UHS_HOST_ERROR_NYET;
                         }
+                        HOST_DEBUGx("dispatchPkt status code %2.2x\r\n", (uint8_t)(status & 0xffu));
 
                         // Important??
                         // Never seen these, as we only send one packet at a time.
@@ -682,6 +683,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                         if(status & 0x04u) {
                                 UHS_EHCI_DEBUG("XXXXXXXX Missed Micro-Frame?\r\n");
                         }
+
                         if(status & 0x10u) {
                                 noInterrupts();
                                 nak_countdown = 0;
@@ -804,7 +806,6 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
         uint16_t nbytes = *nbytesptr;
         uint8_t* p_buffer = data;
         *nbytesptr = 0;
-        // NOTE: can rx > maxPktSize?!
         while(nbytes && !rcode) {
                 datalen = (nbytes > maxpktsize) ? maxpktsize : nbytes;
                 init_qTD(datalen, pep->bmRcvToggle);
