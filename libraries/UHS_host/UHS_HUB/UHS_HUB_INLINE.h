@@ -272,7 +272,9 @@ void UHS_NI UHS_USBHub::Poll(void) {
                 if(((long)(millis() - qNextPollTime) >= 0L)) {
                         CheckHubStatus();
                         //printf("Tick\r\n");
-                        qNextPollTime = millis() + 100;
+                        if(((long)(millis() - qNextPollTime) >= 0L)) {
+                                qNextPollTime = millis() + 100;
+                        } // else internal function set it.
                 }
         }
 }
@@ -321,7 +323,7 @@ uint8_t UHS_NI UHS_USBHub::PortStatusChange(uint8_t port, UHS_HubEvent &evt) {
                         ClearPortFeature(UHS_HUB_FEATURE_C_PORT_CONNECTION, port, 0);
                         SetPortFeature(UHS_HUB_FEATURE_PORT_RESET, port, 0);
                         bResetInitiated = true;
-                        qNextPollTime = millis() + 20;
+                        qNextPollTime = millis() + 200;
                         return UHS_HUB_ERROR_PORT_HAS_BEEN_RESET;
 
                         // Device disconnected event
