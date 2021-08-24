@@ -136,6 +136,18 @@ Fail:
         return rcode;
 };
 
+uint8_t UHS_NI UHS_USBHub::vbusPower(uint8_t port, VBUS_t state) {
+        uint8_t rcode = UHS_HOST_ERROR_BAD_ARGUMENT;
+        if(port && port <= bNbrPorts) {
+                if(state) {
+                        rcode = SetPortFeature(UHS_HUB_FEATURE_PORT_POWER, port, 0);
+                } else {
+                        rcode = ClearPortFeature(UHS_HUB_FEATURE_PORT_POWER, port, 0);
+                }
+        }
+        return rcode;
+}
+
 uint8_t UHS_NI UHS_USBHub::Start(void) {
         uint8_t rcode;
         //uint8_t buf[8];
@@ -144,23 +156,15 @@ uint8_t UHS_NI UHS_USBHub::Start(void) {
         if(rcode)
                 goto Fail;
 
-        //rcode  = GetHubStatus(4, buf);
-
-        //printf("\r\n\r\n\r\nPORT_POWER\r\n");
         for(uint8_t j = 1; j <= bNbrPorts; j++) {
-                //printf("PORT_POWER to %i\r\n",j);
-                //rcode =
-                ClearPortFeature(UHS_HUB_FEATURE_PORT_POWER, j, 0); //HubPortPowerOn(j);
-                //printf("Address 0x%2.2x Port %i rcode 0x%2.2x\r\n\r\n", bAddress, j, rcode);
+                // Don't count on it being a success
+                vbusPower(j, vbus_off);
         }
         if(!UHS_SLEEP_MS(200)) goto Fail;
         for(uint8_t j = 1; j <= bNbrPorts; j++) {
-                //printf("PORT_POWER to %i\r\n",j);
-                //rcode =
-                SetPortFeature(UHS_HUB_FEATURE_PORT_POWER, j, 0); //HubPortPowerOn(j);
-                //printf("Address 0x%2.2x Port %i rcode 0x%2.2x\r\n\r\n", bAddress, j, rcode);
+                // Don't count on it being a success
+                vbusPower(j, vbus_on);
         }
-        //printf("PORT_POWER DONE\r\n\r\n\r\n");
 
         // delay a bit...
         if(!UHS_SLEEP_MS(200)) goto Fail;
@@ -231,7 +235,7 @@ void UHS_NI UHS_USBHub::CheckHubStatus(void) {
                         }
                         if(rcode)
                                 HUB_DEBUG("UHS_USBHub::CheckHubStatus-PortStatusChange OTHER %8.8lx port %i %2.2x\r\n", evt.bmEvent, port, rcode);
-                                return;
+                        return;
                 }
         }
 
@@ -246,7 +250,7 @@ void UHS_NI UHS_USBHub::CheckHubStatus(void) {
                         continue;
                 }
                 if((evt.bmStatus & UHS_HUB_bmPORT_STATE_CHECK_DISABLED) != UHS_HUB_bmPORT_STATE_DISABLED) {
-                                HUB_DEBUG("UHS_USBHub::CheckHubStatus DISABLED %8.8lx port %i %2.2x\r\n", evt.bmEvent, port, rcode);
+                        HUB_DEBUG("UHS_USBHub::CheckHubStatus DISABLED %8.8lx port %i %2.2x\r\n", evt.bmEvent, port, rcode);
                         continue;
                 }
                 // Emulate connection event for the port
@@ -256,7 +260,7 @@ void UHS_NI UHS_USBHub::CheckHubStatus(void) {
                 rcode = PortStatusChange(port, evt);
 
                 if(rcode == UHS_HUB_ERROR_PORT_HAS_BEEN_RESET) {
-                                HUB_DEBUG("UHS_USBHub::CheckHubStatus-PortStatusChange RESET2 %8.8lx port %i %2.2x\r\n", evt.bmEvent, port, rcode);
+                        HUB_DEBUG("UHS_USBHub::CheckHubStatus-PortStatusChange RESET2 %8.8lx port %i %2.2x\r\n", evt.bmEvent, port, rcode);
                         return;
                 }
                 if(rcode) {
@@ -291,7 +295,7 @@ void UHS_NI UHS_USBHub::ResetHubPort(uint8_t port) {
         for(int i = 0; i < 3; i++) {
                 rcode = GetPortStatus(port, 4, evt.evtBuff);
                 if(rcode) return; // Some kind of error, bail.
-                if(evt.bmEvent == UHS_HUB_bmPORT_EVENT_RESET_COMPLETE || evt.bmEvent == UHS_HUB_bmPORT_EVENT_LS_RESET_COMPLETE || evt.bmEvent == UHS_HUB_bmPORT_EVENT_HS_RESET_COMPLETE ) {
+                if(evt.bmEvent == UHS_HUB_bmPORT_EVENT_RESET_COMPLETE || evt.bmEvent == UHS_HUB_bmPORT_EVENT_LS_RESET_COMPLETE || evt.bmEvent == UHS_HUB_bmPORT_EVENT_HS_RESET_COMPLETE) {
                         break;
                 }
                 if(!UHS_SLEEP_MS(100)) return; // simulate polling, bail out early if parent state changes
@@ -347,13 +351,15 @@ uint8_t UHS_NI UHS_USBHub::PortStatusChange(uint8_t port, UHS_HubEvent &evt) {
 
                                 a.devAddress = bAddress;
                                 //uint8_t speed=((evt.bmStatus & UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED) == UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED ? 0 : 1);
-                                uint8_t speed=((evt.bmStatus & (UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED | UHS_HUB_bmPORT_STATUS_PORT_HIGH_SPEED)) >> 9);
+                                uint8_t speed = ((evt.bmStatus & (UHS_HUB_bmPORT_STATUS_PORT_LOW_SPEED | UHS_HUB_bmPORT_STATUS_PORT_HIGH_SPEED)) >> 9);
                                 switch(speed) {
-                                        case 0: {
+                                        case 0:
+                                        {
                                                 speed = 1;
                                                 break;
                                         }
-                                        case 1: {
+                                        case 1:
+                                        {
                                                 speed = 0;
                                                 break;
                                         }

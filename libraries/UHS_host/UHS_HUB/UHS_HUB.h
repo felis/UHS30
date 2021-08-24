@@ -191,7 +191,7 @@ public:
         uint8_t SetHubDescriptor(uint8_t port, uint16_t nbytes, uint8_t* dataptr);
         uint8_t SetHubFeature(uint8_t fid);
         uint8_t SetPortFeature(uint8_t fid, uint8_t port, uint8_t sel = 0);
-
+        uint8_t vbusPower(uint8_t port, VBUS_t state);
         void PrintHubStatus(void);
 
         virtual bool OKtoEnumerate(ENUMERATION_INFO *ei);
