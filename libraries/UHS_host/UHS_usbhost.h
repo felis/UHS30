@@ -133,9 +133,9 @@ public:
                 return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
-        virtual uint8_t UHS_NI dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uint8_t ep), NOTUSED(uint16_t nak_limit)) {
-                return UHS_HOST_ERROR_NOT_IMPLEMENTED;
-        };
+        //virtual uint8_t UHS_NI dispatchPkt(NOTUSED(uint8_t token), NOTUSED(uint8_t ep), NOTUSED(uint16_t nak_limit)) {
+        //        return UHS_HOST_ERROR_NOT_IMPLEMENTED;
+        //};
 
         virtual uint8_t UHS_NI init(void) {
                 return 0;

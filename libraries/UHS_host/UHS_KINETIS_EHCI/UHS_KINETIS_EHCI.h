@@ -252,7 +252,7 @@ public:
         virtual UHS_EpInfo *ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t *dataptr);
         virtual uint8_t ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType, uint16_t left, uint16_t nbytes, uint8_t *dataptr);
         virtual uint8_t ctrlReqRead(UHS_EpInfo *pep, uint16_t *left, uint16_t *read, uint16_t nbytes, uint8_t *dataptr);
-        virtual uint8_t dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit);
+        virtual uint8_t dispatchPkt(uint8_t token, UHS_EpInfo *pep, uint16_t nak_limit);
 
         void UHS_NI IsHub(NOTUSED(bool p)) {
         };

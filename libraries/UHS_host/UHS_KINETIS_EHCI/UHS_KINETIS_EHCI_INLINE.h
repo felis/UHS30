@@ -627,7 +627,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::SetAddress(uint8_t addr, uint8_t ep, UHS_EpInfo
         return UHS_HOST_ERROR_NONE;
 }
 
-uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t nak_limit) {
+uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, UHS_EpInfo *pep, uint16_t nak_limit) {
         uint16_t nc = 0;
         //printf("DISPATCH! %i\r\n", nak_limit);
         noInterrupts();
@@ -643,32 +643,42 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
         while(!condet) {
                 uint32_t status = qTD.transferResults.token;
                 // Wait for a state change.
-                if(newError) {
-                        // we need to get the actual translated error, for now, we'll say NAK here too
-                        noInterrupts();
-                        nak_countdown = 0;
-                        interrupts();
-                        UHS_EHCI_DEBUG("XXXXXXXX newError trap - status said %2.2x\r\n", (unsigned int)(status & 0xffu));
-                        // return UHS_HOST_ERROR_NAK;
-                }
+                //if(newError) {
+                        // we need to get the actual translated error
+                        //noInterrupts();
+                        //nak_countdown = 0;
+                        //interrupts();
+                        //UHS_EHCI_DEBUG("XXXXXXXX newError trap - status said %2.2x\r\n", (unsigned int)(status & 0xffu));
+                //}
 
-                if(!(status & 0x80)) {
-                        if(!(status & 0xffu)) {
+                if(!(status & 0x80) || newError) {
+                        if((status & 0x01u) && (QH.staticEndpointStates[0] & (1 << 13))) {
+                                // 480 Mbit OUT endpoint responded with NYET token.
+                                // NYET means the OUT transfer was successful, but
+                                // next time we need to begin the PING protocol.
+                                // USB 2.0 spec: section 8.5.1, pages 217-220
+                                pep->bmNeedPing = 1;
+                        }
+                        if(!(status & 0xfeu)) {
                                 // no longer active, not halted, no errors... so ok
                                 noInterrupts();
                                 nak_countdown = 0;
                                 interrupts();
                                 return UHS_HOST_ERROR_NONE;
                         }
-                        // doesn't catch the 0x09 case, which is NYET + other error...
-                        if((status & 0x01u) && (QH.staticEndpointStates[0] & (1 << 13))) {
+                        // doesn't catch the NYET + other error...
+                        //if((status & 0x01u) && (QH.staticEndpointStates[0] & (1 << 13))) {
                                 // 480 Mbit OUT endpoint responded with NYET token.
-                                noInterrupts();
-                                nak_countdown = 0;
-                                interrupts();
-                                return UHS_HOST_ERROR_NYET;
-                        }
-                        HOST_DEBUGx("dispatchPkt status code %2.2x, ep %2.2x\r\n", (uint8_t)(status & 0xffu), ep);
+                                // NYET means the OUT transfer was successful, but
+                                // next time we need to begin the PING protocol.
+                                // USB 2.0 spec: section 8.5.1, pages 217-220
+                        //        pep->bmNeedPing = 1;
+                        //        noInterrupts();
+                        //        nak_countdown = 0;
+                        //        interrupts();
+                        //        return UHS_HOST_ERROR_NONE;
+                        //}
+                        HOST_DEBUGx("dispatchPkt status code %2.2x\r\n", (uint8_t)(status & 0xffu));
 
                         // Important??
                         // Never seen these, as we only send one packet at a time.
@@ -723,6 +733,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, uint8_t ep, uint16_t
                                 HOST_DEBUGx("dispatchPkt OTHER\r\n");
                                 return /* UHS_HOST_ERROR_TIMEOUT */ UHS_HOST_ERROR_UNPLUGGED;
                         }
+                        // this section should never happen...
                         noInterrupts();
                         nak_countdown = 0;
                         interrupts();
@@ -764,7 +775,6 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit
         uint8_t* p_buffer = data; // local copy
         uint16_t bytes;
         uint16_t maxpktsize = pep->maxPktSize;
-        uint8_t ep = pep->epAddr;
         uint8_t rcode = UHS_HOST_ERROR_NONE;
         nak_limit = (0x0001UL << ((nak_limit > UHS_USB_NAK_MAX_POWER) ? UHS_USB_NAK_MAX_POWER : nak_limit));
         nak_limit--;
@@ -773,17 +783,9 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::OutTransfer(UHS_EpInfo *pep, uint16_t nak_limit
                 if(bytes > maxpktsize) bytes = maxpktsize;
                 memcpy(data_buf, p_buffer, bytes); // copy packet into buffer
                 init_qTD(bytes, pep->bmSndToggle);
-                rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_OUT, ep, nak_limit);
+                rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_OUT, pep, nak_limit);
                 uint32_t status = qTD.transferResults.token;
                 pep->bmSndToggle = status >> 31;
-                if(rcode == UHS_HOST_ERROR_NYET) {
-                        // NYET means the OUT transfer was successful, but
-                        // next time we need to begin the PING protocol.
-                        // USB 2.0 spec: section 8.5.1, pages 217-220
-                        pep->bmNeedPing = 1;
-                        rcode = UHS_HOST_ERROR_NONE;
-                }
-
                 nbytes -= bytes;
                 p_buffer += bytes;
         }
@@ -801,7 +803,6 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
         uint8_t rcode = 0;
         uint16_t pktsize;
         uint16_t maxpktsize = pep->maxPktSize;
-        uint8_t ep = pep->epAddr;
         uint32_t datalen;
         uint16_t nbytes = *nbytesptr;
         uint8_t* p_buffer = data;
@@ -809,14 +810,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
         while(nbytes && !rcode) {
                 datalen = (nbytes > maxpktsize) ? maxpktsize : nbytes;
                 init_qTD(datalen, pep->bmRcvToggle);
-                rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_IN, ep, nak_limit);
-                if(rcode == UHS_HOST_ERROR_NYET) {
-                        // NYET means the OUT transfer was successful, but
-                        // next time we need to begin the PING protocol.
-                        // USB 2.0 spec: section 8.5.1, pages 217-220
-                        pep->bmNeedPing = 1;
-                        rcode = UHS_HOST_ERROR_NONE;
-                }
+                rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_IN, pep, nak_limit);
                 uint32_t status = qTD.transferResults.token;
                 // This field is decremented by the number of bytes actually moved
                 // during the transaction, only on the successful completion of the
@@ -850,14 +844,7 @@ UHS_EpInfo * UHS_NI UHS_KINETIS_EHCI::ctrlReqOpen(uint8_t addr, uint64_t Request
                 //memcpy(setupbuf, &Request, 8);
                 memcpy(data_buf, &Request, datalen); // copy packet into buffer
                 init_qTD(datalen, 0); // setup always uses DATA0
-                rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_SETUP, 0, nak_limit); // setup always uses DATA0
-                if(rcode == UHS_HOST_ERROR_NYET) {
-                        // NYET means the OUT transfer was successful, but
-                        // next time we need to begin the PING protocol.
-                        // USB 2.0 spec: section 8.5.1, pages 217-220
-                        pep->bmNeedPing = 1;
-                        rcode = UHS_HOST_ERROR_NONE;
-                }
+                rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_SETUP, pep, nak_limit); // setup always uses DATA0
                 if(!rcode) {
                         if(dataptr != NULL) {
                                 if(((Request) /* bmReqType */ & 0x80) == 0x80) {
@@ -908,26 +895,10 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::ctrlReqClose(UHS_EpInfo *pep, uint8_t bmReqType
         if(!rcode) {
                 if(((bmReqType & 0x80) == 0x80)) {
                         init_qTD(0, 1); // make sure we use DATA1 for status phase
-                        rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_OUT, 0, 2000);
-                        if(rcode == UHS_HOST_ERROR_NYET) {
-                                // NYET means the OUT transfer was successful, but
-                                // next time we need to begin the PING protocol.
-                                // USB 2.0 spec: section 8.5.1, pages 217-220
-                                pep->bmNeedPing = 1;
-                                rcode = UHS_HOST_ERROR_NONE;
-                        }
-
+                        rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_OUT, pep, 2000);
                 } else {
                         init_qTD(0, 1); // make sure we use DATA1 for status phase
-                        rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_IN, 0, 2000);
-                        if(rcode == UHS_HOST_ERROR_NYET) {
-                                // NYET means the OUT transfer was successful, but
-                                // next time we need to begin the PING protocol.
-                                // USB 2.0 spec: section 8.5.1, pages 217-220
-                                pep->bmNeedPing = 1;
-                                rcode = UHS_HOST_ERROR_NONE;
-                        }
-
+                        rcode = dispatchPkt(UHS_KINETIS_EHCI_TOKEN_DATA_IN, pep, 2000);
                 }
         }
 
