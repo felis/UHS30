@@ -138,11 +138,13 @@ Fail:
 
 uint8_t UHS_NI UHS_USBHub::vbusPower(uint8_t port, VBUS_t state) {
         uint8_t rcode = UHS_HOST_ERROR_BAD_ARGUMENT;
-        if(port && port <= bNbrPorts) {
-                if(state == vbus_on) {
-                        rcode = SetPortFeature(UHS_HUB_FEATURE_PORT_POWER, port, 0);
-                } else {
-                        rcode = ClearPortFeature(UHS_HUB_FEATURE_PORT_POWER, port, 0);
+        if(state == vbus_on || state == vbus_off) {
+                if(port && port <= bNbrPorts) {
+                        if(state == vbus_on) {
+                                rcode = SetPortFeature(UHS_HUB_FEATURE_PORT_POWER, port, 0);
+                        } else {
+                                rcode = ClearPortFeature(UHS_HUB_FEATURE_PORT_POWER, port, 0);
+                        }
                 }
         }
         return rcode;
