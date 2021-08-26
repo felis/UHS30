@@ -691,6 +691,11 @@
             tool="1"
             flavor2="0">
       </item>
+      <item path="libraries/UHS_FS/examples/UHS_KINETIS_FS_HOST/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
       <item path="libraries/UHS_host/UHS_ADK/examples/UHS_KINETIS_FS_HOST/ArduinoBlinkLED/ArduinoBlinkLED.ino"
             ex="false"
             tool="1"
