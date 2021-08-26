@@ -25,7 +25,7 @@ e-mail   :  support@circuitsathome.com
  */
 
 #ifndef UHS_KINETIS_FS_HOST_H
-#define	UHS_KINETIS_FS_HOST_H
+#define UHS_KINETIS_FS_HOST_H
 #ifdef LOAD_UHS_KINETIS_FS_HOST
 #if !defined(SWI_IRQ_NUM)
 #error include dyn_swi.h first
@@ -70,8 +70,8 @@ e-mail   :  support@circuitsathome.com
 #define UHS_KINETIS_FS_BDT_PID(n)  (((n) >> 2) & 15)
 
 #define UHS_KINETIS_FS_BDT_DESC(count, data)       (UHS_KINETIS_FS_BDT_OWN | UHS_KINETIS_FS_BDT_DTS \
-				        | ((data) ? UHS_KINETIS_FS_BDT_DATA1 : UHS_KINETIS_FS_BDT_DATA0) \
-				        | ((count) << 16))
+                                        | ((data) ? UHS_KINETIS_FS_BDT_DATA1 : UHS_KINETIS_FS_BDT_DATA0) \
+                                        | ((count) << 16))
 
 #define UHS_KINETIS_FS_TX   1
 #define UHS_KINETIS_FS_RX   0
@@ -93,13 +93,13 @@ e-mail   :  support@circuitsathome.com
 // Buffer Descriptor Table
 // desc contains information about the transfer
 // addr points to the transmitted/received data buffer
+
 typedef struct {
         uint32_t desc;
         void * addr;
-} __attribute__((packed)) bdt_t;
+} __attribute__ ((packed)) bdt_t;
 
-class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
-
+class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE, public dyn_SWI {
         volatile uint8_t hub_present;
         volatile uint8_t vbusState;
         volatile uint16_t sof_countdown;
@@ -110,7 +110,7 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         volatile bool busevent;
         volatile bool sofevent;
         volatile bool counted;
-	volatile bool condet;
+        volatile bool condet;
 
         volatile uint32_t sof_mark; // Next time in MICROSECONDS that an SOF will be seen
         volatile uint32_t last_mark; // LAST time in MICROSECONDS that a packet was completely sent
@@ -130,8 +130,8 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         // That helps to avoid name collisions in other code as it is a member.
         //
         __attribute__ ((section(".usbdescriptortable"), used)) static bdt_t table[4];
-        __attribute__ ((section(".usbdescriptortable"), used)) static uint8_t data_in_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to receive data in as host
-        __attribute__ ((section(".usbdescriptortable"), used)) static uint8_t data_out_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned (4)));  // to send data out as host
+        __attribute__ ((section(".usbdescriptortable"), used)) static uint8_t data_in_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned(4))); // to receive data in as host
+        __attribute__ ((section(".usbdescriptortable"), used)) static uint8_t data_out_buf[UHS_KINETIS_FS_EP0_SIZE] __attribute__ ((aligned(4))); // to send data out as host
         // mark that a token was done and store its pid while inside the isr
         volatile bool newToken;
         volatile uint8_t isrPid;
@@ -169,7 +169,8 @@ class UHS_KINETIS_FS_HOST : public UHS_USB_HOST_BASE , public dyn_SWI {
         uint8_t setup_command_buffer[8]; // for setup commands
 
 public:
-        UHS_NI UHS_KINETIS_FS_HOST (void) {
+
+        UHS_NI UHS_KINETIS_FS_HOST(void) {
                 sof_countdown = 0;
                 timer_countdown = 0;
                 insidetask = false;
@@ -200,6 +201,7 @@ public:
         virtual void VBUS_changed(void);
 
         // Note, this is not counting SOFs :-)
+
         virtual bool UHS_NI sof_delay(uint16_t x) {
                 timer_countdown = x;
                 while((timer_countdown != 0) && !condet) {
@@ -209,14 +211,17 @@ public:
         };
 
         // VBUS is always powered for Teensy 3.x (other KINETIS products may not do that though...)
-        virtual void UHS_NI vbusPower(VBUS_t state) {
+
+        virtual void uint8_t vbusPower(uint8_t port, VBUS_t state) {
+                if(port != 1 || (state != vbus_on && state != vbus_off)) return UHS_HOST_ERROR_BAD_ARGUMENT;
 #if defined(UHS_USB_VBUS)
-        if(state == vbus_on) {
-                digitalWriteFast(UHS_USB_VBUS, HIGH);
-        } else {
-                digitalWriteFast(UHS_USB_VBUS, LOW);
-        }
+                if(state == vbus_on) {
+                        digitalWriteFast(UHS_USB_VBUS, HIGH);
+                } else {
+                        digitalWriteFast(UHS_USB_VBUS, LOW);
+                }
 #endif
+                return 0;
         };
 
         virtual void Task(void); // {};
@@ -274,8 +279,11 @@ public:
                 ISRbottom();
         };
 
-        virtual void UHS_NI suspend_host(void) {}; // NOP, AVR only
-        virtual void UHS_NI resume_host(void) {}; // NOP, AVR only
+        virtual void UHS_NI suspend_host(void) {
+        }; // NOP, AVR only
+
+        virtual void UHS_NI resume_host(void) {
+        }; // NOP, AVR only
 
 };
 

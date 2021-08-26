@@ -367,8 +367,10 @@ public:
 
         virtual UHS_EpInfo *ctrlReqOpen(uint8_t addr, uint64_t Request, uint8_t* dataptr);
 
-        virtual void UHS_NI vbusPower(VBUS_t state) {
+        virtual uint8_t UHS_NI vbusPower(uint8_t port, VBUS_t state) {
+                if(port != 1 || (state != vbus_on && state != vbus_off)) return UHS_HOST_ERROR_BAD_ARGUMENT;
                 regWr(rPINCTL, (bmFDUPSPI | bmIRQ_SENSE) | (uint8_t)(state));
+                return 0;
         };
 
         void UHS_NI Task(void);

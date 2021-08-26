@@ -234,7 +234,8 @@ public:
 
         };
 
-        virtual void UHS_NI vbusPower(VBUS_t state) {
+        virtual uint8_t UHS_NI vbusPower(uint8_t port, VBUS_t state) {
+                if(port != 1 || (state != vbus_on && state != vbus_off)) return UHS_HOST_ERROR_BAD_ARGUMENT;
 #if defined(USBHS_USB_VBUS_BIT)
                 if(state) {
                         USBHS_USB_VBUS_CLR = USBHS_USB_VBUS_BIT;
@@ -242,6 +243,7 @@ public:
                         USBHS_USB_VBUS_SET = USBHS_USB_VBUS_BIT;
                 }
 #endif
+                return 0;
         };
 
         virtual void Task(void); // {};

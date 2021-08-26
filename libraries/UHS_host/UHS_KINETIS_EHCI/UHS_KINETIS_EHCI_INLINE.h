@@ -366,7 +366,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         GPIOE_PDDR |= (1 << 6);
 
         DDSB();
-        vbusPower(vbus_off);
+        vbusPower(1, vbus_off);
         DDSB();
 
         MCG_C1 |= MCG_C1_IRCLKEN; // enable MCGIRCLK 32kHz
@@ -519,7 +519,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
                 if(mseconds < 1000) mseconds = 1000;
                 delay(mseconds); // We can't depend on SOF timer here.
         }
-        vbusPower(vbus_on);
+        vbusPower(1, vbus_on);
 
         return 0;
 }

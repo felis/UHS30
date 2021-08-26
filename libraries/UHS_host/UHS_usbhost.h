@@ -107,7 +107,8 @@ public:
                 return NULL;
         };
 
-        virtual void UHS_NI vbusPower(NOTUSED(VBUS_t state)) {
+        virtual uint8_t UHS_NI vbusPower(NOTUSED(uint8_t port), NOTUSED(VBUS_t state)) {
+                return UHS_HOST_ERROR_NOT_IMPLEMENTED;
         };
 
         virtual void UHS_NI Task(void) {
@@ -206,6 +207,11 @@ public:
                 DDSB();
                 interrupts();
         }
+
+        uint8_t UHS_NI vbusPower(uint8_t port, bool state) {
+                if(state) return vbusPower(port, vbus_on);
+                return vbusPower(port, vbus_off);
+        };
 
         uint8_t UHS_NI seekInterface(ENUMERATION_INFO *ei, uint16_t inf, USB_CONFIGURATION_DESCRIPTOR *ucd);
 
