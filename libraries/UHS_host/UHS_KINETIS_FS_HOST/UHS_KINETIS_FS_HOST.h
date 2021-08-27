@@ -212,7 +212,7 @@ public:
 
         // VBUS is always powered for Teensy 3.x (other KINETIS products may not do that though...)
 
-        virtual void uint8_t vbusPower(uint8_t port, VBUS_t state) {
+        virtual uint8_t vbusPower(uint8_t port, VBUS_t state) {
                 if(port != 1 || (state != vbus_on && state != vbus_off)) return UHS_HOST_ERROR_BAD_ARGUMENT;
 #if defined(UHS_USB_VBUS)
                 if(state == vbus_on) {
