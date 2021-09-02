@@ -138,6 +138,39 @@ DRESULT PFAT::disk_write(const FBYTE *buff, DWORD sector, FBYTE count) {
 
 DRESULT PFAT::disk_ioctl(FBYTE cmd, void* buff) {
         switch(cmd) {
+                case CTRL_POWER:
+                        // 0 off
+                        // 1 on
+                        // 2 status
+                        switch(*(int*)buff) {
+                                case 0:
+                                        if(ffs != NULL) {
+                                                if(!storage->Status(storage)) {
+                                                        storage->Commit(storage);
+                                                }
+                                                f_mount(volmap, NULL);
+                                                delete ffs;
+                                                ffs = NULL;
+                                        }
+                                        if(label != NULL) {
+                                                delete label;
+                                                label = NULL;
+                                        }
+#ifdef LOAD_UHS_BULK_STORAGE
+                                        if(storage->driver_type == 0) {
+                                                // USB...
+                                                UHS_USB_Storage[((pvt_t *)storage->private_data)->B]->Release();
+                                        }
+#endif
+                                        *(int*)buff = 0;
+                                        break;
+                                case 1:
+                                        *(int*)buff = 1; // not possible, pretend
+                                        break;
+                                default:
+                                        *(int*)buff = 1; // if it isn't present, it's not got any power :-D
+                                        break;
+                        }
                 case CTRL_SYNC:
                         break;
                 case GET_SECTOR_COUNT:

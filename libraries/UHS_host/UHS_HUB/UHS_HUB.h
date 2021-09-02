@@ -196,7 +196,7 @@ public:
                 if(state) return vbusPower(port, vbus_on);
                 return vbusPower(port, vbus_off);
         };
-        
+
         void PrintHubStatus(void);
 
         virtual bool OKtoEnumerate(ENUMERATION_INFO *ei);

@@ -89,6 +89,9 @@
         <df name="UHS_FS">
           <df name="examples">
             <df name="UHS_KINETIS_EHCI">
+              <df name="IOCTL">
+                <in>IOCTL.ino</in>
+              </df>
               <df name="UHS_FS_NEW_DEMO">
                 <in>UHS_FS_NEW_DEMO.ino</in>
               </df>
@@ -443,6 +446,11 @@
             tool="1"
             flavor2="4">
       </item>
+      <item path="libraries/UHS_FS/examples/UHS_KINETIS_EHCI/IOCTL/IOCTL.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
       <item path="libraries/UHS_FS/examples/USB_HOST_SHIELD/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
             ex="false"
             tool="1"
@@ -685,6 +693,11 @@
             ex="false"
             tool="1"
             flavor2="4">
+      </item>
+      <item path="libraries/UHS_FS/examples/UHS_KINETIS_EHCI/IOCTL/IOCTL.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="libraries/UHS_FS/examples/UHS_KINETIS_EHCI/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
             ex="false"
@@ -1011,6 +1024,11 @@
       <item path="libraries/UHS_FS/UHS_FS.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="libraries/UHS_FS/UHS_FS_INLINE.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/examples/UHS_KINETIS_EHCI/IOCTL/IOCTL.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="libraries/UHS_FS/examples/USB_HOST_SHIELD/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
             ex="false"
@@ -1530,6 +1548,11 @@
       <item path="libraries/UHS_FS/UHS_FS.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="libraries/UHS_FS/UHS_FS_INLINE.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="libraries/UHS_FS/examples/UHS_KINETIS_EHCI/IOCTL/IOCTL.ino"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="libraries/UHS_FS/examples/UHS_KINETIS_EHCI/UHS_FS_NEW_DEMO/UHS_FS_NEW_DEMO.ino"
             ex="false"

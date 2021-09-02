@@ -122,6 +122,11 @@ extern "C" {
         extern uint8_t fs_stat(const char *path, FILINFO *buf);
         extern char *fs_mount_lbl(uint8_t vol);
         extern uint8_t fs_mountcount(void);
+
+        // Actually mount and umount are already provided via IOCTL.
+        // TO-DO: fs_unbind(vol name)
+        //              calls umount then Releases USB (or other polling drivers) if all partitions are not mounted.
+
         // Initialize every sub-system
 
 #if defined(__UHS_BULK_STORAGE_H__) && defined(UHS_USE_SDCARD)
@@ -129,7 +134,7 @@ extern "C" {
 #else
 #if defined(UHS_USE_SDCARD) && !defined(__UHS_BULK_STORAGE_H__)
         void Init_Generic_Storage(int _pr[], int _cs[]);
-#else
+#elsedriver_type
 #if defined(__UHS_BULK_STORAGE_H__) && !defined(UHS_USE_SDCARD)
         void Init_Generic_Storage(void *hd);
 #endif
