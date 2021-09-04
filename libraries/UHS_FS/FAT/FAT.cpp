@@ -159,7 +159,7 @@ DRESULT PFAT::disk_ioctl(FBYTE cmd, void* buff) {
 #ifdef LOAD_UHS_BULK_STORAGE
                                         if(storage->driver_type == 0) {
                                                 // USB...
-                                                UHS_USB_Storage[((pvt_t *)storage->private_data)->B]->Release();
+                                                UHS_USB_Storage[((pvt_t *)storage->private_data)->B]->bPollEnable = 0; //->Release();
                                         }
 #endif
                                         *(int*)buff = 0;
@@ -189,7 +189,7 @@ DRESULT PFAT::disk_ioctl(FBYTE cmd, void* buff) {
 
                                         if(ffs != NULL) {
                                                 if(!storage->Status(storage)) {
-                                                   storage->Commit(storage);
+                                                        storage->Commit(storage);
                                                 }
                                                 f_mount(volmap, NULL);
                                                 delete ffs;
