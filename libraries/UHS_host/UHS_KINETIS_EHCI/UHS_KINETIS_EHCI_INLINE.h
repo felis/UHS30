@@ -639,60 +639,36 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, UHS_EpInfo *pep, uin
         QH.transferOverlayResults[0] &= 1;
         newError = false;
         isrHappened = false;
+        DDSB();
         interrupts();
         while(!condet) {
                 uint32_t status = qTD.transferResults.token;
                 // Wait for a state change.
                 //if(newError) {
-                        // we need to get the actual translated error
-                        //noInterrupts();
-                        //nak_countdown = 0;
-                        //interrupts();
-                        //UHS_EHCI_DEBUG("XXXXXXXX newError trap - status said %2.2x\r\n", (unsigned int)(status & 0xffu));
+                // we need to get the actual translated error
+                //noInterrupts();
+                //nak_countdown = 0;
+                //interrupts();
+                //UHS_EHCI_DEBUG("XXXXXXXX newError trap - status said %2.2x\r\n", (unsigned int)(status & 0xffu));
                 //}
 
-                if(!(status & 0x80) || newError) {
+                if(!(status & 0x80) || newError) { // halted
                         if((status & 0x01u) && (QH.staticEndpointStates[0] & (1 << 13))) {
                                 // 480 Mbit OUT endpoint responded with NYET token.
                                 // NYET means the OUT transfer was successful, but
                                 // next time we need to begin the PING protocol.
                                 // USB 2.0 spec: section 8.5.1, pages 217-220
                                 pep->bmNeedPing = 1;
+                                status &= 0xfeu;
                         }
-                        if(!(status & 0xfeu)) {
+                        if(!(status & 0xffu)) {
                                 // no longer active, not halted, no errors... so ok
                                 noInterrupts();
                                 nak_countdown = 0;
                                 interrupts();
                                 return UHS_HOST_ERROR_NONE;
                         }
-                        // doesn't catch the NYET + other error...
-                        //if((status & 0x01u) && (QH.staticEndpointStates[0] & (1 << 13))) {
-                                // 480 Mbit OUT endpoint responded with NYET token.
-                                // NYET means the OUT transfer was successful, but
-                                // next time we need to begin the PING protocol.
-                                // USB 2.0 spec: section 8.5.1, pages 217-220
-                        //        pep->bmNeedPing = 1;
-                        //        noInterrupts();
-                        //        nak_countdown = 0;
-                        //        interrupts();
-                        //        return UHS_HOST_ERROR_NONE;
-                        //}
                         HOST_DEBUGx("dispatchPkt status code %2.2x\r\n", (uint8_t)(status & 0xffu));
-
-                        // Important??
-                        // Never seen these, as we only send one packet at a time.
-                        // if(status & 0x02u) return; // split state...
-                        // Missed Micro-Frame. The host controller detected that a host-induced
-                        // hold-off caused the host controller to miss a required complete-split transaction.
-                        // if(status & 0x04u) return; // Missed Micro-Frame...
-
-                        if(status & 0x02u) {
-                                UHS_EHCI_DEBUG("XXXXXXXX split state?\r\n");
-                        }
-                        if(status & 0x04u) {
-                                UHS_EHCI_DEBUG("XXXXXXXX Missed Micro-Frame?\r\n");
-                        }
 
                         if(status & 0x10u) {
                                 noInterrupts();
@@ -700,11 +676,42 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, UHS_EpInfo *pep, uin
                                 interrupts();
                                 return UHS_HOST_ERROR_BABBLE; // Babble Detected
                         }
-                        if(status & 0x20u) {
+                        // Important??
+                        // Never seen these, as we only send one packet at a time.
+                        // if(status & 0x02u) return; // split state...
+                        // Missed Micro-Frame. The host controller detected that a host-induced
+                        // hold-off caused the host controller to miss a required complete-split transaction.
+                        // if(status & 0x04u) return; // Missed Micro-Frame...
+
+                        //if(status & 0x02u) { // QTD_STS_STS
+                        //        UHS_EHCI_DEBUG("XXXXXXXX split state?\r\n");
+                        //}
+
+                        if((status & 0x04u) && (((status) >> 8) & 0x03u)) { // QTD_STS_MMF and PID_CODE_IN
+                                /* EHCI Specification, Table 4-13.
+                                 * When MMF is active and PID Code is IN, queue is halted.
+                                 * ...but what is the error code :-)
+                                 */
                                 noInterrupts();
                                 nak_countdown = 0;
                                 interrupts();
-                                return UHS_HOST_ERROR_DMA; // Data Buffer Error
+                                UHS_EHCI_DEBUG("XXXXXXXX Missed Micro-Frame?\r\n");
+                                return UHS_HOST_ERROR_PROTOCOL;
+                        }
+                        // CERR nonzero + halt --> stall
+                        if((((status) >> 8) & 0x03u)) {
+                                noInterrupts();
+                                nak_countdown = 0;
+                                interrupts();
+                                HOST_DEBUGx("dispatchPkt STALL, CERR nonzero\r\n");
+                                return UHS_HOST_ERROR_STALL;
+                        }
+                        if(status & 0x20u) { // QTD_STS_DBE
+                                noInterrupts();
+                                nak_countdown = 0;
+                                interrupts();
+                                HOST_DEBUGx("dispatchPkt DMA Error\r\n");
+                                return UHS_HOST_ERROR_DMA; // Data Buffer Error (could not read or write)
                         }
                         if(status & 0x48u) { // Halted or Transaction Error
                                 // Needs to return one of:
@@ -720,27 +727,25 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::dispatchPkt(uint8_t token, UHS_EpInfo *pep, uin
                                 // bit 4 0x08 Transaction Error
                                 //
                                 //
-
                                 noInterrupts();
                                 nak_countdown = 0;
                                 interrupts();
-                                if(status & 0x40u) { // Seems to be correct for a stall.
-                                        HOST_DEBUGx("dispatchPkt STALL\r\n");
-                                        return UHS_HOST_ERROR_STALL;
-                                }
+                                //if(status & 0x40u) { // Seems to be correct for a stall.
+                                //        HOST_DEBUGx("dispatchPkt STALL\r\n");
+                                //        return UHS_HOST_ERROR_STALL;
+                                //}
                                 // so what exactly is the error anyway??
                                 // Transaction Error doesn't classify the fucking thing!
-                                HOST_DEBUGx("dispatchPkt OTHER\r\n");
-                                return /* UHS_HOST_ERROR_TIMEOUT */ UHS_HOST_ERROR_UNPLUGGED;
+                                HOST_DEBUGx("dispatchPkt - UHS_HOST_ERROR_PROTOCOL\r\n");
+                                return UHS_HOST_ERROR_PROTOCOL;
                         }
-                        // this section should never happen...
                         noInterrupts();
                         nak_countdown = 0;
                         interrupts();
                         USBHS_USBCMD &= ~USBHS_USBCMD_ASE;
                         while((USBHS_USBSTS & USBHS_USBSTS_AS)); // wait for async schedule disable
-                        UHS_EHCI_DEBUG("XXXXXXXX Default trap - NAKing\r\n");
-                        return UHS_HOST_ERROR_NAK;
+                        UHS_EHCI_DEBUG("XXXXXXXX Default trap - UHS_HOST_ERROR_PROTOCOL\r\n");
+                        return UHS_HOST_ERROR_PROTOCOL;
                 }
                 noInterrupts();
                 nc = nak_countdown;
