@@ -134,7 +134,7 @@ extern "C" {
 #else
 #if defined(UHS_USE_SDCARD) && !defined(__UHS_BULK_STORAGE_H__)
         void Init_Generic_Storage(int _pr[], int _cs[]);
-#elsedriver_type
+#else
 #if defined(__UHS_BULK_STORAGE_H__) && !defined(UHS_USE_SDCARD)
         void Init_Generic_Storage(void *hd);
 #endif
