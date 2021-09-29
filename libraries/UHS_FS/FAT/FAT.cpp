@@ -90,7 +90,7 @@ void PFAT::Create(storage_t *sto, uint8_t lv, uint32_t first) {
                                         // We will need to convert 'wide' chars, etc? yuck!
                                         // Life would be a whole lot easier if everything was just UTF-8!
                                 }
-                                printf_P(PSTR("VOLUME %i @ '%s' Offset:%lu\r\n"), volmap, &label[0],Offset);
+                                //printf_P(PSTR("VOLUME %i @ '%s' Offset:%lu\r\n"), volmap, &label[0],Offset);
                         } else {
                                 // Unmount it
                                 f_mount(volmap, NULL);
