@@ -36,15 +36,7 @@ e-mail   :  support@circuitsathome.com
 #undef false
 #endif
 
-#if !defined(STDIO_IS_OK_TO_USE_AS_IS)
-#if defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAM_DUE) || defined(ARDUINO_spresense_ast)
-// STDIO patching not required.
-#define STDIO_IS_OK_TO_USE_AS_IS
-#endif
-#endif
-
-#if !defined(STDIO_IS_OK_TO_USE_AS_IS)
-// We need to patch STDIO so it can be used.
+// TO-DO: redirect for ARDUINO_SAMD_ZERO ARDUINO_SAM_DUE ARDUINO_spresense_ast to programmer's choice
 
 #ifndef SERIAL_PORT_MONITOR
 // Some don't define this.
@@ -64,6 +56,24 @@ e-mail   :  support@circuitsathome.com
 #endif
 #endif
 
+#ifndef USB_HOST_SERIAL_W
+#define USB_HOST_SERIAL_W USB_HOST_SERIAL
+#endif
+
+#ifndef USB_HOST_SERIAL_R
+#define USB_HOST_SERIAL_R USB_HOST_SERIAL
+#endif
+
+#if !defined(STDIO_IS_OK_TO_USE_AS_IS)
+#if defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAM_DUE) || defined(ARDUINO_spresense_ast)
+// STDIO patching not required.
+#define STDIO_IS_OK_TO_USE_AS_IS
+#endif
+#endif
+
+#if !defined(STDIO_IS_OK_TO_USE_AS_IS)
+// We need to patch STDIO so it can be used.
+
 #if !defined(NOTUSED)
 #define NOTUSED(...)  __VA_ARGS__ __attribute__((unused))
 #endif
@@ -81,12 +91,12 @@ e-mail   :  support@circuitsathome.com
 extern "C" {
 
         void _mon_putc(char s) {
-                USB_HOST_SERIAL.write(s);
+                USB_HOST_SERIAL_W.write(s);
         }
 
         int _mon_getc() {
-                while(!USB_HOST_SERIAL.available());
-                return USB_HOST_SERIAL.read();
+                while(!USB_HOST_SERIAL_R.available());
+                return USB_HOST_SERIAL_R.read();
         }
 }
 
@@ -103,27 +113,27 @@ extern "C" {
         static int NOTUSED(tty_std_flush(NOTUSED(FILE *t)));
 
         static int tty_stderr_putc(char c, NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.write(c);
+                USB_HOST_SERIAL_W.write(c);
                 return 0;
         }
 
         static int tty_stderr_flush(NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.flush();
+                USB_HOST_SERIAL_W.flush();
                 return 0;
         }
 
         static int tty_std_putc(char c, NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.write(c);
+                USB_HOST_SERIAL_W.write(c);
                 return 0;
         }
 
         static int tty_std_getc(NOTUSED(FILE *t)) {
-                while(!USB_HOST_SERIAL.available());
-                return USB_HOST_SERIAL.read();
+                while(!USB_HOST_SERIAL_R.available());
+                return USB_HOST_SERIAL_R.read();
         }
 
         static int tty_std_flush(NOTUSED(FILE *t)) {
-                USB_HOST_SERIAL.flush();
+                USB_HOST_SERIAL_W.flush();
                 return 0;
         }
 }
@@ -134,17 +144,17 @@ extern "C" {
                 int j;
                 for(j = 0; j < len; j++) {
                         if(fd == 1)
-                                USB_HOST_SERIAL.write(*ptr++);
+                                USB_HOST_SERIAL_W.write(*ptr++);
                         else if(fd == 2)
-                                USB_HOST_SERIAL.write(*ptr++);
+                                USB_HOST_SERIAL_W.write(*ptr++);
                 }
                 return len;
         }
 
         int _read(int fd, char *ptr, int len) {
                 if(len > 0 && fd == 0) {
-                        while(!USB_HOST_SERIAL.available());
-                        *ptr = USB_HOST_SERIAL.read();
+                        while(!USB_HOST_SERIAL_R.available());
+                        *ptr = USB_HOST_SERIAL_R.read();
                         return 1;
                 }
                 return 0;
@@ -163,6 +173,7 @@ extern "C" {
                 return (fd < 3) ? 1 : 0;
         }
 }
+
 void UHS_PJRC_printf_HELPER_init(void) {
         setvbuf(stdout, NULL, _IONBF, 0);
 }
