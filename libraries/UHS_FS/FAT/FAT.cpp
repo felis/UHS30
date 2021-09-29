@@ -90,7 +90,7 @@ void PFAT::Create(storage_t *sto, uint8_t lv, uint32_t first) {
                                         // We will need to convert 'wide' chars, etc? yuck!
                                         // Life would be a whole lot easier if everything was just UTF-8!
                                 }
-                                //printf_P(PSTR("VOLUME %i @ '%s'\r\n"), volmap, &label[0]);
+                                printf_P(PSTR("VOLUME %i @ '%s' Offset:%lu\r\n"), volmap, &label[0],Offset);
                         } else {
                                 // Unmount it
                                 f_mount(volmap, NULL);
@@ -125,13 +125,13 @@ DSTATUS PFAT::disk_status(void) {
 }
 
 DRESULT PFAT::disk_read(FBYTE *buff, DWORD sector, FBYTE count) {
-        int rc = storage->Reads(sector, (uint8_t*)buff, storage, count);
+        int rc = storage->Reads(sector+Offset, (uint8_t*)buff, storage, count);
         if(rc == 0) return RES_OK;
         return RES_ERROR;
 }
 
 DRESULT PFAT::disk_write(const FBYTE *buff, DWORD sector, FBYTE count) {
-        int rc = storage->Writes(sector, (uint8_t*)buff, storage, count);
+        int rc = storage->Writes(sector+Offset, (uint8_t*)buff, storage, count);
         if(rc == 0) return RES_OK;
         return RES_ERROR;
 }
