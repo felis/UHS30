@@ -169,10 +169,9 @@ struct UHS_HubEvent {
 
 class UHS_USBHub :  public UHS_USBInterface {
         bool bResetInitiated; // True when reset is triggered
-
         uint8_t bAlternateSetting = 255; // impossible?
-
         uint8_t bNbrPorts; // number of ports
+        uint8_t NumTT;
 
         void CheckHubStatus(void);
         uint8_t PortStatusChange(uint8_t port, UHS_HubEvent &evt);
@@ -191,6 +190,7 @@ public:
         uint8_t SetHubDescriptor(uint8_t port, uint16_t nbytes, uint8_t* dataptr);
         uint8_t SetHubFeature(uint8_t fid);
         uint8_t SetPortFeature(uint8_t fid, uint8_t port, uint8_t sel = 0);
+        uint8_t Clear_TT(uint8_t tt, uint8_t address, uint8_t ep);
         uint8_t vbusPower(uint8_t port, VBUS_t state);
         uint8_t vbusPower(uint8_t port, bool state) {
                 if(state) return vbusPower(port, vbus_on);

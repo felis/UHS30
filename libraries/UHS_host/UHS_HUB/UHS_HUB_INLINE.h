@@ -77,7 +77,9 @@ void UHS_NI UHS_USBHub::DriverDefaults(void) {
 }
 
 uint8_t UHS_NI UHS_USBHub::SetInterface(ENUMERATION_INFO *ei) {
-        HUB_DEBUGx("USBHub Accepting address assignment %2.2x\r\n", ei->address);
+        HUB_DEBUGx("USBHub Accepting address assignment %2.2x, Protocol %2.2x\r\n", ei->address, ei->protocol);
+        NumTT = ei->protocol > 1 ? 1 : 0;
+        HUB_DEBUGx("USBHub Multi TT %u\r\n", NumTT);
         bNumEP = 2;
         bAddress = ei->address;
         epInfo[0].epAddr = 0;
@@ -93,7 +95,6 @@ uint8_t UHS_NI UHS_USBHub::SetInterface(ENUMERATION_INFO *ei) {
 
         bIface = ei->interface.bInterfaceNumber;
         bAlternateSetting = ei->interface.bAlternateSetting;
-
         return 0;
 }
 
@@ -107,30 +108,32 @@ uint8_t UHS_NI UHS_USBHub::Finalize(void) {
                 rcode = GetHubDescriptor(0, 3, buf);
                 l = nhd->bDescLength;
         }
-        uint8_t buf[l + 1];
-        UHS_HubDescriptor* hd = reinterpret_cast<UHS_HubDescriptor*>(buf);
         if(rcode) goto Fail;
-        rcode = GetHubDescriptor(0, l, buf);
-        if(rcode) goto Fail;
+        {
+                uint8_t buf[l + 1];
+                UHS_HubDescriptor* hd = reinterpret_cast<UHS_HubDescriptor*>(buf);
+                rcode = GetHubDescriptor(0, l, buf);
+                if(rcode) goto Fail;
 
-        // Save number of ports for future use
-        if(!UHS_SLEEP_MS(50)) goto Fail;
-        bNbrPorts = hd->bNbrPorts;
-        // Allowed to stall as per spec
-        pUsb->ctrlReq(bAddress, mkSETUP_PKT16(USB_SETUP_RECIPIENT_INTERFACE, USB_REQUEST_SET_INTERFACE, bAlternateSetting, bIface, 0), 0, NULL);
-        //if(rcode) goto Fail;
+                // Save number of ports for future use
+                if(!UHS_SLEEP_MS(50)) goto Fail;
+                bNbrPorts = hd->bNbrPorts;
+                NumTT *= bNbrPorts;
+                if(!NumTT) NumTT = 1; // Assume only 1 TT, even for a FS/LS hub.
+                HUB_DEBUGx("USBHub  %u TTs\r\n", NumTT);
+                // Allowed to stall as per spec
+                pUsb->ctrlReq(bAddress, mkSETUP_PKT16(USB_SETUP_RECIPIENT_INTERFACE, USB_REQUEST_SET_INTERFACE, bAlternateSetting, bIface, 0), 0, NULL);
+                if(rcode && rcode != UHS_HOST_ERROR_STALL) goto Fail;
+                // if the following request passes, we reall do indeed have the indicated count of TT's
 
-        // delay a bit...
-        if(!UHS_SLEEP_MS(50)) goto Fail;
+                // delay a bit...
+                if(!UHS_SLEEP_MS(50)) goto Fail;
 
-        rcode = pUsb->getDevStatus(bAddress, 2, buf);
-        if(rcode) goto Fail;
+                rcode = pUsb->getDevStatus(bAddress, 2, buf);
+                if(rcode) goto Fail;
 
-        //rcode  = GetHubStatus(4, buf);
-        //if(rcode) goto Fail;
-
-        return 0;
-
+                return 0;
+        }
 Fail:
         Release();
         return rcode;
@@ -380,6 +383,11 @@ uint8_t UHS_NI UHS_USBHub::PortStatusChange(uint8_t port, UHS_HubEvent &evt) {
 
         } // switch (evt.bmEvent)
         return 0;
+}
+
+uint8_t UHS_NI UHS_USBHub::Clear_TT(uint8_t tt, uint8_t address, uint8_t ep) {
+        //bmReqType, bRequest, wValLo, wValHi, wInd, total
+        return ( pUsb->ctrlReq(bAddress, mkSETUP_PKT8(UHS_HUB_bmREQ_CLEAR_TT_BUFFER, UHS_HUB_REQUEST_CLEAR_TT_BUFFER, address, ep, tt, 0), 0, NULL));
 }
 
 void UHS_NI PrintHubPortStatus(UHS_USBHub *hubptr, NOTUSED(uint8_t addr), uint8_t port, bool print_changes) {
