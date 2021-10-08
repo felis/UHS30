@@ -752,14 +752,13 @@ extern "C" {
                                 Fats[i] = NULL;
                         }
 #ifdef UHS_USE_SDCARD
-                        UHS_SDSPI.begin();
 #if defined(__MK66FX1M0__)
                         // teensy 3.6 :-)
                         SPI1.setMOSI(61);
                         SPI1.setMISO(59);
                         SPI1.setSCK(60);
-
 #endif
+                        UHS_SDSPI.begin();
                         uint8_t intr;
                         // Enumerate SDcards
                         for(int i = 0; i < UHS_MAX_SD_CARDS; i++) {
