@@ -13,7 +13,7 @@
 
 <div class="para func">
 <h2>f_fdisk</h2>
-<p>The f_fdisk fucntion divides a physical drive.</p>
+<p>The f_fdisk function divides a physical drive.</p>
 <pre>
 FRESULT f_fdisk (
   BYTE  <span class="arg">pdrv</span>,         <span class="c">/* [IN] Physical drive number */</span>
@@ -48,7 +48,7 @@ FRESULT f_fdisk (
 
 <div class="para desc">
 <h4>Description</h4>
-<p>The <tt>f_fdisk()</tt> function creates a partition table into the MBR of the physical drive. The partitioning rule is in generic FDISK format so that it can create upto four primary partitions. Extended partition is not supported. The <tt class="arg">part[]</tt> array with four items specifies how to divide the physical drive. The first item specifies the size of first primary partition and fourth item specifies the fourth primary partition. If the value is less than or equal to 100, it means percentage of the partition in the entire disk space. If it is larger than 100, it means partition size in unit of sector.</p>
+<p>The <tt>f_fdisk()</tt> function creates a partition table into the MBR of the physical drive. The partitioning rule is in generic FDISK format so that it can create up to four primary partitions. Extended partition is not supported. The <tt class="arg">part[]</tt> array with four items specifies how to divide the physical drive. The first item specifies the size of first primary partition and fourth item specifies the fourth primary partition. If the value is less than or equal to 100, it means percentage of the partition in the entire disk space. If it is larger than 100, it means partition size in unit of sector.</p>
 </div>
 
 <div class="para comp">

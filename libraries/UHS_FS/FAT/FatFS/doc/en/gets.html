@@ -44,7 +44,7 @@ TCHAR* f_gets (
 
 <div class="para desc">
 <h4>Description</h4>
-<p>The <tt>f_gets()</tt> function is a wrapper function of <a href="read.html">f_read()</a> function. The read operation continues until a <tt>'\n'</tt> is stored, reached end of the file or the buffer is filled with <tt>len - 1</tt> characters. The read string is terminated with a <tt>'\0'</tt>. When no character to read or any error occured during read operation, it returns a null pointer. The status of eof and error can be examined with <tt>f_eof()</tt> and <tt>f_error()</tt> macros.</p>
+<p>The <tt>f_gets()</tt> function is a wrapper function of <a href="read.html">f_read()</a> function. The read operation continues until a <tt>'\n'</tt> is stored, reached end of the file or the buffer is filled with <tt>len - 1</tt> characters. The read string is terminated with a <tt>'\0'</tt>. When no character to read or any error occurred during read operation, it returns a null pointer. The status of eof and error can be examined with <tt>f_eof()</tt> and <tt>f_error()</tt> macros.</p>
 <p>When the FatFs is configured to Unicode API (<tt>_LFN_UNICODE == 1</tt>), the file is read in assumption of UTF-8 encoding and stored it to the buffer in UCS-2. If not the case, the file will be read in one byte per character without any code conversion.</p>
 </div>
 

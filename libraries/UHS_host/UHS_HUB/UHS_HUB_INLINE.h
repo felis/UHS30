@@ -124,7 +124,7 @@ uint8_t UHS_NI UHS_USBHub::Finalize(void) {
                 // Allowed to stall as per spec
                 pUsb->ctrlReq(bAddress, mkSETUP_PKT16(USB_SETUP_RECIPIENT_INTERFACE, USB_REQUEST_SET_INTERFACE, bAlternateSetting, bIface, 0), 0, NULL);
                 if(rcode && rcode != UHS_HOST_ERROR_STALL) goto Fail;
-                // if the following request passes, we reall do indeed have the indicated count of TT's
+                // if the following request passes, we really do indeed have the indicated count of TT's
 
                 // delay a bit...
                 if(!UHS_SLEEP_MS(50)) goto Fail;

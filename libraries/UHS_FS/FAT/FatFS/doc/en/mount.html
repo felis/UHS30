@@ -13,7 +13,7 @@
 
 <div class="para func">
 <h2>f_mount</h2>
-<p>The f_mount fucntion registers/unregisters a work area to the FatFs module.</p>
+<p>The f_mount function registers/unregisters a work area to the FatFs module.</p>
 <pre>
 FRESULT f_mount (
   BYTE  <span class="arg">vol</span>,     <span class="c">/* [IN] Logical drive number */</span>
@@ -44,7 +44,7 @@ FRESULT f_mount (
 <div class="para desc">
 <h4>Description</h4>
 <p>The <tt>f_mount()</tt> function registers/unregisters a work area to the FatFs module. The work area must be given to the each volume with this function prior to use any other file function. To unregister a work area, specify a NULL to the <tt class="arg">fatfs</tt>, and then the work area can be discarded.</p>
-<p>This function always succeeds regardless of the drive status. No media access is occured in this function. It only clears (uninitialize) the given work area and registers its address to the internal table. It can also be used to force cleared the registered work area of a logical drive. The volume mount process, initialize physical drive, detect the FAT volume and initialize the work area, is performed on first volume access when one or both of the work area and physical drive is not initalized.</p>
+<p>This function always succeeds regardless of the drive status. No media access is occurred in this function. It only clears (uninitialize) the given work area and registers its address to the internal table. It can also be used to force cleared the registered work area of a logical drive. The volume mount process, initialize physical drive, detect the FAT volume and initialize the work area, is performed on first volume access when one or both of the work area and physical drive is not initialized.</p>
 </div>
 
 

@@ -14,7 +14,7 @@
 
 <div class="para" id="nam">
 <h3>Format of the path names</h3>
-<p>The format of path name on the FatFs module is similer to the filename specs of DOS/Windos as follows:</p>
+<p>The format of path name on the FatFs module is similer to the filename specs of DOS/Windows as follows:</p>
 <pre>"[drive#:][/]directory/file"</pre>
 <p>The FatFs module supports long file name (LFN) and 8.3 format file name (SFN). The LFN can be used when LFN feature is enabled (<tt>_USE_LFN &gt; 0</tt>). The sub directories are separated with a \ or / in the same way as DOS/Windows API. Duplicated separators are skipped and ignored. Only a difference is that the logical drive is specified in a numeral with a colon. When the drive number is omitted, it is assumed as <em>default drive</em> (drive 0 or current drive).</p>
 <p>Control characters (<tt>'\0'</tt> to <tt>'\x1F'</tt>) are recognized as end of the path name. Leading/embedded spaces in the path name are valid as a part of the name on LFN configuration but they are recognized as end of the path name on non-LFN configuration. Trailing spaces and dots are ignored.</p>
@@ -40,7 +40,7 @@
 <p><br></p>
 <div class="para" id="uni">
 <h3>Unicode API</h3>
-<p>The path names are input/output in either ANSI/OEM code (SBCS/DBCS) or Unicode depends on the configuration options. The type of arguments that specifies the file names are defined as <tt>TCHAR</tt> which is an alias of <tt>char</tt> in default. The code set of the file name string is the ANSI/OEM code set specifid by <tt>_CODE_PAGE</tt>. When <tt>_LFN_UNICODE</tt> is set to 1, the type of the <tt>TCHAR</tt> is switched to <tt>WCHAR, unsigned short</tt> (UCS-2 character) to support Unicode. In this case, the LFN feature is fully supported and the Unicode specific characters, such as ✝☪✡☸☭, can also be used for the path name. It also affects data types and encoding of the string I/O functions. To define literal strings, <tt>_T(s)</tt> and <tt>_TEXT(s)</tt> macro are available to select either ANSI/OEM or Unicode automatically. The code shown below is an example to define the literal strings.</p>
+<p>The path names are input/output in either ANSI/OEM code (SBCS/DBCS) or Unicode depends on the configuration options. The type of arguments that specifies the file names are defined as <tt>TCHAR</tt> which is an alias of <tt>char</tt> in default. The code set of the file name string is the ANSI/OEM code set specified by <tt>_CODE_PAGE</tt>. When <tt>_LFN_UNICODE</tt> is set to 1, the type of the <tt>TCHAR</tt> is switched to <tt>WCHAR, unsigned short</tt> (UCS-2 character) to support Unicode. In this case, the LFN feature is fully supported and the Unicode specific characters, such as ✝☪✡☸☭, can also be used for the path name. It also affects data types and encoding of the string I/O functions. To define literal strings, <tt>_T(s)</tt> and <tt>_TEXT(s)</tt> macro are available to select either ANSI/OEM or Unicode automatically. The code shown below is an example to define the literal strings.</p>
 <pre>
  f_open(fp, "filename.txt", FA_READ);      <span class="c">/* ANSI/OEM only */</span>
  f_open(fp, L"filename.txt", FA_READ);     <span class="c">/* Unicode only */</span>

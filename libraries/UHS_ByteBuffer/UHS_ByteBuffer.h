@@ -63,7 +63,7 @@ public:
         // Returns the maximum capacity of the buffer
         int getCapacity();
 
-        // This method returns the byte that is located at index in the buffer but doesn't modify the buffer like the get methods (doesn't remove the retured byte from the buffer)
+        // This method returns the byte that is located at index in the buffer but doesn't modify the buffer like the get methods (doesn't remove the returned byte from the buffer)
         uint8_t peek(unsigned int index);
 
         //

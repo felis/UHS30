@@ -13,7 +13,7 @@
 
 <div class="para func">
 <h2>f_putc</h2>
-<p>The f_putc funciton puts a character to the file.</p>
+<p>The f_putc function puts a character to the file.</p>
 <pre>
 int f_putc (
   TCHAR <span class="arg">chr</span>,  <span class="c">/* [IN] A character to put */</span>
@@ -35,7 +35,7 @@ int f_putc (
 
 <div class="para ret">
 <h4>Return Values</h4>
-<p>When the character was written successfuly, the function returns 1. When the function failed due to disk full or any error, an <tt>EOF (-1)</tt> will be returned.</p>
+<p>When the character was written successfully, the function returns 1. When the function failed due to disk full or any error, an <tt>EOF (-1)</tt> will be returned.</p>
 <p>When the FatFs is configured to Unicode API (<tt>_LFN_UNICODE == 1</tt>), the UCS-2 character is written to the file in UTF-8 encoding. If not the case, the byte will be written directly.</p>
 </div>
 

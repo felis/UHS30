@@ -286,7 +286,7 @@ void UHS_NI UHS_KINETIS_FS_HOST::ISRTask(void) {
                                 KINETIS_HOST_DEBUG("\r\n\r\n*** ISR sees error 0x10, Device unplugged? ***\r\n\r\n");
                                 isrError = UHS_HOST_ERROR_UNPLUGGED; //UHS_HOST_ERROR_NAK;
                         } else if(err & USB_ERRSTAT_CRC5EOF) {
-                                // Not enough time alloted.
+                                // Not enough time allotted.
                                 KINETIS_HOST_DEBUG("CRC5EOF\r\n");
                                 isrError = UHS_HOST_ERROR_BABBLE;
                         }

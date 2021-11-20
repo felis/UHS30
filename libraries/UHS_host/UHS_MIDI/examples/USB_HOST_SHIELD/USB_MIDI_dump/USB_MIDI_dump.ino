@@ -9,7 +9,8 @@
  * This is sample program. Do not expect perfect behavior.
  *
  * Note: This driver is support for MIDI Streaming class only.
- *       If your MIDI Controler is not work, probably you needs its vendor specific driver. *******************************************************************************
+ *       If your MIDI Controller doesn't work, you probably need its vendor specific driver.
+ *******************************************************************************
  */
 
 // Patch printf so we can use it.
