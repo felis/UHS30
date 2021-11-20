@@ -36,7 +36,7 @@
 #define LED 11 // Set to something here that makes sense for your board.
 #endif
 
-// Unfortunatly this could end up in an unaccessable area.
+// Unfortunately this could end up in an unaccessable area.
 char BlinkLED_MANUFACTURER[] = "TKJElectronics";
 char BlinkLED_MODEL[] = "ArduinoBlinkLED";
 char BlinkLED_DESCRIPTION[] = "Example sketch for the USB Host Shield";

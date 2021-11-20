@@ -12,7 +12,7 @@ the GPL2 ("Copyleft").
 /* USB MIDI interface support header */
 /*
  * Note: This driver is support for MIDI Streaming class only.
- *       If your MIDI Controller is not work, probably you needs its vendor specific driver.
+ *       If your MIDI Controller doesn't work, you probably need its vendor specific driver.
  */
 #if !defined(__UHS_MIDI_H__)
 #define __UHS_MIDI_H__

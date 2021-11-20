@@ -45,7 +45,7 @@ DRESULT disk_read (
 <dt>RES_OK (0)</dt>
 <dd>The function succeeded.</dd>
 <dt>RES_ERROR</dt>
-<dd>Any hard error occured during the read operation and could not recover it.</dd>
+<dd>Any hard error occurred during the read operation and could not recover it.</dd>
 <dt>RES_PARERR</dt>
 <dd>Invalid parameter.</dd>
 <dt>RES_NOTRDY</dt>
@@ -56,10 +56,10 @@ DRESULT disk_read (
 
 <div class="para desc">
 <h4>Description</h4>
-<p>The specified memory address is not that always aligned to word boundary because the type of pointer is defined as <tt>BYTE</tt>. The misaligned read/write request can occure at <a href="appnote.html#fs1">direct transfer</a>. If the bus architecture, especially DMA controller, does not allow misaligned memory access, it should be solved in this function. There are some workarounds described below to avoid this problem.</p>
+<p>The specified memory address is not that always aligned to word boundary because the type of pointer is defined as <tt>BYTE</tt>. The misaligned read/write request can occur at <a href="appnote.html#fs1">direct transfer</a>. If the bus architecture, especially DMA controller, does not allow misaligned memory access, it should be solved in this function. There are some workarounds described below to avoid this problem.</p>
 <ul>
 <li>Convert word transfer to byte transfer in this function. - Recommended.</li>
-<li>On <tt>f_read()</tt>, avoid long read request that includes a whole of sector. - Direct transfer will never occure.</li>
+<li>On <tt>f_read()</tt>, avoid long read request that includes a whole of sector. - Direct transfer will never occur.</li>
 <li>On <tt>f_read(fp, buff, btr, &amp;br)</tt>, make sure that <tt>(((UINT)buff &amp; 3) == (f_tell(fp) &amp; 3))</tt> is true. - Word aligned direct transfer is guaranteed.</li>
 </ul>
 </div>

@@ -99,7 +99,7 @@ R0.04, Feb 04, 2007
   Added _USE_FAT32 option. (Tiny-FatFs)
 
 R0.03a, Dec 11, 2006
-  Improved cluster scan algolithm to write files fast.
+  Improved cluster scan algorithm to write files fast.
   Fixed f_mkdir creates incorrect directory on FAT32.
 
 R0.03, Sep 22, 2006
@@ -112,7 +112,7 @@ R0.02a, Jun 10, 2006
 R0.02, Jun 01, 2006
   Added FAT12.
   Removed unbuffered mode.
-  Fixed a problem on small (<32M) patition.
+  Fixed a problem on small (<32M) partition.
 
 R0.01, Apr 29, 2006
   First release

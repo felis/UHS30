@@ -17,13 +17,13 @@
 <dt id="ok">FR_OK (0)</dt>
 <dd>The function succeeded.</dd>
 <dt id="de">FR_DISK_ERR</dt>
-<dd>An unrecoverable error occured in the lower layer, <tt>disk_read()</tt>, <tt>disk_write()</tt> or <tt>disk_ioctl()</tt> function.</dd>
+<dd>An unrecoverable error occurred in the lower layer, <tt>disk_read()</tt>, <tt>disk_write()</tt> or <tt>disk_ioctl()</tt> function.</dd>
 <dt id="ie">FR_INT_ERR</dt>
 <dd>Assertion failed. An insanity is detected in the internal process. One of the following possibilities are suspected.
 <ul>
 <li>There is any error of the FAT structure on the volume.</li>
 <li>Work area (file system object, file object or etc...) is broken by stack overflow or any other application. This is the reason in most case.</li>
-<li>An <tt>FR_DISK_ERR</tt> has occured on the file object.</li>
+<li>An <tt>FR_DISK_ERR</tt> has occurred on the file object.</li>
 </ul>
 </dd>
 <dt id="nr">FR_NOT_READY</dt>
@@ -62,7 +62,7 @@
 <dd>The <tt>f_mkfs()</tt> function aborted before start in format due to a reason as follows:
 <ul>
 <li>The disk size is too small.</li>
-<li>Not allowable cluster size for this disk. This can occure when number of clusters gets near the 0xFF7 and 0xFFF7.</li>
+<li>Not allowable cluster size for this disk. This can occur when number of clusters gets near the 0xFF7 and 0xFFF7.</li>
 </ul>
 </dd>
 <dt id="tm">FR_TIMEOUT</dt>

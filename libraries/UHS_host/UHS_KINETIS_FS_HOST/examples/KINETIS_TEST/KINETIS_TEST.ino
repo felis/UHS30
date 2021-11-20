@@ -37,7 +37,7 @@ void setup() {
         delay(10000);
         USB_HOST_SERIAL.println("Start.");
         while(UHS_Usb.Init(1000) != 0);
-        // printf may be used after atleast 1 host init
+        // printf may be used after at least 1 host init
         printf("\r\n\r\nSWI_IRQ_NUM %i\r\n", SWI_IRQ_NUM);
         printf("\r\n\r\nUSB HOST READY.\r\n");
 

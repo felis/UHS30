@@ -1449,7 +1449,7 @@ void gen_numname(FBYTE *dst, const FBYTE *src, const WCHAR *lfn, WORD seq) {
                 do seq = (seq >> 1) + (seq << 15) + (WORD) * lfn++; while(*lfn);
         }
 
-        /* itoa (hexdecimal) */
+        /* itoa (hexadecimal) */
         i = 7;
         do {
                 c = (seq % 16) + '0';
@@ -3673,7 +3673,7 @@ FRESULT f_mkdir(
                                         mem_set(dir, 0, SS(dj.fs));
                                 }
                         }
-                        if(res == FR_OK) res = dir_register(&dj); /* Register the object to the directoy */
+                        if(res == FR_OK) res = dir_register(&dj); /* Register the object to the directory */
                         if(res != FR_OK) {
                                 remove_chain(dj.fs, dcl); /* Could not register, remove cluster chain */
                         } else {
@@ -4584,7 +4584,7 @@ int f_printf(
                         case 'U': /* Unsigned decimal */
                                 r = 10;
                                 break;
-                        case 'X': /* Hexdecimal */
+                        case 'X': /* Hexadecimal */
                                 r = 16;
                                 break;
                         default: /* Unknown type (pass-through) */

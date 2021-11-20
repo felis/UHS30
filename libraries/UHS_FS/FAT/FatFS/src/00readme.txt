@@ -41,14 +41,14 @@ REVISION HISTORY
 
   Jun 01, 2006  R0.02  Added FAT12.
                        Removed unbuffered mode.
-                       Fixed a problem on small (<32M) patition.
+                       Fixed a problem on small (<32M) partition.
 
   Jun 10, 2006  R0.02a Added a configuration option _FS_MINIMUM.
 
   Sep 22, 2006  R0.03  Added f_rename.
                        Changed option _FS_MINIMUM to _FS_MINIMIZE.
 
-  Dec 11, 2006  R0.03a Improved cluster scan algolithm to write files fast.
+  Dec 11, 2006  R0.03a Improved cluster scan algorithm to write files fast.
                        Fixed f_mkdir creates incorrect directory on FAT32.
 
   Feb 04, 2007  R0.04  Supported multiple drive system. (FatFs)

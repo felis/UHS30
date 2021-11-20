@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------
-/  Low level disk interface modlue include file   (C)ChaN, 2013
+/  Low level disk interface module include file   (C)ChaN, 2013
 /-----------------------------------------------------------------------*/
 
 #ifndef _DISKIO_DEFINED
@@ -7,7 +7,7 @@
 
 
 #define _USE_WRITE	1	/* 1: Enable disk_write function */
-#define _USE_IOCTL	1	/* 1: Enable disk_ioctl fucntion */
+#define _USE_IOCTL	1	/* 1: Enable disk_ioctl function */
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,7 +52,7 @@ DWORD CPP_PFAT_get_fattime(struct PFAT*);
 #define STA_PROTECT		0x04	/* Write protected */
 
 
-        /* Command code for disk_ioctrl fucntion */
+        /* Command code for disk_ioctrl function */
 
         /* Generic commands used by FatFs */
 #define CTRL_SYNC		0x00	/* Flush disk cache (for write functions) */

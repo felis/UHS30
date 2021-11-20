@@ -213,7 +213,7 @@ extern "C" {
         /*--------------------------------------------------------------*/
         /* FatFs module application interface                           */
         FRESULT f_stat_mount(FBYTE vol); /* return if the fs is mounted */
-        FBYTE f_next_mount(void); /* return next avaliable logical drive, 10 for none-left. */
+        FBYTE f_next_mount(void); /* return next available logical drive, 10 for none-left. */
         FRESULT f_mount(FBYTE vol, FATFS* fs); /* Mount/Unmount a logical drive */
         FRESULT f_open(FIL* fp, const TCHAR* path, FBYTE mode); /* Open or create a file */
         FRESULT f_read(FIL* fp, void* buff, UINT btr, UINT* br); /* Read data from a file */

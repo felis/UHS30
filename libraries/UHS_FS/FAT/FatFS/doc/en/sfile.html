@@ -28,7 +28,7 @@
     DWORD   dsect;        <span class="c">/* Current data sector */</span>
 <span class="k">#if</span> !_FS_READONLY
     DWORD   dir_sect;     <span class="c">/* Sector containing the directory entry */</span>
-    BYTE*   dir_ptr;      <span class="c">/* Ponter to the directory entry in the window */</span>
+    BYTE*   dir_ptr;      <span class="c">/* Pointer to the directory entry in the window */</span>
 <span class="k">#endif</span>
 <span class="k">#if</span> _USE_FASTSEEK
     DWORD*  cltbl;        <span class="c">/* Pointer to the cluster link map table (Nulled on file open) */</span>

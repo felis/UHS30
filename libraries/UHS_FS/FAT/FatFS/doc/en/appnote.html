@@ -36,7 +36,7 @@
 <li>ANSI C<br>
 The FatFs module is a middleware which is written in ANSI C (C89). There is no platform dependence, so long as the compiler is in compliance with ANSI C.</li>
 <li>Size of integer types<br>
-The FatFs module assumes that size of char/short/long are 8/16/32 bit and int is 16 or 32 bit. These correspondence are defined in integer.h. This will not be a problem on most compilers. When any conflict with existing definitions is occured, you must resolve it with care.</li>
+The FatFs module assumes that size of char/short/long are 8/16/32 bit and int is 16 or 32 bit. These correspondence are defined in integer.h. This will not be a problem on most compilers. When any conflict with existing definitions is occurred, you must resolve it with care.</li>
 </ul>
 
 <h4>System organizations</h4>
@@ -63,11 +63,11 @@ The FatFs module assumes that size of char/short/long are 8/16/32 bit and int is
 <ul>
 <li>FAT sub-types: FAT12, FAT16 and FAT32.</li>
 <li>Number of open files: Unlimited, depends on available memory.</li>
-<li>Number of volumes: Upto 10.</li>
-<li>File size: Depends on FAT specs. (upto 4G-1 bytes)</li>
-<li>Volume size: Depends on FAT specs. (upto 2T bytes on 512 bytes/sector)</li>
-<li>Cluster size: Depends on FAT specs. (upto 64K bytes on 512 bytes/sector)</li>
-<li>Sector size: Depends on FAT specs. (upto 4K bytes)</li>
+<li>Number of volumes: Up to 10.</li>
+<li>File size: Depends on FAT specs. (up to 4G-1 bytes)</li>
+<li>Volume size: Depends on FAT specs. (up to 2T bytes on 512 bytes/sector)</li>
+<li>Cluster size: Depends on FAT specs. (up to 64K bytes on 512 bytes/sector)</li>
+<li>Sector size: Depends on FAT specs. (up to 4K bytes)</li>
 </ul>
 </div>
 
@@ -103,13 +103,13 @@ _FS_LABEL        0 (Disable volume label functions)
 _VOLUMES         V (Number of logical drives to be used)
 _MULTI_PARTITION 0 (Single partition per drive)
 _FS_REENTRANT    0 (Disable reentrancy)
-_FS_LOCK         0 (Disable shareing control)
+_FS_LOCK         0 (Disable sharing control)
 </pre>
 </div>
 
 <div class="para" id="reduce">
 <h3>Module Size Reduction</h3>
-<p>Follwing table shows which API function is removed by configuration options for the module size reduction.</p>
+<p>Following table shows which API function is removed by configuration options for the module size reduction.</p>
 <table class="lst2">
 <tr><td rowspan="2">Function</td><td colspan="4">_FS_MINIMIZE</td><td colspan="2">_FS_READONLY</td><td colspan="2">_USE_STRFUNC</td><td colspan="3">_FS_RPATH</td><td colspan="2">_FS_LABEL</td><td colspan="2">_USE_MKFS</td><td colspan="2">_USE_FORWARD</td><td colspan="2">_MULTI_PARTITION</td></tr>
 <tr><td>0</td><td>1</td><td>2</td><td>3</td><td>0</td><td>1</td><td>0&nbsp;&nbsp;</td><td>1/2</td><td>0</td><td>1</td><td>2</td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td></tr>
@@ -158,7 +158,7 @@ _FS_LOCK         0 (Disable shareing control)
 <tr><td>950(Big5)</td><td>+111K</td></tr>
 </table>
 <p>When the LFN feature is enabled, the module size will be increased depends on the selected code page. Right table shows how many bytes increased when LFN feature is enabled with some code pages. Especially, in the CJK region, tens of thousands of characters are being used. Unfortunately, it requires a huge OEM-Unicode bidirectional conversion table and the module size will be drastically increased that shown in the table. As the result, the FatFs with LFN feature with those code pages will not able to be implemented to most 8-bit microcontrollers.</p>
-<p>Note that the LFN feature on the FAT file system is a patent of Microsoft Corporation. This is not the case on FAT32 but most FAT32 drivers include the LFN feature. FatFs can swich the LFN feature off by configuration option. When enable LFN feature on the commercial products, a license from Microsoft may be required depends on the final destination.</p>
+<p>Note that the LFN feature on the FAT file system is a patent of Microsoft Corporation. This is not the case on FAT32 but most FAT32 drivers include the LFN feature. FatFs can switch the LFN feature off by configuration option. When enable LFN feature on the commercial products, a license from Microsoft may be required depends on the final destination.</p>
 </div>
 
 <div class="para" id="unicode">
@@ -176,8 +176,8 @@ _FS_LOCK         0 (Disable shareing control)
 
 <div class="para" id="dup">
 <h3>Duplicated File Access</h3>
-<p>FatFs module does not support the shareing controls of duplicated file access in default. It is permitted when open method to a file is only read mode. The duplicated open in write mode to a file is always prohibited and open file must not be renamed, deleted, or the FAT structure on the volume can be collapted.</p>
-<p>The file shareing control can also be available when <tt>_FS_LOCK</tt> is set to 1 or grater. The value specifies the number of files to manage simultaneously. In this case, if any open, rename or remove that violating the file shareing rule that described above is attempted, the file function will fail with <tt>FR_LOCKED</tt>. If number of open files gets larger than <tt>_FS_LOCK</tt>, the <tt>f_open()</tt> function will fail with <tt>FR_TOO_MANY_OPEN_FILES</tt>.</p>
+<p>FatFs module does not support the sharing controls of duplicated file access in default. It is permitted when open method to a file is only read mode. The duplicated open in write mode to a file is always prohibited and open file must not be renamed, deleted, or the FAT structure on the volume can be collated.</p>
+<p>The file sharing control can also be available when <tt>_FS_LOCK</tt> is set to 1 or grater. The value specifies the number of files to manage simultaneously. In this case, if any open, rename or remove that violating the file sharing rule that described above is attempted, the file function will fail with <tt>FR_LOCKED</tt>. If number of open files gets larger than <tt>_FS_LOCK</tt>, the <tt>f_open()</tt> function will fail with <tt>FR_TOO_MANY_OPEN_FILES</tt>.</p>
 </div>
 
 <div class="para" id="fs1">
@@ -192,9 +192,9 @@ _FS_LOCK         0 (Disable shareing control)
 <p>Figure 3. Sector aligned read<br>
 <img src="../img/f3.png" width="490" height="119" alt="">
 </p>
-<p>The file I/O buffer means a sector buffer to read/write a partial data on the sector. The sector buffer is either file private sector buffer on each file object or shared sector buffer on the file system object. The buffer configuration option <tt>_FS_TINY</tt> determins which sector buffer is used for the file data transfer. When tiny buffer (1) is selected, data memory consumption is reduced 512 bytes each file object. In this case, FatFs module uses only a sector buffer on the file system object for file data transfer and FAT/directory access. The disadvantage of the tiny buffer configuration is: the FAT data cached in the sector buffer will be lost by file data transfer and it must be reloaded at every cluster boundary. However it will be suitable for most application from view point of the decent performance and low memory comsumption.</p>
+<p>The file I/O buffer means a sector buffer to read/write a partial data on the sector. The sector buffer is either file private sector buffer on each file object or shared sector buffer on the file system object. The buffer configuration option <tt>_FS_TINY</tt> determines which sector buffer is used for the file data transfer. When tiny buffer (1) is selected, data memory consumption is reduced 512 bytes each file object. In this case, FatFs module uses only a sector buffer on the file system object for file data transfer and FAT/directory access. The disadvantage of the tiny buffer configuration is: the FAT data cached in the sector buffer will be lost by file data transfer and it must be reloaded at every cluster boundary. However it will be suitable for most application from view point of the decent performance and low memory consumption.</p>
 <p>Figure 1 shows that partial sector data is transferred via the file I/O buffer. On long data transfer shown in Figure 2, middle of transfer data that covers one or more sector is transferred to application buffer directly. Figure 3 shows that the case of entier transfer data is aligned to the sector boundary. In this case, file I/O buffer is not used. On the direct transfer, the maximum extent of sectors are read with <tt>disk_read()</tt> function at a time but the multi sector transfer never across the cluster boundary even if it is contiguous.</p>
-<p>Therefore taking effort to sector aligned read/write accesss avoids buffered data transfer and the read/write performance will be improved. Besides the effect, cached FAT data will not be flushed by file data transfer on the tiny configuration so that it can achieve same performance as non-tiny configuration with small memory footprint.</p>
+<p>Therefore taking effort to sector aligned read/write access avoids buffered data transfer and the read/write performance will be improved. Besides the effect, cached FAT data will not be flushed by file data transfer on the tiny configuration so that it can achieve same performance as non-tiny configuration with small memory footprint.</p>
 </div>
 
 <div class="para" id="fs2">
@@ -205,14 +205,14 @@ _FS_LOCK         0 (Disable shareing control)
 Figure 6. Comparison between Multiple/Single Sector Write<br>
 <img src="../img/f6.png" width="630" height="148" alt="fig.6">
 </div>
-<p>The write throughput of the flash memory media becomes the worst at single sector write and it increases proportional to the number of sectors per a write transaction. This effect more appers at more fast bus clock and its ratio often becomes grater than ten. The number of write transaction also affects the life time of the media. Therefore the application program should write the data in large block as possible. The ideal block size is cluster size or power of 2 bytes and the byte offset should be aligned to the block. Of course all layers between the application and the media must support multiple sector write feature, however most of open-source disk drivers lack it. Do not split a multiple sector write request into single sector writes or the write throughput gets poor. Note that FatFs module and its sample disk drivers supprt multiple sector read/write feature.</p>
+<p>The write throughput of the flash memory media becomes the worst at single sector write and it increases proportional to the number of sectors per a write transaction. This effect more appears at more fast bus clock and its ratio often becomes grater than ten. The number of write transaction also affects the life time of the media. Therefore the application program should write the data in large block as possible. The ideal block size is cluster size or power of 2 bytes and the byte offset should be aligned to the block. Of course all layers between the application and the media must support multiple sector write feature, however most of open-source disk drivers lack it. Do not split a multiple sector write request into single sector writes or the write throughput gets poor. Note that FatFs module and its sample disk drivers support multiple sector read/write feature.</p>
 <h4>Forcing Memory Erase</h4>
 <p>When remove a file with <tt>f_remove()</tt> function, the data clusters occupied by the file are marked 'free' on the FAT. But the data sectors containing the file data are not that applied any process, so that the file data left occupies a part of the flash memory array as live blocks. If the file data is forced erased on removing the file, the number of free blocks on the flash memory will be increased. This may skip internal block erase operation to the data block on next write. As the result the write performance might be improved. To enable this feature, set <tt>_USE_ERASE</tt> to 1. Note that this is a feature with expectation of internal process of the flash memory media. It may not always effective and f_remove function will take a time on removing a large file.</p>
 </div>
 
 <div class="para" id="critical">
 <h3>Critical Section</h3>
-<p>If a write operation to the FAT file system is interrupted due to any accidental failure, such as sudden blackout, incorrect disk removal and unrecoverable disk error, the FAT structure can be collapted. Following images shows the critical section on the FatFs application.</p>
+<p>If a write operation to the FAT file system is interrupted due to any accidental failure, such as sudden blackout, incorrect disk removal and unrecoverable disk error, the FAT structure can be collated. Following images shows the critical section on the FatFs application.</p>
 <div class="lset">
 Figure 4. Long critical section<br>
 <img src="../img/f4.png" width="320" height="436" alt="fig.4">
@@ -222,9 +222,9 @@ Figure 5. Minimized critical section<br>
 <img src="../img/f5.png" width="320" height="436" alt="fig.5">
 </div>
 <br class="clr">
-<p>An interruption in the red section can cause a cross link; as a result, the object being changed may be lost. There is one or more possibility listed below when an interruption in the yellow section is occured.</p>
+<p>An interruption in the red section can cause a cross link; as a result, the object being changed may be lost. There is one or more possibility listed below when an interruption in the yellow section is occurred.</p>
 <ul>
-<li>File data being rewrited is collapted.</li>
+<li>File data being rewritten is collated.</li>
 <li>A file being appended returns initial state.</li>
 <li>A file created as new is gone.</li>
 <li>A file created as new or in overwritten remains with no content.</li>

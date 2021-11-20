@@ -73,7 +73,7 @@ To append data to the file, use <a href="lseek.html"><tt>f_lseek()</tt></a> func
 
 <div class="para desc">
 <h4>Description</h4>
-<p>After <tt>f_open()</tt> function succeeded, the file object is valid. The file object is used for subsequent read/write functions to identify the file. If the file is modified and not closed, the file data will be collapted. To close an open file, use <a href="close.html"><tt>f_close()</tt></a> function. </p>
+<p>After <tt>f_open()</tt> function succeeded, the file object is valid. The file object is used for subsequent read/write functions to identify the file. If the file is modified and not closed, the file data will be collated. To close an open file, use <a href="close.html"><tt>f_close()</tt></a> function. </p>
 <p>If duplicated file open is needed, read <a href="appnote.html#dup">here</a> carefully. However duplicated open of a file with write mode flags is always prohibited.</p>
 <p>Before using any file function, a work area (file system object) must be registered to the logical drive with <a href="mount.html"><tt>f_mount()</tt></a> function. All API functions except for <a href="fdisk.html"><tt>f_fdisk()</tt></a> function can work after this procedure.</p>
 </div>
