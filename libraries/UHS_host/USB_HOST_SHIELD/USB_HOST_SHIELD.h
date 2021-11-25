@@ -307,6 +307,25 @@ public UHS_USB_HOST_BASE
         volatile bool counted;
         volatile bool condet;
         volatile bool doingreset;
+
+        bool UHS_NI pollDevices(void);
+        // Frame timer control
+
+        volatile bool frame_irq_enabled = false;
+
+        bool enable_frame_irq(bool enable) {
+                const bool prev_state = frame_irq_enabled;
+                if(prev_state != enable) {
+                        if(enable)
+                                regWr(rHIEN, regRd(rHIEN) |  bmFRAMEIE);
+                        else
+                                regWr(rHIEN, regRd(rHIEN) & ~bmFRAMEIE);
+                        frame_irq_enabled = enable;
+                }
+                return prev_state;
+        }
+
+
 public:
         SPISettings MAX3421E_SPI_Settings;
         uint8_t ss_pin;
@@ -354,6 +373,7 @@ public:
         };
 
         virtual bool UHS_NI sof_delay(uint16_t x) {
+                const bool saved_state = enable_frame_irq(true);
                 sof_countdown = x;
                 while((sof_countdown != 0) && !condet) {
                         SYSTEM_OR_SPECIAL_YIELD();
@@ -362,6 +382,7 @@ public:
 #endif
                 }
                 //                Serial.println("...Wake");
+                enable_frame_irq(saved_state);
                 return (!condet);
         };
 
@@ -422,6 +443,7 @@ public:
                 // Enable interrupts
                 noInterrupts();
 #endif
+                enable_frame_irq(true);
                 sofevent = true;
 #if USB_HOST_SHIELD_USE_ISR
                 DDSB();

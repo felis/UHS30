@@ -230,6 +230,7 @@ void UHS_NI MAX3421E_HOST::busprobe(void) {
                                 regWr(rMODE, MODE_LS_HOST); // start low-speed host
                                 vbusState = LSHOST;
                         }
+                        enable_frame_irq(true);
                         tmpdata = regRd(rMODE) | bmSOFKAENAB; // start SOF generation
                         regWr(rHIRQ, bmFRAMEIRQ); // see data sheet.
                         regWr(rMODE, tmpdata);
@@ -243,6 +244,7 @@ void UHS_NI MAX3421E_HOST::busprobe(void) {
                                 regWr(rMODE, MODE_FS_HOST); // start full-speed host
                                 vbusState = FSHOST;
                         }
+                        enable_frame_irq(true);
                         tmpdata = regRd(rMODE) | bmSOFKAENAB; // start SOF generation
                         regWr(rHIRQ, bmFRAMEIRQ); // see data sheet.
                         regWr(rMODE, tmpdata);
@@ -834,13 +836,22 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
                         usb_task_state = UHS_USB_HOST_STATE_RUNNING;
                         break;
                 case UHS_USB_HOST_STATE_RUNNING:
-                        Poll_Others();
-                        for(x = 0; (usb_task_state == UHS_USB_HOST_STATE_RUNNING) && (x < UHS_HOST_MAX_INTERFACE_DRIVERS); x++) {
-                                if(devConfig[x]) {
-                                        if(devConfig[x]->bPollEnable) devConfig[x]->Poll();
+                        #if USB_HOST_MANUAL_POLL && USB_HOST_SHIELD_USE_ISR
+                                enable_frame_irq(false);
+                        #else
+                                // If no device requires polling, it is okay to shutoff
+                                // the frame irq to free up some CPU cycles until the
+                                // next device insertion/removal
+                                if(!pollDevices()) {
+                                        enable_frame_irq(false);
                                 }
-                        }
-                        // fall thru
+                        #endif
+                        break;
+                case UHS_USB_HOST_STATE_ERROR:
+                case UHS_USB_HOST_STATE_IDLE:
+                case UHS_USB_HOST_STATE_ILLEGAL:
+                        enable_frame_irq(false);
+                        break;
                 default:
                         // Do nothing
                         break;
@@ -864,6 +875,24 @@ void UHS_NI MAX3421E_HOST::ISRbottom(void) {
         DDSB();
 }
 
+/* Allows devices to run periodic tasks. Returns "true" if any devices
+ * have polling enabled. */
+bool UHS_NI MAX3421E_HOST::pollDevices(void) {
+        bool is_polling = false;
+        #if defined(UHS_LOAD_BT) || defined(UHS_LOAD_HID)
+                Poll_Others();
+                is_polling = true;
+        #endif
+
+        for(uint8_t x = 0; x < UHS_HOST_MAX_INTERFACE_DRIVERS; x++) {
+                if(devConfig[x] && devConfig[x]->bPollEnable) {
+                        devConfig[x]->Poll();
+                        is_polling = true;
+                }
+        }
+        return is_polling;
+}
+
 
 /* USB main task. Services the MAX3421e */
 #if !USB_HOST_SHIELD_USE_ISR
@@ -874,6 +903,13 @@ void UHS_NI MAX3421E_HOST::Task(void)
 #else
 
 void UHS_NI MAX3421E_HOST::Task(void) {
+        #if USB_HOST_MANUAL_POLL
+                if(usb_task_state == UHS_USB_HOST_STATE_RUNNING) {
+                        noInterrupts();
+                        pollDevices();
+                        interrupts();
+                }
+        #endif
 }
 
 void UHS_NI MAX3421E_HOST::ISRTask(void)
