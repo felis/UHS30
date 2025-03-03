@@ -29,6 +29,10 @@
                     <name>k20</name>
                     <type>0</type>
                 </confElem>
+                <confElem>
+                    <name>Teensy-4.1</name>
+                    <type>0</type>
+                </confElem>
             </confList>
             <formatting>
                 <project-formatting-style>false</project-formatting-style>

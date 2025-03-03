@@ -247,6 +247,7 @@ void UHS_NI UHS_CDC_ACM::PrintEndpointDescriptor(const USB_ENDPOINT_DESCRIPTOR *
 uint8_t UHS_NI UHS_CDC_ACM::Read(uint16_t *bytes_rcvd, uint8_t * dataptr) {
         if(!bAddress) return UHS_HOST_ERROR_UNPLUGGED;
         pUsb->DisablePoll();
+        *bytes_rcvd = 0; // zap stale value.
         uint8_t rv = pUsb->inTransfer(bAddress, epInfo[epDataInIndex].epAddr, bytes_rcvd, dataptr);
 #if defined(LOAD_UHS_CDC_ACM_FTDI)
         if(adaptor == UHS_USB_ACM_FTDI) {

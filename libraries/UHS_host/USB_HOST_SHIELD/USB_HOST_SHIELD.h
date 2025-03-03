@@ -474,11 +474,9 @@ public:
                 // Used on MCU that lack control of IRQ priority (AVR).
                 // Suspends ISRs, for critical code. IRQ will be serviced after it is resumed.
                 // NOTE: you must track the state yourself!
-#if defined(__AVR__)
                 noInterrupts();
                 detachInterrupt(UHS_GET_DPI(irq_pin));
                 interrupts();
-#endif
         };
 
         virtual void UHS_NI resume_host(void);

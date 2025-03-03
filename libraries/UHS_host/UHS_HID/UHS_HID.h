@@ -143,10 +143,10 @@ public:
                 uint8_t rv = parent->pUsb->inTransfer(parent->bAddress, parent->epInfo[parent->epInterruptInIndex].epAddr, &length, data);
 
                 if(rv == 0) {
-                        printf_P(PSTR("Length %d "), length);
+                        HID_DEBUG("Length %d ", length);
                         parent->hidProcessor->onPoll(this, data, length);
                 } else if(rv != UHS_HOST_ERROR_NAK) {
-                        printf_P(PSTR("DP %02x A %02x EI %02x EA %02x\r\n"), rv, parent->bAddress, parent->epInterruptInIndex, parent->epInfo[parent->epInterruptInIndex].epAddr);
+                        HID_DEBUG("DP %02x A %02x EI %02x EA %02x\r\n", rv, parent->bAddress, parent->epInterruptInIndex, parent->epInfo[parent->epInterruptInIndex].epAddr);
                 }
         }
 

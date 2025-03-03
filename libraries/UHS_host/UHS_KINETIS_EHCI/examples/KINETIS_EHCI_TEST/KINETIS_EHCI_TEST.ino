@@ -42,9 +42,13 @@ void poopOutStatus() {
         } else {
                 printf("off ");
         }
+#ifdef USBHS_PORTSC_PHCD
         if(n & USBHS_PORTSC_PHCD) {
                 printf("phyoff ");
         }
+#endif
+
+#ifdef USBHS_PORTSC_SUSP
         if(n & USBHS_PORTSC_PE) {
                 if(n & USBHS_PORTSC_SUSP) {
                         printf("suspend ");
@@ -54,6 +58,7 @@ void poopOutStatus() {
         } else {
                 printf("disable ");
         }
+#endif
         printf("speed=");
         switch(((n >> 26) & 3)) {
                 case 0: printf("12 Mbps FS ");
@@ -67,9 +72,11 @@ void poopOutStatus() {
         if(n & USBHS_PORTSC_HSP) {
                 printf("high-speed ");
         }
+#ifdef USBHS_PORTSC_OCA
         if(n & USBHS_PORTSC_OCA) {
                 printf("overcurrent ");
         }
+#endif
         if(n & USBHS_PORTSC_CCS) {
                 printf("connected ");
         } else {
@@ -81,8 +88,12 @@ void poopOutStatus() {
         // print info about the EHCI status
         n = USBHS_USBSTS;
         printf(",SUSP=%i", n & USBHS_USBSTS_HCH ? 1 : 0);
+#ifdef  USBHS_USBSTS_RCL
         printf(",RECL=%i", n & USBHS_USBSTS_RCL ? 1 : 0);
+#endif
+#ifdef  USBHS_USBSTS_PS
         printf(",PSRUN=%i", n & USBHS_USBSTS_PS ? 1 : 0);
+#endif
         printf(",ASRUN=%i", n & USBHS_USBSTS_AS ? 1 : 0);
         printf(",USBINT=%i", n & USBHS_USBSTS_UI ? 1 : 0);
         printf(",USBERRINT=%i", n & USBHS_USBSTS_UEI ? 1 : 0);
@@ -91,7 +102,9 @@ void poopOutStatus() {
         printf(",errINT=%i", n & USBHS_USBSTS_SEI ? 1 : 0);
         printf(",AAINT=%i", n & USBHS_USBSTS_AAI ? 1 : 0);
         printf(",RSTINT=%i", n & USBHS_USBSTS_URI ? 1 : 0);
+#ifdef  USBHS_USBSTS_SRI
         printf(",SOFINT=%i", n & USBHS_USBSTS_SRI ? 1 : 0);
+#endif
         printf(",NAKINT=%i", n & USBHS_USBSTS_NAKI ? 1 : 0);
         printf(",ASINT=%i", n & USBHS_USBSTS_UAI ? 1 : 0);
         printf(",PSINT=%i", n & USBHS_USBSTS_UPI ? 1 : 0);
@@ -128,10 +141,13 @@ void loop() {
         if (USB_HOST_SERIAL.available() > 0) {
 
                 d = USB_HOST_SERIAL.read();
+#ifdef USB0_INTEN
                 if(d=='s') {
                         printf("USB0_INTEN: 0x%x ", USB0_INTEN);
                         printf("USB0_CTL: 0x%x\r\n", USB0_CTL);
-                } else if(d=='p') {
+                } else
+#endif
+                if(d=='p') {
                         poopOutStatus();
                 }
         }

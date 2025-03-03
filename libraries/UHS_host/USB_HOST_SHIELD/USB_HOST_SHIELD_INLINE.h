@@ -49,7 +49,6 @@ void UHS_NI MAX3421E_HOST::resume_host(void) {
                 // Used on MCU that lack control of IRQ priority (AVR).
                 // Resumes ISRs.
                 // NOTE: you must track the state yourself!
-#if defined(__AVR__)
                 noInterrupts();
                 if(irq_pin & 1) {
                         ISRodd = this;
@@ -59,7 +58,6 @@ void UHS_NI MAX3421E_HOST::resume_host(void) {
                         attachInterrupt(UHS_GET_DPI(irq_pin), call_ISReven, IRQ_SENSE);
                 }
                 interrupts();
-#endif
 
 }
 /* write single byte into MAX3421e register */
@@ -219,6 +217,20 @@ void UHS_NI MAX3421E_HOST::busprobe(void) {
         uint8_t bus_sample;
         uint8_t tmpdata;
         bus_sample = regRd(rHRSL); //Get J,K status
+        // Proposed fix from an ancient project. Yes, finally got to it. #43
+        // This is possibly due to noisy connectors. Technically, the hardware should be filtering jitter.
+        // Apparently the fix is to force a re-sample.
+        if((bus_sample & (bmJSTATUS | bmKSTATUS | 0x0f)) == UHS_HOST_ERROR_NAK) {
+                regWr(rHCTL, bmSAMPLEBUS);
+                do {
+                        tmpdata = regRd(rHCTL);
+                } while(!(tmpdata & bmSAMPLEBUS));
+                tmpdata=10;
+                do {
+                        bus_sample = regRd(rHRSL);
+                } while((!(bus_sample & (bmJSTATUS | bmKSTATUS))) && --tmpdata);
+
+        }
         bus_sample &= (bmJSTATUS | bmKSTATUS); //zero the rest of the byte
         switch(bus_sample) { //start full-speed or low-speed host
                 case(bmJSTATUS):
@@ -975,9 +987,6 @@ void UHS_NI MAX3421E_HOST::ISRTask(void)
         }
 }
 
-#if 0
-DDSB();
-#endif
 #else
 #error "Never include USB_HOST_SHIELD_INLINE.h, include UHS_host.h instead"
 #endif

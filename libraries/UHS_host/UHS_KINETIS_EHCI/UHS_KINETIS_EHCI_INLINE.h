@@ -91,7 +91,7 @@ void UHS_NI UHS_KINETIS_EHCI::busprobe(void) {
 
 void UHS_NI UHS_KINETIS_EHCI::VBUS_changed(void) {
         /* modify USB task state because Vbus changed or unknown */
-        // printf("\r\n\r\n\r\n\r\nSTATE %2.2x -> ", usb_task_state);
+        HOST_DEBUG("\r\n\r\n\r\n\r\nSTATE %2.2x -> ", usb_task_state);
         ReleaseChildren();
         timer_countdown = 0;
         sof_countdown = 0;
@@ -105,7 +105,7 @@ void UHS_NI UHS_KINETIS_EHCI::VBUS_changed(void) {
                         usb_task_state = UHS_USB_HOST_STATE_IDLE;
                         break;
         }
-        // printf("0x%2.2x\r\n\r\n\r\n\r\n", usb_task_state);
+        HOST_DEBUG("0x%2.2x\r\n\r\n\r\n\r\n", usb_task_state);
         return;
 };
 
@@ -123,27 +123,27 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                 condet = false;
                 interrupts();
         }
-        //HOST_DEBUG("ISRbottom, usb_task_state: 0x%0X \r\n", (uint8_t)usb_task_state);
+        HOST_DEBUG("ISRbottom, usb_task_state: 0x%0X \r\n", (uint8_t)usb_task_state);
 
         switch(usb_task_state) {
                 case UHS_USB_HOST_STATE_INITIALIZE: /* 0x10 */ // initial state
-                        //printf("ISRbottom, UHS_USB_HOST_STATE_INITIALIZE\r\n");
+                        HOST_DEBUG("ISRbottom, UHS_USB_HOST_STATE_INITIALIZE\r\n");
                         // if an attach happens we will detect it in the isr
                         // update usb_task_state and check speed (so we replace busprobe and VBUS_changed methods)
                         break;
                 case UHS_USB_HOST_STATE_DEBOUNCE: /* 0x01 */
-                        //printf("ISRbottom, UHS_USB_HOST_STATE_DEBOUNCE\r\n");
+                        HOST_DEBUG("ISRbottom, UHS_USB_HOST_STATE_DEBOUNCE\r\n");
                         sof_countdown = UHS_HOST_DEBOUNCE_DELAY_MS;
                         usb_task_state = UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE;
                         break;
                 case UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE: /* 0x02 */
                         //settle time for just attached device
-                        //printf("ISRbottom, UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE\r\n");
+                        HOST_DEBUG("ISRbottom, UHS_USB_HOST_STATE_DEBOUNCE_NOT_COMPLETE\r\n");
                         usb_task_state = UHS_USB_HOST_STATE_RESET_DEVICE;
                         break;
 
                 case UHS_USB_HOST_STATE_RESET_DEVICE: /* 0x0A */
-                        //printf("ISRbottom, UHS_USB_HOST_STATE_RESET_DEVICE\r\n");
+                        HOST_DEBUG("ISRbottom, UHS_USB_HOST_STATE_RESET_DEVICE\r\n");
                         noInterrupts();
                         busevent = true;
                         doingreset = true;
@@ -155,7 +155,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                         //timer_countdown = 20;
                         break;
                 case UHS_USB_HOST_STATE_RESET_NOT_COMPLETE: /* 0x03 */
-                        //printf("ISRbottom, UHS_USB_HOST_STATE_RESET_NOT_COMPLETE\r\n");
+                        HOST_DEBUG("ISRbottom, UHS_USB_HOST_STATE_RESET_NOT_COMPLETE\r\n");
                         if(!busevent) usb_task_state = UHS_USB_HOST_STATE_WAIT_BUS_READY;
                         // We delay two extra ms to ensure that at least one SOF has been sent.
                         // This trick is performed by just moving to the next state.
@@ -165,7 +165,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                         doingreset = false;
                         DDSB();
                         interrupts();
-                        //printf("ISRbottom, UHS_USB_HOST_STATE_WAIT_BUS_READY\r\n");
+                        HOST_DEBUG("ISRbottom, UHS_USB_HOST_STATE_WAIT_BUS_READY\r\n");
                         usb_task_state = UHS_USB_HOST_STATE_CONFIGURING;
                         break; // don't fall through
 
@@ -198,7 +198,7 @@ void UHS_NI UHS_KINETIS_EHCI::ISRbottom(void) {
                         break;
 
                 case UHS_USB_HOST_STATE_RUNNING: /* 0x60 */
-                        //printf("ISRbottom, UHS_USB_HOST_STATE_RUNNING\r\n");
+                        HOST_DEBUG("ISRbottom, UHS_USB_HOST_STATE_RUNNING\r\n");
                         Poll_Others();
                         for(x = 0; (usb_task_state == UHS_USB_HOST_STATE_RUNNING) && (x < UHS_HOST_MAX_INTERFACE_DRIVERS); x++) {
                                 if(devConfig[x]) {
