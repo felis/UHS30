@@ -357,7 +357,7 @@ int16_t UHS_NI UHS_KINETIS_EHCI::Init(int16_t mseconds) {
         Init_dyn_SWI();
         _UHS_KINETIS_EHCI_THIS_ = this;
 
-        memset(&qHalt, 0, sizeof (qHalt));
+        memset(reinterpret_cast<uint8_t*>(&qHalt), 0, sizeof (qHalt));
         qHalt.transferResults.token = 0x40;
         int count = 0;
 #if defined(__MK66FX1M0__)
@@ -830,7 +830,7 @@ uint8_t UHS_NI UHS_KINETIS_EHCI::InTransfer(UHS_EpInfo *pep, uint16_t nak_limit,
                 HOST_DEBUG("InTransfer Got %d Bytes\r\n", *nbytesptr);
                 if(pktsize < datalen) break; // short packet.
         }
-        HOST_DEBUG("InTransfer done.\r\n");
+        HOST_DEBUG("InTransfer %2.2X done. \r\n", rcode);
         return rcode;
 }
 
